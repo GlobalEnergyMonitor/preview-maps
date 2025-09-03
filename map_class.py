@@ -115,19 +115,19 @@ class MapObject:
 
         if 'url' not in gdf.columns:
             gdf['url'] = ''
-        
-        gdf['url'] = gdf.apply(lambda row: row['wiki-from-name'] if 'gem.wiki' not in row['url'] else row['url'], axis=1)
-        
         gdf['url'].fillna('',inplace=True)
+
+        gdf['url'] = gdf.apply(lambda row: row['wiki-from-name'] if 'gem.wiki' not in row['url'] else row['url'], axis=1)
+        logger.info(f'gem.wiki was not in url column so used formatted wiki-from-nae url, this should be qcd')
                 
         # one last check since this'll ruin the filter logic
         gdf.columns = [col.replace('_', '-') for col in gdf.columns] 
         gdf.columns = [col.replace('  ', ' ') for col in gdf.columns] 
         gdf.columns = [col.replace(' ', '-') for col in gdf.columns] 
 
-        print(f'Check all columns:')
+        logger.info(f'Check all columns:')
         for col in gdf.columns:
-            print(col)
+            logger.info(col)
         # input('Is fuel-filter there?')
 
         # translate acronyms to full names for legend and table 
@@ -225,9 +225,9 @@ class MapObject:
         else:
             # Check if the dataframe is a GeoDataFrame
             if isinstance(gdf, gpd.GeoDataFrame):
-                print('Already a GeoDataFrame!')
+                logger.info('Already a GeoDataFrame!')
             else:
-                print(f'Converting to GeoDataFrame for {self.name} ...')
+                logger.info(f'Converting to GeoDataFrame for {self.name} ...')
                 if 'geometry' not in gdf.columns:
                     raise ValueError("The dataframe does not have a 'geometry' column to convert to GeoDataFrame.")
                 gdf = gpd.GeoDataFrame(gdf, geometry=gdf['geometry'])
@@ -254,7 +254,7 @@ class MapObject:
 
 
     def simplified(self):
-        print('Finish writing simplified function to easily filter down any map file for quick map rendering without table, first step for 1hot encoding')
+        logger.info('Finish writing simplified function to easily filter down any map file for quick map rendering without table, first step for 1hot encoding')
 
     def set_capacity_conversions(self):
     
@@ -266,7 +266,7 @@ class MapObject:
         gdf = self.trackers
 
         if self.name in gas_only_maps:
-            print('no need to handle for hydro having two capacities')
+            logger.info('no need to handle for hydro having two capacities')
             # continue
         else:
             # first let's get GHPT cap added 
@@ -321,12 +321,16 @@ class MapObject:
         # gdf_converted['ea_scaling_capacity'] = gdf_converted.apply(lambda row: conversion_equal_area(row), axis=1) # square root(4 * capacity / pi)
         # must be float for table to sort
         if self.name in non_regional_maps: # map name
-            print('skip converting to joules')
+            logger.info('skip converting to joules')
 
             gdf['scaling_capacity'] = gdf['cleaned_cap']
             gdf['scaling_capacity'] = gdf['scaling_capacity'].astype(float)
 
         else:
+            logger.info('not skipping conversion to joules...')
+            logger.info(f'{self.name}')
+            input('check name and why it is not in non_regional_maps')
+            logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
         # must be float for table to sort
         gdf['capacity'] = gdf['capacity'].fillna('') # issue if it's natype so filling in
@@ -391,7 +395,7 @@ class MapObject:
         gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
         gdf_map_ready['status_legend'] = gdf_map_ready['status_legend'].apply(lambda x: x.strip().replace('_','-'))
         gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.lower())
-        print(set(gdf_map_ready['status'].to_list()))
+        logger.info(set(gdf_map_ready['status'].to_list()))
         # input('check list of statuses after replace space and _') # worked
         # TODO check that all legend filter columns go through what status goes through 
         if self.name == 'gcmt':
@@ -402,7 +406,7 @@ class MapObject:
                 gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.strip().replace('_','-'))
                 gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.lower())        
                 
-        print(set(gdf_map_ready['areas'].to_list()))
+        logger.info(set(gdf_map_ready['areas'].to_list()))
 
         tracker_sel = gdf_map_ready['tracker-acro'].iloc[0] 
         if tracker_sel == 'GCMT':
@@ -455,11 +459,11 @@ class MapObject:
             
         if self.name in gas_only_maps:
             # handle for gas only maps (meaning no two cols for ghpt), the adding of the semicolon for js script
-            print('In gas only area of function map ready statuses and countries')
+            logger.info('In gas only area of function map ready statuses and countries')
             gdf_map_ready['areas'] = gdf_map_ready['areas'].fillna('')
             gdf_map_ready['areas'] = gdf_map_ready['areas'].apply(lambda x: x.replace(',', ';')) # try this to fix geojson multiple country issue
             gdf_map_ready['areas'] = gdf_map_ready['areas'].apply(lambda x: f"{x.strip()};")
-            print(gdf_map_ready['areas'])
+            logger.info(gdf_map_ready['areas'])
             # input('check above has semicolon')
 
         else: 
@@ -484,19 +488,19 @@ class MapObject:
             
             gdf = tracker_obj.data
             tracker_sel = tracker_obj.acro # GOGPT, GGIT, GGIT-lng, GOGET
-            print(f'tracker_sel is {tracker_sel} equal to tracker-acro...')
+            logger.info(f'tracker_sel is {tracker_sel} equal to tracker-acro...')
             # print('This is tracker-acro:')
             # print(gdf['tracker-acro'])
             if tracker_sel == 'GOGPT-eu':
                 # if new_h2_data == True: 
                 # print('passing because GOGPT-eu already renamed when concatted hy and plants tabs')
 
-                print(f'this is df cols: {gdf.columns}')
+                logger.info(f'this is df cols: {gdf.columns}')
                 
                 tracker_rename = gdf['tracker-acro'].iloc[0]
                 renaming_dict_sel = renaming_cols_dict[tracker_rename]
-                print(f'This is renaming dict for {tracker_rename}: {renaming_dict_sel}')
-                print(f'Check rename keys against cols for {tracker_rename}')
+                logger.info(f'This is renaming dict for {tracker_rename}: {renaming_dict_sel}')
+                logger.info(f'Check rename keys against cols for {tracker_rename}')
                 check_rename_keys(renaming_dict_sel, gdf)
                 gdf.columns = gdf.columns.str.strip()
                 gdf = gdf.rename(columns=renaming_dict_sel) 
@@ -508,13 +512,13 @@ class MapObject:
             else:
                 gdf['tracker-acro'] = tracker_sel
 
-                print(f"renaming on tracker acro: {gdf['tracker-acro'].iloc[0]}")
+                logger.info(f"renaming on tracker acro: {gdf['tracker-acro'].iloc[0]}")
                 # all_trackers.append(tracker_sel)
                 # select the correct renaming dict from config.py based on tracker name
                 renaming_dict_sel = renaming_cols_dict[tracker_sel]
                 # rename the columns!
                 # check check_rename_keys(renaming_dict_sel)
-                print(f'Check rename keys against cols for {tracker_sel}')
+                logger.info(f'Check rename keys against cols for {tracker_sel}')
                 check_rename_keys(renaming_dict_sel, gdf)
                 gdf.columns = gdf.columns.str.strip()
                 gdf = gdf.rename(columns=renaming_dict_sel) 
@@ -546,11 +550,11 @@ class MapObject:
                 
                 
             if 'subnat' in gdf.columns:
-                print(f'subnat here for {tracker_obj.name}')
+                logger.info(f'subnat here for {tracker_obj.name}')
                 
             else:
-                print(f'subnat not here for {tracker_obj.name}') # TODO investigate for egt
-                input('check which tracker is missing subnat')
+                logger.info(f'subnat not here for {tracker_obj.name}') # TODO investigate for egt
+                logger.info('check which tracker is missing subnat')
             # print(f'Adding {tracker_sel} gdf to renamed_gdfs')
             renamed_gdfs.append(gdf)
             # input('Check it adds for gogpt eu')
@@ -559,11 +563,11 @@ class MapObject:
             
         one_gdf = pd.concat(renamed_gdfs, sort=False, verify_integrity=True, ignore_index=True) 
         # one_gdf = one_gdf.drop_duplicates('id').reset_index(drop=True)
-        print(one_gdf.index)
+        logger.info(one_gdf.index)
         
         cols_to_be_dropped = set(one_gdf.columns) - set(final_cols)
-        print(f'These cols will be dropped: {cols_to_be_dropped}')
-        input('Check that')
+        logger.info(f'These cols will be dropped: {cols_to_be_dropped}')
+        logger.info('Check that')
         
         final_gdf = one_gdf.drop(columns=cols_to_be_dropped)
         self.trackers = final_gdf
