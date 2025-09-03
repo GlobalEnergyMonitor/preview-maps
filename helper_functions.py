@@ -1900,50 +1900,50 @@ def convert_WKT_to_geo(df):
     
     return gdf
 
-def find_about_page(tracker,key):
-        # print(f'this is key and tab list in def find_about_page(tracker,key):function:\n{tracker}{key}')
+# def find_about_page(tracker,key):
+#         # print(f'this is key and tab list in def find_about_page(tracker,key):function:\n{tracker}{key}')
 
-        gspread_creds = gspread.oauth(
-            scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"],
-            credentials_filename=client_secret_full_path,
-            # authorized_user_filename=json_token_name,
-        )
-        wait_time = 5
-        time.sleep(wait_time)
-        gsheets = gspread_creds.open_by_key(key)
+#         gspread_creds = gspread.oauth(
+#             scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"],
+#             credentials_filename=client_secret_full_path,
+#             # authorized_user_filename=json_token_name,
+#         )
+#         wait_time = 5
+#         time.sleep(wait_time)
+#         gsheets = gspread_creds.open_by_key(key)
             
-        # List all sheet names
-        sheet_names = [sheet.title for sheet in gsheets.worksheets()]
-        # print(f"{tracker} Sheet names:", sheet_names)
-        # Access a specific sheet by name
-        first_tab = sheet_names[0]
-        first_sheet = gsheets.worksheet(first_tab)  # Access the first sheet
+#         # List all sheet names
+#         sheet_names = [sheet.title for sheet in gsheets.worksheets()]
+#         # print(f"{tracker} Sheet names:", sheet_names)
+#         # Access a specific sheet by name
+#         first_tab = sheet_names[0]
+#         first_sheet = gsheets.worksheet(first_tab)  # Access the first sheet
         
-        last_tab = sheet_names[-1]
-        last_sheet = gsheets.worksheet(last_tab)  # Access the last sheet
+#         last_tab = sheet_names[-1]
+#         last_sheet = gsheets.worksheet(last_tab)  # Access the last sheet
 
-        # print("First sheet name:", sheet.title)
-        if 'About' not in first_sheet.title:
-            # print('Looking for about page in last tab now, first one no.')
-            # handle for goget and ggit, goit who put it in the last tab
-            if 'About' not in last_sheet.title:
-                if 'Copyright' not in last_sheet.title:
-                    print('Checked first and last tab, no about page found not even for copyright. Pausing.')
-                    input("Press Enter to continue...")
-                else:
-                    # print(f'Found about page in last tab: {last_tab}')
-                    sheet = last_sheet
-            else:
-                # print(f'Found about page in last tab: {last_tab}')
-                sheet = last_sheet
-        else:
-            # print(f'Found about page in first tab: {first_tab}')
-            sheet = first_sheet
+#         # print("First sheet name:", sheet.title)
+#         if 'About' not in first_sheet.title:
+#             # print('Looking for about page in last tab now, first one no.')
+#             # handle for goget and ggit, goit who put it in the last tab
+#             if 'About' not in last_sheet.title:
+#                 if 'Copyright' not in last_sheet.title:
+#                     print('Checked first and last tab, no about page found not even for copyright. Pausing.')
+#                     input("Press Enter to continue...")
+#                 else:
+#                     # print(f'Found about page in last tab: {last_tab}')
+#                     sheet = last_sheet
+#             else:
+#                 # print(f'Found about page in last tab: {last_tab}')
+#                 sheet = last_sheet
+#         else:
+#             # print(f'Found about page in first tab: {first_tab}')
+#             sheet = first_sheet
         
-        data = pd.DataFrame(sheet.get_all_records(expected_headers=[]))
-        about_df = data.copy()
+#         data = pd.DataFrame(sheet.get_all_records(expected_headers=[]))
+#         about_df = data.copy()
     
-        return about_df
+#         return about_df
 
 def find_region_country_colname(df):
     continent_list = ['Africa', 'Americas', 'Oceania', 'Asia', 'Europe']
@@ -3121,9 +3121,9 @@ def create_filtered_df_list_by_map(trackerdf, col_country_name, col_reg_name, ma
 def conversion_multiply(row):
     cap = float(row['cleaned_cap'])
     factor = row['conversion_factor']
+    # transforming this to 1, it had been purposefully set to n/a for all not regional ones, so should be skipped
     if isinstance(factor, str) and factor.lower() == 'n/a':
-        factor = 1
-        print(row['tracker-acro'])
+        factor = 1        
 
     else:
         factor = float(factor)

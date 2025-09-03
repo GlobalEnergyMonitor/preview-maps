@@ -35,24 +35,6 @@ def make_data_dwnlds(tracker):
     bufferday = 0
     map_obj_list = []  # Initialize map_obj_list outside the loop
     problem_map_objs = []
-        ### * FOR SPEEDING IT UP * ####
-
-    # while bufferday <= 7:
-    #     try: 
-    #         # create a variable that is a week from iso_today_date
-    #         buffer_date = (pd.to_datetime(iso_today_date) - pd.Timedelta(days=bufferday)).strftime('%Y-%m-%d')
-    #         print(buffer_date)
-            
-    #         with open(f'local_pkl_dir/map_objs_list{buffer_date}.pkl', 'rb') as f:
-    #             map_obj_list = pickle.load(f)
-    #             for map_obj in map_obj_list:
-    #                 print(map_obj.name)
-    #             input('here?')
-    #             break  # Exit loop if file is successfully loaded
-
-    #     except:
-    #         bufferday += 1
-
     
     if not map_obj_list:
         print('Have not created files recently')
@@ -99,7 +81,7 @@ def make_data_dwnlds(tracker):
                 print(f'Length of tracker list for {map_obj.name} {len(map_obj.trackers)}')
                 # for item in map_obj.data:
                 #     print(f'length of item: {len(item)}')
-                input('check above for number of trackers included in the map type.')
+                # input('check above for number of trackers included in the map type.')
                 map_obj_list.append(map_obj)
         
         # print(iso_today_date) # /Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/local_pkl
@@ -128,8 +110,8 @@ def make_data_dwnlds(tracker):
             path_tst = gem_path + map_obj.name + '/testing/'            
         os.makedirs(path_dwn, exist_ok=True)
         os.makedirs(path_tst, exist_ok=True)
-        xlsfile = f'{path_dwn}{map_obj.name}-data-download_{new_release_date}_{iso_today_date}.xlsx'
-        xlsfile_testing = f'{path_tst}{map_obj.name}-data-download_{new_release_date}_{iso_today_date}_test.xlsx'
+        xlsfile = f'{path_dwn}{map_obj.name}-data-download_{new_release_dateinput}_{iso_today_date}.xlsx'
+        xlsfile_testing = f'{path_tst}{map_obj.name}-data-download_{new_release_dateinput}_{iso_today_date}_test.xlsx'
 
         # write to excel files! 
         for filename in [xlsfile, xlsfile_testing]:
@@ -170,8 +152,8 @@ def make_data_dwnlds(tracker):
                     about.to_excel(writer, sheet_name=f'About {tracker_name}', index=False)
                     writer = bold_first_row(writer, sheet_name=f'About {tracker_name}')
                     if isinstance(tracker_obj.data, tuple):
-                        print(tracker_obj.name)
-                        input("In tuple part of make data dwnlds function, check the name can be gogpt eu (when there's new h2 data) or goget")
+                        # print(tracker_obj.name)
+                        # input("In tuple part of make data dwnlds function, check the name can be gogpt eu (when there's new h2 data) or goget")
                         logger.info(f"In tuple part of make data dwnlds function for {tracker_obj.name}, check the name can be gogpt eu (when there's new h2 data) or goget")
                         tracker_obj.set_data_official() # so have data for map and for datadownload
 
