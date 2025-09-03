@@ -44,12 +44,23 @@ list_of_all_official = [
 
 pm_preview_mode = False # For Baird's testing work
 trackers_to_update = ["Nuclear"] # official tracker tab name in map tracker log sheet
-new_release_date = 'August_2025' # for within about page NEEDS TO BE FULL MONTH
-releaseiso = '2025-08'
+new_release_date = 'September_2025' # for within about page NEEDS TO BE FULL MONTH
+new_release_dateinput = input(f'In {new_release_date} format, with no spaces, tell me the public release date.')
+# build out option to show existing and overwrite it
+# if new_release_dateinput == '':
+#     pass
+# else: 
+#     new_release_date = new_release_dateinput
+releaseiso = '2025-09'
 simplified = False # True False
 new_h2_data = False
-priority = ['gnpt'] 
+priority = ['internal'] 
 tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
+
+about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I'
+
+
+
 
 # At the beginning of all_config.py
 def ensure_compilation_folders():

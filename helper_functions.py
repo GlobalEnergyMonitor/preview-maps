@@ -2647,7 +2647,7 @@ def format_values(df):
 
 # from GOGPT make, check that its not gogpt specific
 
-def replace_old_date_about_page_reg(df):
+def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or delete it
     """ Finds a month and replaces it along with the next five characters (a space and year) with the current release date"""
 
     months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -2682,7 +2682,7 @@ def replace_old_date_about_page_reg(df):
                     # input(f'Found a month! at index: {index}')
                     startbit = df.iloc[row,0][:(index)]
                     endbit = df.iloc[row,0][end:]
-                    df.iloc[row,0] = startbit + new_release_date.replace('_', ' ') + endbit
+                    df.iloc[row,0] = startbit + new_release_dateinput.replace('_', ' ') + endbit
                     # df.iloc[row,0] = df.iloc[row,0].replace(sub, new_release_date)
                     print(df.iloc[row,0])
                     # input('Check find replace did the right thing') # works on main and dependents
@@ -3120,7 +3120,13 @@ def create_filtered_df_list_by_map(trackerdf, col_country_name, col_reg_name, ma
 
 def conversion_multiply(row):
     cap = float(row['cleaned_cap'])
-    factor = float(row['conversion_factor'])
+    factor = row['conversion_factor']
+    if isinstance(factor, str) and factor.lower() == 'n/a':
+        factor = 1
+        print(row['tracker-acro'])
+
+    else:
+        factor = float(factor)
     # print(f'this is factor! {factor}')
 
     result = float(cap * factor)
