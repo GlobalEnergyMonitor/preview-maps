@@ -1,5 +1,5 @@
 from requests import HTTPError
-from all_config import logpath, local_pkl_dir, new_h2_data, logger, new_release_date, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab
+from all_config import about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab
 from helper_functions import fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, rename_gdfs, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, convert_coords_to_point, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
@@ -299,30 +299,26 @@ class TrackerObject:
         tracker_official_name = f"{self.off_name}"
         if self.name in trackers_to_update:
             # use new date not old one in map log gsheets
-            release_month_year = f"{new_release_date.replace('_', ' ')}" 
+            release_month_year = f"{new_release_dateinput.replace('_', ' ')}" 
         else:
             release_month_year = self.release
+            # look into how releaase_month_year gets pulled
+            
+        # TODO August 28th
         copyright_full = f"Copyright © Global Energy Monitor. Global {tracker_official_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
         citation_full = f'Recommended Citation: "Global Energy Monitor, Global {tracker_official_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
+        
         # if either are not in there fully then insert into the df after first row
         # elif partially in there, delete row and insert
         # else pass
-        if copyright_full in about_df.values:
-            print(f'Already has full copyright: {copyright_full}')
-        elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright © Global Energy Monitor.').any(), axis=1).any():
-            print('Partial copyright, delete row and insert full')
+        if (about_df == copyright_full).any().any():
+            logger.info(f'Already has full copyright: {copyright_full}')
+        elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1).any():
+            logger.info('Partial copyright, delete row and insert full')
             # find row number in df that holds partial
-            partial_row_index = about_df.apply(lambda row: row.astype(str).str.contains('Copyright © Global Energy Monitor.').any(), axis=1).idxmax()
-            about_df.drop(index=partial_row_index, inplace=True)
-            about_df.reset_index(drop=True, inplace=True)
-            print(about_df.shape)
-            full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
-            print(full_copy_row)
-            print(full_copy_row.shape)
-            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
-
+            logger.warning(f'need to add full copyright to about template for {self.name}')
         else:
-            print('Inserting full copyright into second row') 
+            logger.info('Inserting full copyright into second row') 
             # insert a new blank row in the second row
             full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
             # split the existing df in two at the second row, concat full copy row like a sandwich in between
@@ -331,28 +327,25 @@ class TrackerObject:
         about_df.reset_index(drop=True, inplace=True)
         
         
-        if citation_full in about_df:
-            print(f'Already has full citation: {citation_full}')
-        # see if any of the full citation is found in any of the about df rows
-        elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation: "Global Energy Monitor,').any(), axis=1).any():
-            print('Partial Citations, delete row and insert full via concat sandwich')
-            partial_row_index = about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation: "Global Energy Monitor,').any(), axis=1).idxmax()
-            about_df.drop(index=partial_row_index, inplace=True)
-            about_df.reset_index(drop=True, inplace=True)
-            full_cite_row = pd.DataFrame([[citation_full] * len(about_df.columns)], columns=about_df.columns)
-            about_df = pd.concat([about_df.iloc[:2], full_cite_row, about_df.iloc[2:]]).reset_index(drop=True)
-            
+        if (about_df == citation_full).any().any():
+            logger.info(f'Already has full citation: {citation_full}')
+        elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1).any():
+            logger.info('Partial citation, delete row and insert full')
+            logger.warning(f'need to add full citation to about template for {self.name}')
+
         else:
-            print('Inserting full citation into third row') 
-            full_cite_row = pd.DataFrame([[citation_full] * len(about_df.columns)], columns=about_df.columns)
-            about_df = pd.concat([about_df.iloc[:2], full_cite_row, about_df.iloc[2:]]).reset_index(drop=True) 
-                       
+            logger.info('Inserting full citation_full into second row') 
+            # insert a new blank row in the second row
+            full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
+            # split the existing df in two at the second row, concat full copy row like a sandwich in between
+            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
+        
+        about_df.reset_index(drop=True, inplace=True)
+        
 
         about_df = clean_about_df(about_df) 
 
-        # print(about_df)
-        # input("Check for changes in about_df, full copyright with date and full citation with date.")
-            
+    
         self.about = about_df
 
 
@@ -777,7 +770,7 @@ class TrackerObject:
         print(len(plant_df)) # 1204
         plant_df = plant_df.merge(right=plant_cap_df, on='Plant ID', how='outer')       
         print(len(plant_df)) # 1732 looks correct because multiple rows for each unit 
-        input('check on len change')
+        print('check on len change')
         
         # now that plant level only let's create capacity for scaling using nominal steel when there iron as backfill
         plant_df['capacity'] = plant_df.apply(lambda row: row['Nominal crude steel capacity (ttpa)'] if pd.notna(row['Nominal crude steel capacity (ttpa)']) else row['Nominal iron capacity (ttpa)'], axis=1)
@@ -810,6 +803,8 @@ class TrackerObject:
         # replace '' with nan for all instances in the list_unit_cap cols
         plant_df[list_unit_cap] = plant_df[list_unit_cap].replace('>0', np.nan)
         plant_df[list_unit_cap] = plant_df[list_unit_cap].replace('N/A', np.nan)
+        plant_df[list_unit_cap] = plant_df[list_unit_cap].replace('n/a', np.nan)
+
         # make all in list_unit_cap rounded to be without decimal places
         plant_df[list_unit_cap] = plant_df[list_unit_cap].applymap(lambda x: round(x) if pd.notna(x) and isinstance(x, (int, float)) else x)
                 
@@ -978,13 +973,13 @@ class TrackerObject:
                 plant_df_grouped[col] = plant_df_grouped[col].apply(lambda x: str(x).split('.')[0])
 
         
-        print(len(plant_df_grouped))
+        logger.info(len(plant_df_grouped))
         plant_df_grouped = plant_df_grouped.drop_duplicates(subset='Plant ID')
-        print(len(plant_df_grouped))
-        input('pause and check drop worked 1204') # woo worked!        
+        logger.info(len(plant_df_grouped))
+        logger.info('pause and check drop worked 1204') # woo worked!        
         
-        print(plant_df_grouped.info())
-        input('Check on column names in plant_df_grouped for gist lat lng??')
+        logger.info(plant_df_grouped.info())
+        logger.info('Check on column names in plant_df_grouped for gist lat lng??')
 
         self.data = plant_df_grouped   
         
@@ -1036,14 +1031,39 @@ class TrackerObject:
             cols_no_unknown = ['Production type', 'Plant type', 'Cement Color', 'Clay Calcination', 'Alternative Fuel', 'CCS/CCUS', 'Start date', 'Cement Capacity (millions metric tonnes per annum)']
             for col in cols_no_unknown:
                 df[col] = df[col].replace('unknown', '')
-                print(set(df[col].to_list()))
-                input('check no unknown')
+                logger.info(set(df[col].to_list()))
+                logger.info('check no unknown')
 
             self.data = df 
 
     def find_about_page(self,key):
             # print(f'this is key and tab list in def find_about_page(tracker,key):function:\n{tracker}{key}')
             tracker = self.name 
+            
+            release = self.release
+            release_mon = release.split(' ')[0]
+            release_yr = release.split(' ')[1]
+
+            # go to the about sheet template and if the self name has a non empty tab then use that
+            
+            about_gsheets = gspread_creds.open_by_key(about_templates_key)
+            for sheet in about_gsheets.worksheets():
+                logger.info(sheet.title)
+                if self.name in sheet.title:
+                    logger.info(f'Found template for {self.name}!')
+                    data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
+                    if len(data) > 1:
+                        
+                        about_df = data.copy()
+                        # find replace  {RELEASE NON NUMERICAL MONTH} {RELEASE YEAR} with release_mon release_yr
+                        about_df = about_df.applymap(lambda x: str(x).replace('{RELEASE NON NUMERICAL MONTH}', release_mon).replace('{RELEASE YEAR}', release_yr))
+                        return about_df
+                    else:
+                        logger.info('Appears to be empty... so moving on to old way')
+
+            # else go through this search
+            
+            
             wait_time = 10
 
             gsheets = gspread_creds.open_by_key(key)
@@ -1058,6 +1078,7 @@ class TrackerObject:
             last_tab = sheet_names[-1]
             last_sheet = gsheets.worksheet(last_tab)  # Access the last sheet
             tries = 0
+            about_df = None  # Initialize about_df
             while tries <= 3:
                 time.sleep(wait_time)
                 try:
@@ -1085,11 +1106,11 @@ class TrackerObject:
                     data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
                     
                     # for those situations where tracker to be updated is out of date with about file
-                    if self.name in trackers_to_update:
-                        data = replace_old_date_about_page_reg(data)
+                    # if self.name in trackers_to_update:
+                    #     data = replace_old_date_about_page_reg(data)
 
                     about_df = data.copy()
-                    break
+                    return about_df
                 except HTTPError as e:
                     print(f'This is error: \n{e}')
                     wait_time += 5
@@ -1649,7 +1670,7 @@ class TrackerObject:
                 gdf = gdf.reset_index(drop=True)
                 conversion_df = conversion_df.reset_index(drop=True)
                 # print(f'printing this out to troubleshoot no zero: {gdf}')
-                print(f'Setting acro as tracker custom: {self.acro} which is needed to look up conversion factor')
+                logger.info(f'Setting acro as tracker custom: {self.acro} which is needed to look up conversion factor')
                 # gdf['tracker_custom'] = self.acro
 
                 gdf['original_units'] = conversion_df[conversion_df['tracker']==self.acro]['original_units'].values[0]
