@@ -1039,10 +1039,17 @@ class TrackerObject:
     def find_about_page(self,key):
             # print(f'this is key and tab list in def find_about_page(tracker,key):function:\n{tracker}{key}')
             tracker = self.name 
+            official_name = self.off_name
             
-            release = self.release
-            release_mon = release.split(' ')[0]
-            release_yr = release.split(' ')[1]
+            # check if the release date should be the current one or pulled from the tracker object / release column in map log
+            if official_name in trackers_to_update:
+                release = new_release_dateinput
+                release_mon = release.split('_')[0]
+                release_yr = release.split('_')[1]
+            else:
+                release = self.release
+                release_mon = release.split(' ')[0]
+                release_yr = release.split(' ')[1]
 
             # go to the about sheet template and if the self name has a non empty tab then use that
             
@@ -1056,7 +1063,7 @@ class TrackerObject:
                         
                         about_df = data.copy()
                         # find replace  {RELEASE NON NUMERICAL MONTH} {RELEASE YEAR} with release_mon release_yr
-                        about_df = about_df.applymap(lambda x: str(x).replace('{RELEASE NON NUMERICAL MONTH}', release_mon).replace('{RELEASE YEAR}', release_yr))
+                        about_df = about_df.applymap(lambda x: str(x).replace('{RELEASE NON NUMERICAL MONTH}', release_mon).replace('{RELEASE YEAR}', release_yr).replace('{FULL TRACKER NAME}', self.off_name))
                         return about_df
                     else:
                         logger.info('Appears to be empty... so moving on to old way')
