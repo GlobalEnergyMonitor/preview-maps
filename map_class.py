@@ -7,6 +7,7 @@ from all_config import new_h2_data, mapname_gitpages, non_regional_maps, logger,
 import geopandas as gpd
 import numpy as np
 import gspread
+from shapely import wkt
 
 class MapObject:
     def __init__(self,
@@ -159,11 +160,49 @@ class MapObject:
                 gdf[col].replace('-1', 'not stated')
             
         if self.name == 'europe':
-            print(self.name)
+            logger.info(self.name)
             gdf = pci_eu_map_read(gdf)
 
         gdf.fillna('', inplace = True)
         
+        for col in gdf.columns:
+            gdf[col] = gdf[col].apply(lambda x: str(x).lower())            
+        # Check for invalid geometries in the 'geometry' column
+        invalid_geoms = []
+        for idx, geom in gdf['geometry'].items():
+            # Check if geometry is a shapely object and is valid
+            if hasattr(geom, 'is_valid') and not geom.is_valid:
+                # Try to fix geometry
+                fixed_geom = geom.buffer(0)
+                if fixed_geom.is_valid:
+                    gdf.at[idx, 'geometry'] = fixed_geom
+                else:
+                    invalid_geoms.append((idx, geom))
+            # If geometry is not a shapely object, try to parse it
+            elif not hasattr(geom, 'is_valid'):
+                try:
+                    parsed_geom = wkt.loads(str(geom))
+                    if parsed_geom.is_valid:
+                        gdf.at[idx, 'geometry'] = parsed_geom
+                    else:
+                        fixed_geom = parsed_geom.buffer(0)
+                        if fixed_geom.is_valid:
+                            gdf.at[idx, 'geometry'] = fixed_geom
+                        else:
+                            invalid_geoms.append((idx, geom))
+                except Exception as e:
+                    invalid_geoms.append((idx, geom))
+            
+        # Remove rows with invalid geometry and log them
+        if invalid_geoms:
+            logger.warning(f"Found invalid geometries, removing: {invalid_geoms}")
+            pd.DataFrame(invalid_geoms, columns=['index', 'geometry']).to_csv(f'issues/{self.name}-invalid-geometries-{iso_today_date}.csv', index=False)
+            # Extract indices of invalid geometries for removal
+            invalid_geom_indices = [idx for idx, _ in invalid_geoms]
+            gdf.drop(invalid_geom_indices, inplace=True)
+            
+        # remove duplicate columns
+        gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
         self.trackers = gdf
     
     def save_file(self):
@@ -233,7 +272,10 @@ class MapObject:
                 gdf = gpd.GeoDataFrame(gdf, geometry=gdf['geometry'])
                 gdf.set_crs(epsg=4326, inplace=True)  # Set CRS to EPSG:4326 (WGS 84)  
     
-                   
+            # ensure no dupliacted columns
+            gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
+
+                  
             gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
             # gdf.to_file(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/testingcode/files/{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
 
@@ -329,7 +371,7 @@ class MapObject:
         else:
             logger.info('not skipping conversion to joules...')
             logger.info(f'{self.name}')
-            input('check name and why it is not in non_regional_maps')
+            logger.info('check name and why it is not in non_regional_maps')
             logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
         # must be float for table to sort

@@ -68,7 +68,7 @@ def make_map(list_of_map_objs):
                 elif tracker_obj.name in ['Cement and Concrete']: 
                     tracker_obj.gcct_changes()      
                 elif tracker_obj.name in ['Iron & Steel']:
-                    input('IN IRON & STEEL')
+                    logger.info('IN IRON & STEEL')
                     tracker_obj.process_steel_iron_parent() 
                     tracker_obj.gist_changes() 
                 elif tracker_obj.name in ['Iron ore Mines']:

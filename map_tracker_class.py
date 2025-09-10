@@ -1,6 +1,6 @@
 from requests import HTTPError
 from all_config import about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab
-from helper_functions import fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, rename_gdfs, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, convert_coords_to_point, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
+from helper_functions import wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, rename_gdfs, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, convert_coords_to_point, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
 import geopandas as gpd
@@ -240,7 +240,7 @@ class TrackerObject:
                 # GIST gets handled in create_df since its not going to be a tuple
             else:
                 #assign df to data 
-
+                # put in a wait for 45 sec because hitting quota per minute
                 df = self.create_df()
                 # input('Check df') # works! didn't call the method correctly..
                 
@@ -505,6 +505,8 @@ class TrackerObject:
 
     def create_df(self):
         # print(tabs)
+        logger.info('in create_df')
+        wait_n_sec(45)
         dfs = []
         
         if self.off_name == 'Iron and Steel':
@@ -824,15 +826,15 @@ class TrackerObject:
                     # print(plant_df.loc[row,col])
                     print('skip creating new column for this one')
         # print(set(all_suffixes_check)) # passed!         
-        print(plant_df[plant_df['Plant ID']=='P100000120823'][['Nominal iron capacity (ttpa)', 'Status']])
+        logger.info(plant_df[plant_df['Plant ID']=='P100000120823'][['Nominal iron capacity (ttpa)', 'Status']])
 
         # print(plant_df[plant_df['Plant ID']=='P100000120679'][['Nominal crude steel capacity (ttpa)', 'Status']])
         # print(plant_df[plant_df['Plant ID']=='P100000120620'][['Nominal iron capacity (ttpa)', 'Status']])
         # print(plant_df[plant_df['Plant ID']=='P100000120679'][['Operating Nominal crude steel capacity (ttpa)', 'Nominal crude steel capacity (ttpa)', 'Announced Nominal crude steel capacity (ttpa)']])
         # print(plant_df[plant_df['Plant ID']=='P100000120620'][['Operating Nominal iron capacity (ttpa)', 'Nominal iron capacity (ttpa)', 'Announced Nominal iron capacity (ttpa)', 'Mothballed Nominal iron capacity (ttpa)']])
-        input('Check above') # works!  [4000, 2500, 5500] for all three
-        print(plant_df.columns)
-        input('add cols') #'Main Production Equipment', 'Steel Products',
+        logger.info('Check above') # works!  [4000, 2500, 5500] for all three
+        logger.info(plant_df.columns)
+        logger.info('add cols') #'Main Production Equipment', 'Steel Products',
         # filter out some cols 
         filter_cols = ['tab-type', 'Plant ID', 'Plant name (English)',
         'Plant name (other language)', 'Other plant names (English)',

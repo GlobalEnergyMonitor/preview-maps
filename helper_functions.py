@@ -1082,8 +1082,8 @@ def assign_conversion_factors(df, conversion_df):
 def rename_gdfs(df):
 
     tracker_sel = df['tracker-acro'].iloc[0] # plants, term, pipes, extraction
-    print(tracker_sel)
-    input(f"check above ...if not 'plants_hy', 'plants', 'GOGPT-eu' we found problem")
+    logger.info(tracker_sel)
+    logger.info(f"check above ...if not 'plants_hy', 'plants', 'GOGPT-eu' we found problem")
     # TO DO remove this later 
     if tracker_sel in ['plants_hy', 'plants', 'GOGPT-eu']:
         df.columns = df.columns.str.lower()
@@ -1640,7 +1640,7 @@ def create_search_column(dict_of_gdfs):
     return dict_of_gdfs_with_search
 
 
-def last_min_fixes(one_gdf_by_maptype):
+def last_min_fixes_old(one_gdf_by_maptype):
     one_gdf_by_maptype_fixed = {}
     # TODO handle for Bonaire, Sint Eustatius, and Saba
     # # printone_gdf_by_maptype.keys())
@@ -1944,6 +1944,16 @@ def convert_WKT_to_geo(df):
 #         about_df = data.copy()
     
 #         return about_df
+
+def wait_n_sec(n):
+    print(f"Starting {n} second wait...")
+    logger.info(f'started {n} second wait...')
+
+    time.sleep(n)
+    print(f"{n}-second wait completed.")
+    logger.info(f'{n}-second wait completed.')
+    
+
 
 def find_region_country_colname(df):
     continent_list = ['Africa', 'Americas', 'Oceania', 'Asia', 'Europe']
