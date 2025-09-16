@@ -52,7 +52,7 @@ if new_release_dateinput == '':
 releaseiso = '2025-09'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ['goget'] 
+priority = ['africa'] 
 
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
 
@@ -212,8 +212,8 @@ region_tab = ['mapping']
 # gem standard representative points Latitude_rep_point	Longitude_rep_point	GEM Standard Country Name
 centroid_key = '1ETg632Bkwnr96YQbtmDwyWDpSHqmg5He0GQwJjJz8IU'  # Country/Area Copy of Fill In Coordinates from Country Centroid
 centroid_tab = ['centroids']
-rep_point_key = '1Bu2RhxgvRW7yEJu6zbng_nudXBYRASNvRtgIOvrDN0c', # GEM Standard Country Name
-rep_point_tab = ['fillin']
+rep_point_key = '1Yke2VQYWZn3UvbqenP2KXvOKR_ZuS43m6C0gd4lwLOQ', # GEM Standard Country Name
+rep_point_tab = ['lev1_reppoints']
 
 
 client_secret_full_path = os.path.expanduser("~/") + client_secret

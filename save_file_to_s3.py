@@ -1,6 +1,34 @@
+# from map_class.py
+        # save the file to unique path for africa-energy if africa, else save to map name
+        # also saving to testing folder 
+        # TODO save to map folder in digital ocean
+            # bypass parquet for now todo Hannah
+            # process = save_to_s3(self, gdf, 'map', path_for_download_and_map_files_af)
+
+            # print(process.stdout.decode('utf-8'))
+            # if process.stderr:
+            #     print(process.stderr.decode('utf-8'))
+                        
+
+        # TODO comment out save to s3 to bypass parquet issue Hannah
+        # process = save_to_s3(self, gdf, 'map', path_for_download_and_map_files)
+
+        # print(process.stdout.decode('utf-8'))
+        # if process.stderr:
+        #     print(process.stderr.decode('utf-8'))
+            
+            
+            
+
 # note this was run separtely from the run_maps.py file, it was for catch up and initial load into s3
 # and used to save geojson files to s3
+
+
+
 # TODO re write this with the data mangement process at the foreground / main point 
+
+
+
 
 
 # plopping all relevant s3 stuff here ... pull out of make files functions
@@ -18,6 +46,19 @@
 #             # Execute the terminal command to pull down file from digital ocean
 #     process = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #     return process
+
+
+# took from make_map_tracker_objs
+
+            # save filtered df to s3 and log to config yaml how long it is after filter
+            # TODO commenting this out for now since data mgmt process still in progress 
+            # save_mapfile_s3(map_obj.name, tracker.name, True, tracker.data)
+
+            # save filtered df to s3 and log to config yaml how long it is after filter
+            # input('Check after geo filter')
+            # TODO same as above 
+            # save_mapfile_s3(map_obj.name, tracker.name, True, main_or_h2, prod_or_og)
+
 
 
 

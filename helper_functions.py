@@ -478,7 +478,13 @@ def gspread_access_file_read_only(key, tab_list):
                 # input('review tab to diagnose error')
                 spreadsheet = gsheets.worksheet(tab)
 
-                df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                try:
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                except APIError:
+                    print(f'getting an APIError')
+                    print(f'this is spreadsheet after loading tab into gsheets.worksheet:\n{spreadsheet}')
+                    df = pd.DataFrame(spreadsheet.get_all_records())
+
 
                 list_of_dfs.append(df)
         if len(list_of_dfs) > 1: 
@@ -2561,26 +2567,25 @@ def rebuild_countriesjs(mapname, newcountriesjs):
         prev_countriesjs = f'{tracker_folder_path}{mapname}/countries.json'
         default = "src/countries.json"
      
-        print(prev_countriesjs)
-        print('The above is from the existing countries.json file if it exists in the map folder')
-        # prev_countriesjs = pd.read_csv(prev_countriesjs)
-        # print(prev_countriesjs)
+        logger.info(prev_countriesjs)
+        logger.info('The above is from the existing countries.json file if it exists in the map folder')
+
         
         # or try except FileNotFoundError 
         if os.path.exists(prev_countriesjs):
             if prev_countriesjs.endswith('.json'):
                 with open(prev_countriesjs, 'r') as js_file:
                     prev_countriesjs = js_file.read()
-                    print("JSON content:")
-                    print(prev_countriesjs)
+                    logger.info("JSON content:")
+                    logger.info(prev_countriesjs)
             else:
-                print("The file is not a JSON file.")
+                logger.info("The file is not a JSON file.")
         else:
-            print(f"File not found. Using default countries.json from {default}")
+            logger.info(f"File not found. Using default countries.json from {default}")
             with open(default, 'r') as js_file:
                 prev_countriesjs = js_file.read()
-                print("Default JSON content:")
-                print(prev_countriesjs)
+                logger.info("Default JSON content:")
+                logger.info(prev_countriesjs)
         
         # cycle through folder to find new countries.js file and do a comparison
         
@@ -2594,16 +2599,12 @@ def rebuild_countriesjs(mapname, newcountriesjs):
             # save the sorted file
             cleaned_countriesjs = [country.strip(';') for country in newcountriesjs]
             newcountriesjs = sorted(cleaned_countriesjs)
-            print(f'This is the sorted countries file with net new: \n {newcountriesjs}')
-            # input('Paste this in')
-            print(newcountriesjs)
-            # cjs = {'countries': newcountriesjs}
-            # cjs_df = pd.DataFrame(data=cjs)
-            # cjs_df.to_csv(f'{tracker_folder_path}{mapname}/countriesjsnew{iso_today_date}.js')
-            # input('check file in tracker folder countriesjsnew DATE.js')
+            logger.info(f'This is the sorted countries file with net new: \n {newcountriesjs}')
+            logger.info(newcountriesjs)
+            cjs = {'countries': newcountriesjs}
+            cjs_df = pd.DataFrame(data=cjs)
+            cjs_df.to_csv(f'{tracker_folder_path}{mapname}/countriesjsnew{iso_today_date}.js')
     
-        # add a check to see if the country in missing is not currently in the map's geo list .. but that's accomplished by previous js
-
 
 def pci_eu_map_read(gdf):
     # take columns PCI5 and pci6 

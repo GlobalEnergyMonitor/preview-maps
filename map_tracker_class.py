@@ -1467,8 +1467,8 @@ class TrackerObject:
         # input('check unique countries that need descriptive points') # TODO actually save this somewhere
         # normally would use descriptive point
         
-        # centroid_df = gspread_access_file_read_only(centroid_key, centroid_tab) # TODO update this with descriptive point on subregion
-        centroid_df = gspread_access_file_read_only(rep_point_key, rep_point_tab) # TODO update this with descriptive point on subregion
+        centroid_df = gspread_access_file_read_only(centroid_key, centroid_tab) # TODO update this with descriptive point on subregion
+        # centroid_df = gspread_access_file_read_only(rep_point_key, rep_point_tab) # TODO update this with descriptive point on subregion
 
         # print(centroid_df.head())
         # input('check centroid df')
