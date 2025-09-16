@@ -26,14 +26,14 @@ def run_maps():
         
         if tracker in list_of_all_official:
             
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)  
+            map_obj_list = make_data_dwnlds(tracker)  
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
             
             print(f'done making dd and maps for {tracker}')
         
         
         elif tracker == 'Nuclear':
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)  
+            map_obj_list = make_data_dwnlds(tracker)  
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
 
             # df = set_up_df(input_file_csv)
@@ -43,7 +43,7 @@ def run_maps():
             # df = harmonize_countries(df, countries)
         
         elif tracker == 'Iron ore Mines':
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)  
+            map_obj_list = make_data_dwnlds(tracker)  
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -51,7 +51,7 @@ def run_maps():
             print('Great, now lets run those map objs map version thru tests on source!')
         
         elif tracker == 'Oil & Gas Plants':
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)  
+            map_obj_list = make_data_dwnlds(tracker)  
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -64,8 +64,7 @@ def run_maps():
             print('Creating global map for Cement and Concrete then dependent maps and dd')
             # add a comparison between all_config column dictionary and new file
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -77,8 +76,7 @@ def run_maps():
             print('Creating global map for Coal Mines then dependent maps and dd')
             # add a comparison between all_config column dictionary and new file
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -89,8 +87,7 @@ def run_maps():
         
         elif tracker == 'Hydropower':
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -106,8 +103,7 @@ def run_maps():
         elif tracker == 'Gas Pipelines':
             
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -127,8 +123,7 @@ def run_maps():
             # output_file = f'{output_folder}goit-data-{iso_today_date}.csv'
             
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             # input('Check if the above statement makes sense ^')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
@@ -324,7 +319,7 @@ def run_maps():
 
             output_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/geothermal/compilation_output/'
 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
+            map_obj_list = make_data_dwnlds(tracker)            
             input('check progress on dd') # TODO march 28th getting issue with nonetype for df.info should have filtering done, now focus on GOGET so can be filtered but also two tabs
             # creates single map file
             key, tabs = get_key_tabs_prep_file(tracker)
@@ -355,7 +350,7 @@ def run_maps():
             test_results_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/gist/test_results/'
             output_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/gist/compilation_output/'
             
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
+            map_obj_list = make_data_dwnlds(tracker)            
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
             
@@ -367,8 +362,7 @@ def run_maps():
             
 
             # make data downloads 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            # creates single map file
+            map_obj_list = make_data_dwnlds(tracker)            # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
             
@@ -519,8 +513,8 @@ def run_maps():
         
         elif tracker == 'Coal Plants':
 
-            map_obj_list, problem_map_objs = make_data_dwnlds(tracker)
-            make_summary_tables(map_obj_list) #this has all the filtered dataframes by map 
+            map_obj_list = make_data_dwnlds(tracker)            
+            # make_summary_tables(map_obj_list) #this has all the filtered dataframes by map 
             # creates single map file
             print(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')
             input('Check if the above statement makes sense ^')

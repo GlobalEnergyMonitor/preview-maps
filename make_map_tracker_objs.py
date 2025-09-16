@@ -1,20 +1,16 @@
 import pandas as pd
 from numpy import absolute
-import geopandas as gpd
-from helper_functions import save_raw_s3, save_mapfile_s3
 from map_class import MapObject
 from map_tracker_class import TrackerObject
-from all_config import releaseiso, iso_today_date
-import yaml
-import os
-# from tqdm import tqdm # can adapt more, special tweaking for dataframe!
+
 
 def make_map_tracker_objs(map_tab_df,row, prep_dict):
     map_obj = MapObject(
         name=map_tab_df.loc[row, 'mapname'],
         source=map_tab_df.loc[row, 'source'],
         geo=map_tab_df.loc[row, 'geo'], 
-        needed_geo=[], # changes to list of countries from geo via get needed geo
+        # changes to list of countries from geo via get needed geo
+        needed_geo=[], 
         fuel=map_tab_df.loc[row, 'fuel'],
         pm=map_tab_df.loc[row, 'PM'], 
         trackers=[],

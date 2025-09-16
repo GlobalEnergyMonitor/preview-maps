@@ -2,6 +2,45 @@
 # and used to save geojson files to s3
 # TODO re write this with the data mangement process at the foreground / main point 
 
+
+# plopping all relevant s3 stuff here ... pull out of make files functions
+
+# moved to helper functions cuz need it in make map file too
+# def save_to_s3(map_obj, path_dwn, df):
+#     parquet = save_as_parquet(df, map_obj.name, path_dwn)
+            
+          
+#     do_command_s3 = (
+#                 f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
+#                 f'aws s3 cp {parquet} s3://$BUCKETEER_BUCKET_NAME/latest/ '
+#                 f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read')
+
+#             # Execute the terminal command to pull down file from digital ocean
+#     process = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     return process
+
+
+
+        # read from excel to parquet in DO
+        # for filename in [xlsfile, xlsfile_testing]:
+        #     df = pd.read_excel(filename)
+            # TODO save parquet file locally
+            # bypass parquet for Hannah todo
+            # process = save_to_s3(map_obj, df, 'datadownload', path_dwn)
+            # # save parquet file in DO in latest folder
+            # # Print the output and errors (if any)
+            # print(process.stdout.decode('utf-8'))
+            # if process.stderr:
+            #     print(process.stderr.decode('utf-8'))
+        
+        # except Exception as e:
+        #     print(f'Issue with {map_obj.name}, let us skip it, go onto making maps and then come back.')
+        #     # remove problem map_obj.name from map_obj_list
+        #     map_obj_list.remove(map_obj)
+        #     problem_map_objs.append((map_obj, e))
+        #     print(e)   
+
+
 import pandas as pd
 import geopandas as gpd
 import numpy as np
@@ -120,7 +159,7 @@ def googlelinktoparquet(link=''):
     # Optionally upload to S3
     saves3(newfilepath)
     
-    
+
 
 # def filetoparquet(filepaths): # should be a list
     

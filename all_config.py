@@ -210,21 +210,20 @@ region_tab = ['mapping']
 
 # TODO TESTING swap out for rep points https://docs.google.com/spreadsheets/d/1Bu2RhxgvRW7yEJu6zbng_nudXBYRASNvRtgIOvrDN0c/edit?gid=975391128#gid=975391128 
 # gem standard representative points Latitude_rep_point	Longitude_rep_point	GEM Standard Country Name
-centroid_key = '1ETg632Bkwnr96YQbtmDwyWDpSHqmg5He0GQwJjJz8IU'  # Country/Area
+centroid_key = '1ETg632Bkwnr96YQbtmDwyWDpSHqmg5He0GQwJjJz8IU'  # Country/Area Copy of Fill In Coordinates from Country Centroid
 centroid_tab = ['centroids']
 rep_point_key = '1Bu2RhxgvRW7yEJu6zbng_nudXBYRASNvRtgIOvrDN0c', # GEM Standard Country Name
-rep_point_tab = ['gem standard representative points']
+rep_point_tab = ['fillin']
 
 
 client_secret_full_path = os.path.expanduser("~/") + client_secret
 gem_path = os.path.join(os.path.dirname(__file__), 'trackers/')
-# gem_path_tst = '~/testing/'
 path_for_pkl = gem_path + 'local_pkl/'
 gspread_creds = gspread.oauth(
         scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"],
         credentials_filename=client_secret_full_path,
-        # authorized_user_filename=json_token_name,
     )
+# WIP to handle numeric columns in an organized way
 # dtype_spec = {} #{'Latitude': float, 'Longitude': float}
 # numeric_cols = ['capacity', 'start_year', 'capacity2', 'prod_start_year', 'prod_gas', 'prod_year_gas', 'prod_oil', 'prod_year_oil', 'prod-coal', ] #STOPPED AT GCMT March 3rd 2025
 # list_official_tracker_names = ['Oil & Gas Plants', 'Coal Plants', 'Solar', 'Wind', 'Hydropower', 'Geothermal', 'Bioenergy', 'Nuclear', 'Coal Mines', 'Coal Terminals', 'Oil & Gas Extraction', 'Oil Pipelines', 'Gas Pipelines', 'LNG Terminals']
@@ -292,7 +291,7 @@ final_cols.extend(steel_gist_table_cols)
 
 
 
-# this is what could be replaced by a class, tip from Hannah
+# TODO this is what could be replaced by a class, tip from Hannah
 renaming_cols_dict = {
                         'GIOMT': {'GEM Asset ID': 'pid','Coordinate accuracy': 'coordinate-accuracy','GEM wiki page URL': 'url', 'Operating status': 'status', 'Asset name (English)': 'name', 'Asset name (other language)': 'noneng_name',
                                   'Design capacity (ttpa)': 'capacity', 'Owner': 'owner', 'Parent': 'parent', 'Start date': 'start_date', 'Country/Area':'areas',
@@ -374,7 +373,6 @@ renaming_cols_dict = {
                                 'start-year': 'start_year', 'state/province': 'subnat'},
 
                         # gas pipelines eu
-
                       'EGT-gas': {'projectid':'pid','countries': 'areas','wiki': 'url',
                                    'pipelinename':'name', 'segmentname':'unit_name',
                                    'startyear1': 'start_year', 'capacity': 'given_capacity','capacitybcm/y': 'capacity', 'startstate/province': 'subnat',
