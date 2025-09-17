@@ -2593,18 +2593,15 @@ def rebuild_countriesjs(mapname, newcountriesjs):
         missing_countries_areas = set(newcountriesjs) - set(prev_countriesjs)
         
         if len(missing_countries_areas) > 0 and missing_countries_areas != None:
-            # print(f'paste in this sorted list of new countries into {mapname} countries.js file')
-            # print(f'These are the net new countries:')
-            # # print(missing_countries_areas)
+            logger.info(f'paste in this sorted list of new countries into {mapname} countries.js file')
+            logger.info(f'These are the net new countries:')
+            logger.info(missing_countries_areas)
             # save the sorted file
             cleaned_countriesjs = [country.strip(';') for country in newcountriesjs]
             newcountriesjs = sorted(cleaned_countriesjs)
             logger.info(f'This is the sorted countries file with net new: \n {newcountriesjs}')
             logger.info(newcountriesjs)
-            cjs = {'countries': newcountriesjs}
-            cjs_df = pd.DataFrame(data=cjs)
-            cjs_df.to_csv(f'{tracker_folder_path}{mapname}/countriesjsnew{iso_today_date}.js')
-    
+
 
 def pci_eu_map_read(gdf):
     # take columns PCI5 and pci6 

@@ -207,7 +207,8 @@ class MapObject:
         logger.info(f'This is len of gdf {len(self.trackers)}')
         # helps map to the right folder name
         if self.name in mapname_gitpages.keys():
-            path_for_download_and_map_files = gem_path + mapname_gitpages[self.name] + '/compilation_output/'
+            self.name = mapname_gitpages[self.name]
+            path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
         else:
             path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
         
@@ -227,18 +228,8 @@ class MapObject:
         logger.info(cols)
     
         
-        # save as geojson and csv
-        # if self.name == 'africa':
-        #     gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')            
-        #     gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
-            
-
-        #     newcountriesjs = list(set(gdf['areas'].to_list()))
-        #     rebuild_countriesjs(self.name, newcountriesjs)
-            
-            
-        # else:
-            # Check if the dataframe is a GeoDataFrame
+ 
+        # Check if the dataframe is a GeoDataFrame
         if isinstance(gdf, gpd.GeoDataFrame):
             logger.info('Already a GeoDataFrame!')
         else:
@@ -248,12 +239,11 @@ class MapObject:
             gdf = gpd.GeoDataFrame(gdf, geometry=gdf['geometry'])
             gdf.set_crs(epsg=4326, inplace=True)  # Set CRS to EPSG:4326 (WGS 84)  
 
-        # ensure no dupliacted columns
+        # ensure no duplicated columns
         gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
 
                 
         gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
-        # gdf.to_file(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/testingcode/files/{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
 
 
         gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
