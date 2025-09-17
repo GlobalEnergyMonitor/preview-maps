@@ -38,8 +38,25 @@ The [`config.js for coal-plant`](/trackers/coal-plant/config.js) has documentati
 
 Create a new branch. Place new data file in the appropriate tracker directory. Test and do quality checks locally by running python -m http.server 8000 at the root of the directory. When ready, make a pull request to the main repository. And accept the pull request to make the update.
 
+## Steps to creating a new testing map repo that pulls from official remote
+- create folder on local machine where you want this to be
+- git clone this repo git@github.com:GlobalEnergyMonitor/maps.git
+- cd maps
+- Add the testing repo as a new remote git remote add testing https://github.com/your/testing-repo.git
+- Set the testing repo as your default push remote git remote set-url --push origin https://github.com/your/testing-repo.git
+- add the original as a remote, only for pulling git remote add upstream git@github.com:GlobalEnergyMonitor/maps.git
+- allow unrelated histories git pull upstream gitpages-production --allow-unrelated-histories
+- then you'll likely need to force the first push to your new repo git push origin main --force
+- be sure to rename the remotes so that you can only push to the original if you specify upstream git remote set-url origin NEW_URL git remote add upstream OLD_URL
+
+- Pull from the original git pull upstream gitpages-production
+- push only to the testing git push origin main
+
+## Steps for 
+
 ## Sharing a preview of the map with others
-Warning: you'll have to have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned to your machine and perhaps already open in an IDE window. You should also have set up two remotes repos, one called official that is linked to the [official repo]([url](https://github.com/GlobalEnergyMonitor/maps)) and the other that is linked to the testing repo. 
+Warning: you'll have to have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned to your machine and perhaps already open in an IDE window. You should also have set up two remotes repos, one called official that is linked to the [official repo]([url](https://github.com/GlobalEnergyMonitor/maps)) and the other that is linked to the testing repo. (see above section on Steps to creating a new testing map repo that pulls from official remote for how to do that, note you DO NOT need to create a new testing repo for this, just clone the testing repo instead of the maps one)
+
 On the official repo IDE window, push the branch you have with the new data to the [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), do not merge into the live branch called "gitpages-production". Then go to your IDE window where you have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned and set up. Pull from your branch name on  [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), accept all merges from official remote since they will override anything going on there, and then push to the test remote repo. Note that currently the test remote repo branch connected to its own gitpages is called "testmaplive". Now you can share the updated map preview via the testing repo's gitpages link. 
 
 Here are the steps on my machine: 
