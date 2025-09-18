@@ -3,21 +3,21 @@
 * clone the repo "maps"
 * cd into the root of the repo, at the same level as the trackers and src folders
 * You must have node.js or npm installed already on your computer, check if you do by running `node -v`
-`npm -v` if you don't install it here https://docs.npmjs.com/downloading-and-installing-node-js-and-npm 
-* npm install (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
-* To test the map locally you will just need to run python -m server.http 8000 at the root of the repo
+`npm -v` if you don't install it here https://docs.npmjs.com/downloading-and-installing-node-js-and-npm and then relaunch your terminal
+* Run `npm install` (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
+* To test the map locally you will just need to run `python -m http.server 8000` at the root of the repo
 
 
 * create a virtual environment and activate it
 
-* pip install -r requirements.txt
-* pip install gspread
-* pip install geopandas
-* pip install openpyxl
-* pip install pyyaml
-* pip install tqdm
-* pip install boto3
-* pip install xlsxwriter
+* `pip install -r requirements.txt`
+* `pip install gspread`
+* `pip install geopandas`
+* `pip install openpyxl`
+* `pip install pyyaml`
+* `pip install tqdm`
+* `pip install boto3`
+* `pip install xlsxwriter`
 
   
 * create the following Python file by running the following command:
@@ -58,7 +58,7 @@ IDE set up
     --simplified = False # True False
     --priority = [''] # allows you to prioritize global, regional or internal output files
 
-- at the root run python run_maps.py
+- at the root run `python run_maps.py`
 - the output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
 - You can find the output files in the appropriate trackers/{mapname} subfolder
 - For example, the new Bioenergy output file will be in trackers/bioenergy/compilation_output/ and the updated Africa output will be in trackers/africa/compilation_output/
@@ -68,6 +68,7 @@ var config = {
   ....other config variables for that map}
 
 - If the map also has a data download, you'd upload those to google drive and share with Carolina after checking the about pages and filtering look ok.
+- 
 
 
 
