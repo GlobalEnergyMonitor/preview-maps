@@ -402,7 +402,7 @@ class TrackerObject:
 
     def create_df(self):
         logger.info('in create_df')
-        wait_n_sec(45)
+        wait_n_sec(1)
         dfs = []
         
         if self.off_name == 'Iron and Steel':
