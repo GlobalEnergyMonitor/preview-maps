@@ -2,7 +2,9 @@
 ## Initial Set up
 * clone the repo "maps"
 * cd into the root of the repo, at the same level as the trackers and src folders
-* run npm install (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
+* You must have node.js or npm installed already on your computer, check if you do by running `node -v`
+`npm -v`
+* npm install (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
 * To test the map locally you will just need to run python -m server.http 8000 at the root of the repo
 
 
