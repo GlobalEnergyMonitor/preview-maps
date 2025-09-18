@@ -5,6 +5,7 @@
 * You must have node.js or npm installed already on your computer, check if you do by running `node -v`
 `npm -v` if you don't install it here https://docs.npmjs.com/downloading-and-installing-node-js-and-npm and then relaunch your terminal and then run `nvm install 18.17.0` `nvm use 18.17.0` OR latest version
 * Run `npm install` (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
+* WARNING: If you are on a windows machine to test the maps you'll need to recreate the index.html symlinks for each tracker with `mklink`
 
 
 * create a virtual environment and activate it
