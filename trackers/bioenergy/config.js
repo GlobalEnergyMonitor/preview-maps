@@ -58,17 +58,19 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['name', 'capacity', 'status', 'owner(s)', 'operator(s)',  'country/area', 'fuel'],
-        labels: ['Project name','Capacity (MW)','Status','Owner', 'Operator', 'Country/Area(s)','Fuel',],
+        values: ['name', 'capacity', 'status', 'owner', 'areas', 'Fuel'],
+        labels: ['Project name','Capacity (MW)','Status','Owner', 'Country/Area(s)','Fuel',],
         clickColumns: ['name'],
         rightAlign: ['capacity'],
         toLocaleString: ['capacity'],
+        removeLastComma: ['areas'],
+        makeCase: ['name', 'status', 'owner', 'areas']
     },
 
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
     searchFields: { 'Project': ['name'], 
-        'Companies': ['owner', 'operator'],
+        'Companies': ['owner-search', 'owner'],
         'Status': ['status'], 
 
     },
@@ -84,13 +86,13 @@ var config = {
         'name': {'display': 'heading'},
         // 'status': {'label': 'Status'}, # handled in summary of capacity and status section
         // 'capacity': {'label': 'Capacity (MW)'},
-        'owner(s)': {'label': 'Owner'},
-        'operator(s)': {'label': 'Operator'},
-        'country/area' : {'label': 'Country/Area(s)'},
+        'owner': {'label': 'Owner'},
+        'operator': {'label': 'Operator'},
         'location-accuracy': {'label': 'Location Accuracy'},
         // 'state/province': {'display': 'location'},
         // 'country': {'display': 'location'},
         'areas-subnat-sat-display': {'display': 'location'}
+
 
     },
     showCapacityTable: true, 
