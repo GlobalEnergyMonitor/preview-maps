@@ -3,21 +3,81 @@
 * clone the repo "maps"
 * cd into the root of the repo, at the same level as the trackers and src folders
 * run npm install (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
-* create a virtual environment and activate it 
-* pip install -r requirements.txt 
+* To test the map locally you will just need to run python -m server.http 8000 at the root of the repo
+
+
+* create a virtual environment and activate it
+
+* pip install -r requirements.txt
+* pip install gspread
+* pip install geopandas
+* pip install openpyxl
+* pip install pyyaml
+* pip install tqdm
+* pip install boto3
+* pip install xlsxwriter
+
+  
 * create the following Python file by running the following command:
     1. If on Mac/Linux: `cp creds_TEMPLATE.py creds.py`
     2. If on Windows: `copy creds_TEMPLATE.py creds.py`
     3. **This new file should not be committed to git**
     4. Open `creds.py` with a text editor or IDE, and populate this file with the following: 
-       *  client_secret = "path to client secret json for google console api" with your local path to client secret 
-       *  ACCESS_KEY = '' digital ocean access key stored here in [onepassword ]([[url](https://share.1password.com/s#VKz54HWgtkNU5GVblRPnQSq6Bm_uhJV6aRknYUDGNh4)](https://share.1password.com/s#VKz54HWgtkNU5GVblRPnQSq6Bm_uhJV6aRknYUDGNh4)) (if link expired you can find it in the data team vault)
-       *  SECRET_KEY = '' digital ocean secret key stored here in [onepassword ]([[url](https://share.1password.com/s#VKz54HWgtkNU5GVblRPnQSq6Bm_uhJV6aRknYUDGNh4)](https://share.1password.com/s#VKz54HWgtkNU5GVblRPnQSq6Bm_uhJV6aRknYUDGNh4)) (if link expired you can find it in the data team vault)
+       *  client_secret = "path to client secret json for google console api" with your local path to your client secret (if this is your first time setting that up check for support here https://developers.google.com/workspace/guides/create-credentials) 
+       *  ACCESS_KEY = '' digital ocean access key stored here in [onepassword ]([[url](https://share.1password.com/s#R_Muz4jORFM9dJBZORUcopx69EGgKcgpKuzD96VKZXE)](if link expired you can find it in the data team vault)
+       *  SECRET_KEY = '' digital ocean secret key stored here in [onepassword ]([[url](https://share.1password.com/s#R_Muz4jORFM9dJBZORUcopx69EGgKcgpKuzD96VKZXE)] (if link expired you can find it in the data team vault)
+
+
+
+## Steps for updating maps for routine tracker releases
+
+Non IDE set up / external process duties
+- manual copy excel file to google drive then update map tracker log sheet
+- manual download geojson file, save to s3
+  
+* Save a copy of the new data to the: [Tracker official releases (data team copies)](https://drive.google.com/drive/folders/1Ql9V1GLLNuOGoJOotX-wK6wCtDq1dOxo)
+* Update the map tracker log sheet ([tab name prep_file](https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1817870001#gid=1817870001) with the new data's google sheet key from the copy of official data saved above
+
+            
+Responsibilities of this repo (hint: maybe we separate this out to other repos soon)
+- create files for map js code from final data
+- create files for final data download from final data for multi-tracker maps (mostly regional as of writing)
+- manage tracker maps (tile based and json based) via core map js code held in src folders and trackers/tracker folders
+- save to s3 digital ocean raw data, map files, parquet of raw data tabs and metadata about these files from start to finish 
+- test files at start to get ahead of data consistency or other problems for the map
+- test files at end for data integrity
+
+
+IDE set up 
+- adjust all_config.py based on your needs (primarily these initial four and any local file path)
+    --trackers_to_update = ['Bioenergy']# official tracker tab name in map tracker log sheet
+    --new_release_date = 'June_2025' # for find replace within about page NEEDS TO BE FULL MONTH
+    --releaseiso = '2025-06' # YYYY-MM-DD (day optional)
+    --simplified = False # True False
+    --priority = [''] # allows you to prioritize global, regional or internal output files
+
+- at the root run python run_maps.py
+- the output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
+- You can find the output files in the appropriate trackers/{mapname} subfolder
+- For example, the new Bioenergy output file will be in trackers/bioenergy/compilation_output/ and the updated Africa output will be in trackers/africa/compilation_output/
+- with that new file you'll paste the path to it into the relevant map's config.js file. It can be csv, or geojson. It usually will look like this:
+var config = {
+  geojson: 'path/to/file'
+  ....other config variables for that map}
+
+- If the map also has a data download, you'd upload those to google drive and share with Carolina after checking the about pages and filtering look ok.
+
+
+
+
+
+
+### About the maps repo
 
 
 # gem_tracker_maps
 
-GEM Tracker Maps is served entirely staticly, with no build process. Each tracker only requires a JSON based configuration file, and a data file (mostly hosted in digital ocean as geojson files).
+GEM Tracker Maps are served entirely staticly, with no build process. Each tracker only requires a JSON based configuration file, and a data file (mostly hosted in digital ocean as geojson files).
 
 * `/src/` contains the site code, styling information, layout, and supporting assets like images.
 * `site-config.js` contains site wide configuration that applies to all trackers
@@ -52,7 +112,6 @@ Create a new branch. Place new data file in the appropriate tracker directory. T
 - Pull from the original git pull upstream gitpages-production
 - push only to the testing git push origin main
 
-## Steps for 
 
 ## Sharing a preview of the map with others
 Warning: you'll have to have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned to your machine and perhaps already open in an IDE window. You should also have set up two remotes repos, one called official that is linked to the [official repo]([url](https://github.com/GlobalEnergyMonitor/maps)) and the other that is linked to the testing repo. (see above section on Steps to creating a new testing map repo that pulls from official remote for how to do that, note you DO NOT need to create a new testing repo for this, just clone the testing repo instead of the maps one)
@@ -64,35 +123,6 @@ git push origin yourbranchname [in official repo IDE window]
 git pull official yourbranchname [in test repo IDE window]
 _accept merges_
 git push origin testmaplive [in test repo IDE window]
-
-
-## Routine tracker releases
-Non IDE set up / external process duties
-- manual copy excel file to google drive then update map tracker log sheet
-- manual download geojson file, save to s3
-  
-* Save a copy of the new data to the: [Tracker official releases (data team copies)](https://drive.google.com/drive/folders/1Ql9V1GLLNuOGoJOotX-wK6wCtDq1dOxo)
-* Update the map tracker log sheet ([tab name prep_file](https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1817870001#gid=1817870001) with the new data's google sheet key from the copy of official data saved above
-
-            
-Responsibilities of this repo (hint: maybe we separate this out to other repos soooon)
-- create files for map js code from final data
-- create files for final data download from final data for multi-tracker maps (mostly regional as of writing)
-- manage tracker maps (tile based and json based) via core map js code held in src folders and trackers/tracker folders
-- save to s3 digital ocean raw data, map files, parquet of raw data tabs and metadata about these files from start to finish 
-- test files at start to get ahead of data consistency or other problems for the map
-- test files at end for data integrity
-
-
-IDE set up 
-- adjust all_config.py based on your needs (primarily these initial four and any local file path)
-    --trackers_to_update = ['Integrated-simple']# official tracker tab name in map tracker log sheet
-    --new_release_date = 'June_2025' # for find replace within about page NEEDS TO BE FULL MONTH
-    --releaseiso = '2025-06' # YYYY-MM-DD (day optional)
-    --simplified = False # True False
-    --priority = [''] # allows you to prioritize global, regional or internal output files
-
-- If you have a new tracker to set up, add to the renaming_cols_dict in all_config.py and add net new columns to final_cols, currently you may want to run the script and check the final names first, since the js map code requires certain formatting, so the dictioanry renaming_cols_dict may not be the final col name
 
 
 
@@ -131,13 +161,17 @@ Official Maps can be found at this repo:
 
 Live branch is gitpages-production
 
-### Test Repo 
+### Test Data Repo 
 
 Maps spun up for PM review before pushed to live can be found in this repo: 
 
 * https://github.com/GlobalEnergyMonitor/testing-maps/
 
 Live branch is testmaplive
+
+# Test Features Repo
+
+* https://github.com/GlobalEnergyMonitor/feature-maps/
 
 
 ## Libraries Used
