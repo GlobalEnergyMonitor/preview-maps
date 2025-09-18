@@ -5,18 +5,12 @@
 * You must have node.js or npm installed already on your computer, check if you do by running `node -v`
 `npm -v` if you don't install it here https://docs.npmjs.com/downloading-and-installing-node-js-and-npm and then relaunch your terminal and then run `nvm install 18.17.0` `nvm use 18.17.0` OR latest version
 * Run `npm install` (this will install the correct version of node and all node modules that the repo depends on by looking at the package.json and package-lock.json files)
+* WARNING: If you are on a windows machine to test the maps you'll need to launch the server through a linux terminal, such as WSL. 
 
 
 * create a virtual environment and activate it
 
 * `pip install -r requirements.txt`
-* `pip install gspread`
-* `pip install geopandas`
-* `pip install openpyxl`
-* `pip install pyyaml`
-* `pip install tqdm`
-* `pip install boto3`
-* `pip install xlsxwriter`
 
   
 * create the following Python file by running the following command:
@@ -32,13 +26,12 @@
 
 ## Steps for updating maps for routine tracker releases
 
-Non IDE set up / external process duties
-- manual copy excel file to google drive then update map tracker log sheet
-- manual download geojson file, save to s3
-  
+### Non IDE set up / external process
+- Depending on the tracker:
 * Save a copy of the new data to the: [Tracker official releases (data team copies)](https://drive.google.com/drive/folders/1Ql9V1GLLNuOGoJOotX-wK6wCtDq1dOxo)
 * Update the map tracker log sheet ([tab name prep_file](https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1817870001#gid=1817870001) with the new data's google sheet key from the copy of official data saved above
 
+- OR manually download geojson file and save to s3 (for example: GGIT, GOIT, GGIT-LNG)
             
 Responsibilities of this repo (hint: maybe we separate this out to other repos soon)
 - create files for map js code from final data
@@ -49,36 +42,62 @@ Responsibilities of this repo (hint: maybe we separate this out to other repos s
 - test files at end for data integrity
 
 
-IDE set up 
-- adjust all_config.py based on your needs (primarily these initial four and any local file path)
-    --trackers_to_update = ['Bioenergy']# official tracker tab name in map tracker log sheet
-    --new_release_date = 'June_2025' # for find replace within about page NEEDS TO BE FULL MONTH
-    --releaseiso = '2025-06' # YYYY-MM-DD (day optional)
-    --simplified = False # True False
-    --priority = ['gbpt'] # allows you to prioritize global, regional or internal output files
+### IDE set up 
+- adjust `all_config.py` based on your needs (primarily these initial four and any local file path)
+    --`trackers_to_update = ['Bioenergy']` # official tracker tab name in map tracker log sheet
+    --`new_release_date = 'June_2025'` # for find replace within about page NEEDS TO BE FULL MONTH
+    --`releaseiso = '2025-06'` # YYYY-MM-DD (day optional)
+    --`simplified = False` # True False
+    --`priority = ['gbpt']` # allows you to prioritize global, regional or internal output files
 
-- at the root run `python run_maps.py`
-- the output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
-- You can find the output files in the appropriate trackers/{mapname} subfolder
-- For example, the new Bioenergy output file will be in trackers/bioenergy/compilation_output/ and the updated Africa output will be in trackers/africa/compilation_output/
+
+### Run the processing code
+- At the root run `python run_maps.py`
+- The output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
+- You can find the output files in the appropriate `trackers/{mapname} subfolder`
+- For example, the new Bioenergy output file will be in `trackers/bioenergy/compilation_output/` and the updated Africa output will be in `trackers/africa/compilation_output/`
 - with that new file you'll paste the path to it into the relevant map's config.js file. It can be csv, or geojson. It usually will look like this:
-var config = {
+`var config = {
   geojson: 'path/to/file'
-  ....other config variables for that map}
+  ....other config variables for that map}`
 
-- If the map also has a data download, you'd upload those to google drive and share with Carolina after checking the about pages and filtering look ok.
-- * To test the map locally you will just need to run `python -m http.server 8000` at the root of the repo
-
-
-
+### Manually test the maps and data downloads
+- To test the map locally you will just need to run `python -m http.server 8000` at the root of the repo and navigate to `trackers/map_folder_name`
+- If the map also has a data download deliverable (all regional maps), you'd upload those to its own folder in [google drive]([url](https://drive.google.com/drive/u/0/folders/1I225d18KhpPXXwhp-q7oeBU3RLFx7N60)) and share with Carolina/Comms after checking the about pages and filtering look ok
 
 
 
+### Creating a new testing map repo that pulls from official remote
+- create folder on local machine where you want this to be
+- git clone this repo git@github.com:GlobalEnergyMonitor/maps.git
+- cd maps
+- Add the testing repo as a new remote git remote add testing https://github.com/your/testing-repo.git
+- Set the testing repo as your default push remote git remote set-url --push origin https://github.com/your/testing-repo.git
+- add the original as a remote, only for pulling git remote add upstream git@github.com:GlobalEnergyMonitor/maps.git
+- allow unrelated histories git pull upstream gitpages-production --allow-unrelated-histories
+- then you'll likely need to force the first push to your new repo git push origin main --force
+- be sure to rename the remotes so that you can only push to the original if you specify upstream git remote set-url origin NEW_URL git remote add upstream OLD_URL
 
-### About the maps repo
+- Pull from the original git pull upstream gitpages-production
+- push only to the testing git push origin main
 
 
-# gem_tracker_maps
+### Sharing a preview of the map with others
+Warning: you'll have to have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned to your machine and perhaps already open in an IDE window. You should also have set up two remotes repos, one called official that is linked to the [official repo]([url](https://github.com/GlobalEnergyMonitor/maps)) and the other that is linked to the testing repo. (see above section on Steps to creating a new testing map repo that pulls from official remote for how to do that, note you DO NOT need to create a new testing repo for this, just clone the testing repo instead of the maps one)
+
+On the official repo IDE window, push the branch you have with the new data to the [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), do not merge into the live branch called "gitpages-production". Then go to your IDE window where you have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned and set up. Pull from your branch name on  [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), accept all merges from official remote since they will override anything going on there, and then push to the test remote repo. Note that currently the test remote repo branch connected to its own gitpages is called "testmaplive". Now you can share the updated map preview via the testing repo's gitpages link. 
+
+Here are the steps on my machine: 
+git push origin yourbranchname [in official repo IDE window]
+git pull official yourbranchname [in test repo IDE window]
+_accept merges_
+git push origin testmaplive [in test repo IDE window]
+
+
+
+
+
+### About the maps repo from EarthGenome 
 
 GEM Tracker Maps are served entirely staticly, with no build process. Each tracker only requires a JSON based configuration file, and a data file (mostly hosted in digital ocean as geojson files).
 
@@ -100,39 +119,6 @@ The [`config.js for coal-plant`](/trackers/coal-plant/config.js) has documentati
 ## Update tracker data
 
 Create a new branch. Place new data file in the appropriate tracker directory. Test and do quality checks locally by running python -m http.server 8000 at the root of the directory. When ready, make a pull request to the main repository. And accept the pull request to make the update.
-
-## Steps to creating a new testing map repo that pulls from official remote
-- create folder on local machine where you want this to be
-- git clone this repo git@github.com:GlobalEnergyMonitor/maps.git
-- cd maps
-- Add the testing repo as a new remote git remote add testing https://github.com/your/testing-repo.git
-- Set the testing repo as your default push remote git remote set-url --push origin https://github.com/your/testing-repo.git
-- add the original as a remote, only for pulling git remote add upstream git@github.com:GlobalEnergyMonitor/maps.git
-- allow unrelated histories git pull upstream gitpages-production --allow-unrelated-histories
-- then you'll likely need to force the first push to your new repo git push origin main --force
-- be sure to rename the remotes so that you can only push to the original if you specify upstream git remote set-url origin NEW_URL git remote add upstream OLD_URL
-
-- Pull from the original git pull upstream gitpages-production
-- push only to the testing git push origin main
-
-
-## Sharing a preview of the map with others
-Warning: you'll have to have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned to your machine and perhaps already open in an IDE window. You should also have set up two remotes repos, one called official that is linked to the [official repo]([url](https://github.com/GlobalEnergyMonitor/maps)) and the other that is linked to the testing repo. (see above section on Steps to creating a new testing map repo that pulls from official remote for how to do that, note you DO NOT need to create a new testing repo for this, just clone the testing repo instead of the maps one)
-
-On the official repo IDE window, push the branch you have with the new data to the [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), do not merge into the live branch called "gitpages-production". Then go to your IDE window where you have the [testing repo]([url](https://github.com/GlobalEnergyMonitor/testing-maps)) cloned and set up. Pull from your branch name on  [official remote repo]([url](https://github.com/GlobalEnergyMonitor/maps)), accept all merges from official remote since they will override anything going on there, and then push to the test remote repo. Note that currently the test remote repo branch connected to its own gitpages is called "testmaplive". Now you can share the updated map preview via the testing repo's gitpages link. 
-
-Here are the steps on my machine: 
-git push origin yourbranchname [in official repo IDE window]
-git pull official yourbranchname [in test repo IDE window]
-_accept merges_
-git push origin testmaplive [in test repo IDE window]
-
-
-
-### Pre and Post Tests
-* [Testing and data set up for multi tracker map files and data download files](https://docs.google.com/document/d/1LacVuubl4T4CtGzy1KT_GsWrjV-DOI8XQFuLsUliT88/edit?tab=t.0#heading=h.eooqz1k5afdy)
-* Tests final dataframe size to original
-* Tests capacity values to be sure none after converting to joules are larger than capacity in original units for a country
 
 
 ## Building vector tiles
