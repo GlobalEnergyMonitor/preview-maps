@@ -2,15 +2,19 @@ var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'data.csv',
 
-    csv: 'compilation_output/GBPT-map-file-2024-09-23.csv',
+    csv: 'compilation_output/bioenergy_map_2025-09-18.csv',
 
     /* zoom level to set map when viewing all phases */
     phasesZoom: 10,
     /* initial load zoom multiplier */
     // zoomFactor: 2,
     center: [0, 0],
-    countryField: 'country/area',
+    countryField: 'areas',
+    /* define column names to pull data from */
+    linkField: 'url',
 
+    urlField: 'url',
+    
     color: {
         field: 'status',
         values: {
@@ -39,8 +43,8 @@ var config = {
 
     /* define the field for calculating and showing capacity along with label.
        this is defined per tracker since it varies widely */
-    capacityField: 'capacity-(mw)',
-    capacityDisplayField: 'capacity-(mw)',
+    capacityField: 'capacity',
+    capacityDisplayField: 'capacity',
     capacityLabel: 'Capacity (MW)',
 
     /* Labels for describing the assets */
@@ -48,23 +52,23 @@ var config = {
     assetLabel: 'units',
 
     /* the column that contains the asset name. this varies between trackers */
-    nameField: 'project-name',
+    nameField: 'name',
 
 
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['project-name', 'capacity-(mw)', 'status', 'owner(s)', 'operator(s)',  'country/area', 'fuel'],
+        values: ['name', 'capacity', 'status', 'owner(s)', 'operator(s)',  'country/area', 'fuel'],
         labels: ['Project name','Capacity (MW)','Status','Owner', 'Operator', 'Country/Area(s)','Fuel',],
-        clickColumns: ['project-name'],
-        rightAlign: ['capacity-(mw)'],
-        toLocaleString: ['capacity-(mw)'],
+        clickColumns: ['name'],
+        rightAlign: ['capacity'],
+        toLocaleString: ['capacity'],
     },
 
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
-    searchFields: { 'Project': ['project-name'], 
-        'Companies': ['owner(s)', 'operator(s)'],
+    searchFields: { 'Project': ['name'], 
+        'Companies': ['owner', 'operator'],
         'Status': ['status'], 
 
     },
@@ -77,9 +81,9 @@ var config = {
       `'label': '...'` prepends a label. If a range, two values for singular and plural.
     */
     detailView: {
-        'project-name': {'display': 'heading'},
+        'name': {'display': 'heading'},
         // 'status': {'label': 'Status'}, # handled in summary of capacity and status section
-        // 'capacity-(mw)': {'label': 'Capacity (MW)'},
+        // 'capacity': {'label': 'Capacity (MW)'},
         'owner(s)': {'label': 'Owner'},
         'operator(s)': {'label': 'Operator'},
         'country/area' : {'label': 'Country/Area(s)'},
