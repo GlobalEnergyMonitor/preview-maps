@@ -275,7 +275,7 @@ class MapObject:
                 gdf_minus_ghpt = gdf[gdf['capacity2'].isna()]
                 for col in ghpt_only.columns:
                     print(col)
-                logger.info(f'ghpt only cap: {ghpt_only['capacity']}')
+                logger.info(f'ghpt only cap: {ghpt_only["capacity"]}')
                 ghpt_only['capacity'] = ghpt_only.apply(lambda row: row['capacity'] + row['capacity2'], axis=1) 
                 
                 # concat them back together now that ghpt capacity is in one col
@@ -340,7 +340,7 @@ class MapObject:
 
         gdf['status'] = gdf['status'].fillna('Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
         gdf['status'] = gdf['status'].replace('', 'Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
-        logger.info(f'set of statuses: {set(gdf['status'].to_list())}')
+        logger.info(f'set of statuses: {set(gdf["status"].to_list())}')
         gdf_map_ready = fix_status_inferred(gdf)
     
         # Create masks for the 'tracker-acro' conditions
