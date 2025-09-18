@@ -56,7 +56,7 @@ IDE set up
     --new_release_date = 'June_2025' # for find replace within about page NEEDS TO BE FULL MONTH
     --releaseiso = '2025-06' # YYYY-MM-DD (day optional)
     --simplified = False # True False
-    --priority = [''] # allows you to prioritize global, regional or internal output files
+    --priority = ['gbpt'] # allows you to prioritize global, regional or internal output files
 
 - at the root run `python run_maps.py`
 - the output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
