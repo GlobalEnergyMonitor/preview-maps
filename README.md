@@ -160,7 +160,7 @@ Live branch is testmaplive
 
 # Test Features Repo
 
-* https://github.com/GlobalEnergyMonitor/feature-maps/
+* https://github.com/GlobalEnergyMonitor/features-maps/
 
 
 ## Libraries Used

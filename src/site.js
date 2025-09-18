@@ -1148,6 +1148,10 @@ function geoJSON2Table() {
             if ('clickColumns' in config.tableHeaders && config.tableHeaders.clickColumns.includes(header)) {
                 value =  "<a href='" + feature.properties[config.urlField] + "' target='_blank'>" + value + '</a>'; 
             } 
+
+            if ('makeCase' in config.tableHeaders && config.tableHeaders.clickColumns.includes(header)) {
+                value =  makeCase(value); 
+            }  
             return value;
         });
     });
@@ -1293,7 +1297,7 @@ function displayDetails(features) {
                 detail_text += '<span class="fw-bold">' + config.color.fieldLabel + '</span>: ' +
                 '<span class="legend-dot" style="background-color:' + config.color.values[ features[0].properties[config.color.field] ]
                 + '"></span><span class="text-capitalize">' + features[0].properties[config.color.field] + '</span><br/>';
-            }                 
+            }             
             else if (config.detailView[detail]['display'] == 'gist-unit-level'){
 
                 // cycle through all of them to only group them if there is value there 
@@ -1786,6 +1790,14 @@ function removeLastComma(str) {
     if (str.charAt(str.length - 1) === ';') {
         str = str.slice(0, -1);
     }
+    return str;
+}
+
+
+function makeCase(str) {
+    str = str.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
     return str;
 }
 
