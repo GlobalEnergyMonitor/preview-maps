@@ -2,7 +2,7 @@ var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'data.csv',
 
-    csv: 'compilation_output/bioenergy_map_2025-09-18.csv',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GBPT/2025-09/bioenergy_map_2025-09-18.geojson',
 
     /* zoom level to set map when viewing all phases */
     phasesZoom: 10,
@@ -11,10 +11,10 @@ var config = {
     center: [0, 0],
     countryField: 'areas',
     /* define column names to pull data from */
-    linkField: 'url',
+    linkField: 'pid',
 
     urlField: 'url',
-    
+
     color: {
         field: 'status',
         values: {
@@ -88,9 +88,9 @@ var config = {
         'operator(s)': {'label': 'Operator'},
         'country/area' : {'label': 'Country/Area(s)'},
         'location-accuracy': {'label': 'Location Accuracy'},
-        'state/province': {'display': 'location'},
-        'country': {'display': 'location'},
-        // 'areas-subnat-sat-display': {'display': 'location'}
+        // 'state/province': {'display': 'location'},
+        // 'country': {'display': 'location'},
+        'areas-subnat-sat-display': {'display': 'location'}
 
     },
     showCapacityTable: true, 
