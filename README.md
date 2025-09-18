@@ -11,13 +11,6 @@
 * create a virtual environment and activate it
 
 * `pip install -r requirements.txt`
-* `pip install gspread`
-* `pip install geopandas`
-* `pip install openpyxl`
-* `pip install pyyaml`
-* `pip install tqdm`
-* `pip install boto3`
-* `pip install xlsxwriter`
 
   
 * create the following Python file by running the following command:
@@ -33,13 +26,12 @@
 
 ## Steps for updating maps for routine tracker releases
 
-Non IDE set up / external process duties
-- manual copy excel file to google drive then update map tracker log sheet
-- manual download geojson file, save to s3
-  
+### Non IDE set up / external process
+- Depending on the tracker,
 * Save a copy of the new data to the: [Tracker official releases (data team copies)](https://drive.google.com/drive/folders/1Ql9V1GLLNuOGoJOotX-wK6wCtDq1dOxo)
 * Update the map tracker log sheet ([tab name prep_file](https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1817870001#gid=1817870001) with the new data's google sheet key from the copy of official data saved above
 
+- OR manually download geojson file and save to s3 (for example: GGIT, GOIT, GGIT-LNG)
             
 Responsibilities of this repo (hint: maybe we separate this out to other repos soon)
 - create files for map js code from final data
@@ -50,25 +42,28 @@ Responsibilities of this repo (hint: maybe we separate this out to other repos s
 - test files at end for data integrity
 
 
-IDE set up 
-- adjust all_config.py based on your needs (primarily these initial four and any local file path)
-    --trackers_to_update = ['Bioenergy']# official tracker tab name in map tracker log sheet
-    --new_release_date = 'June_2025' # for find replace within about page NEEDS TO BE FULL MONTH
-    --releaseiso = '2025-06' # YYYY-MM-DD (day optional)
-    --simplified = False # True False
-    --priority = ['gbpt'] # allows you to prioritize global, regional or internal output files
+### IDE set up 
+- adjust `all_config.py` based on your needs (primarily these initial four and any local file path)
+    --`trackers_to_update = ['Bioenergy']` # official tracker tab name in map tracker log sheet
+    --`new_release_date = 'June_2025'` # for find replace within about page NEEDS TO BE FULL MONTH
+    --`releaseiso = '2025-06'` # YYYY-MM-DD (day optional)
+    --`simplified = False` # True False
+    --`priority = ['gbpt']` # allows you to prioritize global, regional or internal output files
 
-- at the root run `python run_maps.py`
-- the output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
-- You can find the output files in the appropriate trackers/{mapname} subfolder
-- For example, the new Bioenergy output file will be in trackers/bioenergy/compilation_output/ and the updated Africa output will be in trackers/africa/compilation_output/
+
+### Run the processing code
+- At the root run `python run_maps.py`
+- The output will be all map and data download files related to the tracker that has new data (held in trackers_to_update, can be more than 1)
+- You can find the output files in the appropriate `trackers/{mapname} subfolder`
+- For example, the new Bioenergy output file will be in `trackers/bioenergy/compilation_output/` and the updated Africa output will be in `trackers/africa/compilation_output/`
 - with that new file you'll paste the path to it into the relevant map's config.js file. It can be csv, or geojson. It usually will look like this:
-var config = {
+`var config = {
   geojson: 'path/to/file'
-  ....other config variables for that map}
+  ....other config variables for that map}`
 
-- If the map also has a data download, you'd upload those to google drive and share with Carolina after checking the about pages and filtering look ok.
-- * To test the map locally you will just need to run `python -m http.server 8000` at the root of the repo
+### Manually test the maps and data downloads
+- To test the map locally you will just need to run `python -m http.server 8000` at the root of the repo and navigate to `trackers/map_folder_name`
+- If the map also has a data download deliverable (all regional maps), you'd upload those to its own folder in [google drive]([url](https://drive.google.com/drive/u/0/folders/1I225d18KhpPXXwhp-q7oeBU3RLFx7N60)) and share with Carolina/Comms after checking the about pages and filtering look ok
 
 
 
