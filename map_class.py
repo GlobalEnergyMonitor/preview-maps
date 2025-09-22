@@ -118,6 +118,7 @@ class MapObject:
         logger.info(f'gem.wiki was not in url column so used formatted wiki-from-nae url, this should be qcd')
                 
         # one last check since this'll ruin the filter logic
+        gdf.columns = [col.replace('&', '') for col in gdf.columns]
         gdf.columns = [col.replace('_', '-') for col in gdf.columns] 
         gdf.columns = [col.replace('  ', ' ') for col in gdf.columns] 
         gdf.columns = [col.replace(' ', '-') for col in gdf.columns] 
