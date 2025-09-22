@@ -985,21 +985,19 @@ function filterGeoJSON() {
         }
         
         if (config.selectedCountries.length > 0) {
+            console.log(config.selectedCountries)
             // This checks if any of the selected countries are associated with the project
             try {
-            const projectCountries = feature.properties[config.countryField].split(';').map(country => country.trim());
-            if (!config.selectedCountries.some(country => projectCountries.includes(country))) {
-                include = false;
-            }
+                const projectCountries = feature.properties[config.countryField].split(';').map(country => country.trim());
+                if (!config.selectedCountries.some(country => projectCountries.includes(country))) {
+                    include = false;
+                }
             } catch (err) {
-            console.error("Country field error for feature:", feature.properties[config.nameField], err);
+                console.error("Country field error for feature:", feature.properties[config.nameField], err);
+                include = false;
             }
         }
 
-            if (!config.selectedCountries.some(country => projectCountries.includes(country))) {
-            include = false;
-            }
-        
         // for those projects that aren't associated with selected countries it makes the include flag false so it is not displayed
 
         if (include) {
