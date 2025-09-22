@@ -161,9 +161,9 @@ class MapObject:
             gdf = pci_eu_map_read(gdf)
 
         gdf.fillna('', inplace = True)
-        
-        for col in gdf.columns:
-            gdf[col] = gdf[col].apply(lambda x: str(x).lower()) 
+
+        # so all column names are lowercase 
+        gdf.columns = [col.lower() for col in gdf.columns]
                        
         # Check for invalid geometries in the 'geometry' column
         invalid_geoms = []

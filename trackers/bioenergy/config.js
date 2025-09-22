@@ -2,7 +2,7 @@ var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'data.csv',
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GBPT/2025-09/bioenergy_map_2025-09-18.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GBPT/2025-09/bioenergy_map_2025-09-22.geojson',
 
     /* zoom level to set map when viewing all phases */
     phasesZoom: 10,
