@@ -58,8 +58,8 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['name', 'capacity', 'status', 'owner', 'areas', 'Fuel'],
-        labels: ['Project name','Capacity (MW)','Status','Owner', 'Country/Area(s)','Fuel',],
+        values: ['name', 'capacity', 'status', 'owner', 'operator','areas', 'fuel'],
+        labels: ['Project name','Capacity (MW)','Status','Owner', 'Operator','Country/Area(s)','Fuel'],
         clickColumns: ['name'],
         rightAlign: ['capacity'],
         toLocaleString: ['capacity'],
@@ -70,7 +70,7 @@ var config = {
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
     searchFields: { 'Project': ['name'], 
-        'Companies': ['owner-search', 'owner'],
+        'Companies': ['owner-search', 'owner', 'operator'], // add 'operator-search' to processing script and entity id
         'Status': ['status'], 
 
     },
