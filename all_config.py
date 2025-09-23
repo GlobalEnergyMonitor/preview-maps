@@ -52,7 +52,7 @@ if new_release_dateinput == '':
 releaseiso = '2025-09'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ['gbpt'] 
+priority = ['africa', 'latam'] 
 
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
 
