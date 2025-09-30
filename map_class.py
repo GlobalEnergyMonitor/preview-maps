@@ -1,6 +1,6 @@
 import pandas as pd
 from helper_functions import replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
-from all_config import gspread_creds , mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
+from all_config import simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
 import geopandas as gpd
 import numpy as np
 from shapely import wkt
@@ -200,7 +200,12 @@ class MapObject:
             gdf.drop(invalid_geom_indices, inplace=True)
             
         # remove duplicate columns
-        gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
+        gdf = gdf.loc[:, ~gdf.columns.duplicated()] 
+        
+        if simplified:
+            # remove columns
+            gdf = gdf[simplified_cols]
+             
         self.trackers = gdf
     
     def save_file(self):
@@ -243,12 +248,21 @@ class MapObject:
         # ensure no duplicated columns
         gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
 
-                
-        gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
-
-
-        gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+        
+        if simplified:
             
+            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
+
+
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv', encoding='utf-8')
+                            
+        else:
+            
+            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
+
+
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+                
         newcountriesjs = list(set(gdf['areas'].to_list()))
         rebuild_countriesjs(self.name, newcountriesjs)
 

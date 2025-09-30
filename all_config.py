@@ -50,9 +50,9 @@ if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 releaseiso = '2025-09'
-simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
+simplified = True # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ['africa', 'latam'] 
+priority = ['internal'] 
 
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
 
@@ -289,7 +289,8 @@ final_cols = ['model','reactor-type','lat', 'lng','coordinate-accuracy','total-r
 # add two together because gist list is so long and should be refactored soon
 final_cols.extend(steel_gist_table_cols)
 
-
+# need to adjust when handle sorting column names TODO 
+# simplified_cols = ['lat', 'lng','url', 'areas','name','capacity', 'capacity-display', 'Latitude', 'Longitude', 'pid','id', 'type', 'subnational-unit-(state,-province)', 'geometry']
 
 # TODO this is what could be replaced by a class, tip from Hannah
 renaming_cols_dict = {
