@@ -202,10 +202,27 @@ class MapObject:
         # remove duplicate columns
         gdf = gdf.loc[:, ~gdf.columns.duplicated()] 
         
+        # Drop columns where all values are empty strings or null
+        cols_to_drop = [col for col in gdf.columns if gdf[col].replace('', np.nan).isna().all()]
+        print(f'These are cols to drop because all empty: {cols_to_drop}')
+        gdf = gdf.drop(columns=cols_to_drop)
+        
+        
+        
         if simplified:
-            # remove columns
-            gdf = gdf[simplified_cols]
-             
+            simplified_cols_drop = []
+            for col in simplified_cols:
+                if col in gdf.columns:
+                    pass
+                else:
+                    print(f'this col is not there, was it expected? \n {col}')
+                    simplified_cols_drop.append(col) 
+            
+            simplified_cols_updated = [col for col in simplified_cols if col not in simplified_cols_drop]  # Result: ["a", "c"]
+            if simplified:
+                # remove columns
+                gdf = gdf[simplified_cols_updated]
+            
         self.trackers = gdf
     
     def save_file(self):
@@ -225,6 +242,7 @@ class MapObject:
         else:
             logger.info(f"No {self.name} is not in gas only maps")
             gdf = self.trackers.drop(['count-of-semi','multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) #  'multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
+             
 
         print(f'Final cols:\n')
         [print(col) for col in gdf.columns]

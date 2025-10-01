@@ -35,12 +35,6 @@ def run_maps():
         elif tracker == 'Nuclear':
             map_obj_list = make_data_dwnlds(tracker)  
             list_of_map_objs_mapversion = make_map(map_obj_list) # this returns map obj list map version that can be run thru tests
-
-            # df = set_up_df(input_file_csv)
-            # df = filter_cols(df)
-            # df = fix_status_inferred(df)
-            # df = rename_cols(df)
-            # df = harmonize_countries(df, countries)
         
         elif tracker == 'Iron ore Mines':
             map_obj_list = make_data_dwnlds(tracker)  
@@ -370,36 +364,6 @@ def run_maps():
 
             
             print('Great, now lets run those map objs map version thru tests on source!')
-
-
-        elif tracker == 'Bioenergy':
-
-            test_results_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/bioenergy/test_results/'
-
-            output_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/bioenergy/compilation_output/'
-
-            # creates single map file
-            key, tabs = get_key_tabs_prep_file(tracker)
-
-            df = create_df(key, tabs)
-            df = rename_cols(df)
-            df = fix_status_inferred(df)
-            df = filter_cols(df,final_cols=['country/area', 'project-name', 'fuel', 'unit-name', 'project-name-in-local-language-/-script',
-                                            'capacity-(mw)', 'status', 'start-year', 'retired-year', 'hydrogen-capable',
-                                            'operator(s)', 'owner(s)', 'lat', 'lng', 'location-accuracy', 'city', 'state/province',
-                                            'region', 'gem-phase-id', 'url'          
-                                            ])
-            df = input_to_output(df, f'{output_folder}{tracker}-map-file-{iso_today_date}.csv')
-            test_stats(df)
-            # creates multi-map files 
-            print('DONE MAKING GBPT SINGLE MAP onto MULTI MAPS')
-            input('continue?')
-            # creates multi-tracker maps
-            # if tracker to update is coal terminals then look at sheet and create all regional and of course single
-            subprocess.run(["python", "/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/multi_tracker_maps_script.py"])                 
-            
-            # if test:
-            #     check_expected_number(incorporated_dict_list_gdfs_by_map) # TODO HANDLE THIS ONE for dict or use the one thats been concatenated
 
         elif tracker == 'Oil & Gas Plants':
             # continue for all of them that are in or not in multi tracker maps
