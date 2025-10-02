@@ -132,9 +132,9 @@ def run_maps():
 
                     
         elif tracker == 'Integrated':
-            test_results_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/integrated/test_results/'
+            test_results_folder = 'trackers/integrated/test_results/'
 
-            output_folder = '/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/trackers/integrated/compilation_output/'
+            output_folder = 'trackers/integrated/compilation_output/'
             
             output_file = f'{output_folder}gipt-data-{iso_today_date}.csv'
             output_file2 = f'{output_folder}integrated_{releaseiso}.geojson'
@@ -147,6 +147,21 @@ def run_maps():
             ### send to s3 for latest data download
             # s3folder = 'latest'
             filetype = 'datadownload'
+            
+            # save csv to digital ocean
+            
+            # output_file
+            save_csv_s3 = (
+                f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
+                f'aws s3 cp {output_file} s3://$BUCKETEER_BUCKET_NAME/{tracker}/{releaseiso}/ '
+                f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
+            )            
+            
+            
+            runresults = subprocess.run(save_csv_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(runresults.stdout)  
+            print(f'saved csv file to s3, update config.js {output_file}')           
+            
             parquetpath = f'{output_folder}{tracker}{filetype}{releaseiso}.parquet'
             for col in df.columns:
             # check if mixed dtype
@@ -160,8 +175,10 @@ def run_maps():
                 f'aws s3 cp {parquetpath} s3://$BUCKETEER_BUCKET_NAME/{tracker}/{releaseiso}/ '
                 f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
             )            
-            process = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    
+            
+            
+            runresults = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(runresults.stdout)                    
             
             df = clean_capacity(df) 
             df = semicolon_for_mult_countries_gipt(df)
@@ -205,17 +222,17 @@ def run_maps():
                 f'aws s3 cp {parquetpath_m} s3://$BUCKETEER_BUCKET_NAME/{tracker}/{releaseiso}/ '
                 f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
             )            
-            process = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
+            runresults = subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(runresults.stdout)
             logger.info('Check that ingt was saved to s3')
-
-            
-            # process = subprocess.run(do_csv2json, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+         
             # run tippecanoe
             do_tippecanoe = (
                 f"tippecanoe -e {output_folder}integrated-{iso_today_date}.dir --no-tile-compression -r1 -pk -pf --force -l integrated < {output_folder}integrated_{releaseiso}.geojson"
             )
-            process = subprocess.run(do_tippecanoe, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            runresults = subprocess.run(do_tippecanoe, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(runresults.stdout)
+
             print('Finished running tippecanoe to create pbf files from the json file. Start on aws bucket command.')
             print('This may take about 20 min, check Activity Monitor and search for aws to make sure all is ok.')
             # set aws configue and bucket name  # do aws command copy to s3 mapintegrated 
@@ -225,7 +242,8 @@ def run_maps():
                 f"export BUCKETEER_BUCKET_NAME=mapsintegrated && "
                 f"aws s3 cp --endpoint-url https://nyc3.digitaloceanspaces.com {output_folder}integrated-{iso_today_date}.dir s3://$BUCKETEER_BUCKET_NAME/maps/integrated-{releaseiso} --recursive --acl public-read"
             )
-            process = subprocess.run(do_aws_bucket, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            runresults = subprocess.run(do_aws_bucket, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print(runresults.stdout)
 
                     
         elif tracker == 'Integrated-simple':

@@ -1183,6 +1183,28 @@ def clean_about_df(df):
     
     return df
 
+
+def convert_coords_to_point(df):
+    crs = 'EPSG: 4326'
+    geometry_col = 'geometry'
+    df = df.reset_index(drop=True)
+    # df.columns = df.columns.str.lower()
+    df['geometry'] = None  # Initialize the geometry column
+    if 'Longitude' in df.columns and 'Latitude' in df.columns:
+        print('Long in there')
+        df['geometry'] = df.apply(lambda row: Point(row['Longitude'], row['Latitude']), axis=1)
+    elif 'longitude' in df.columns and 'latitude' in df.columns:
+        print('long in there')
+        df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
+    else:
+        print('issues with finding lat lng to convert to gdf!!')
+        print(f'{df.columns} \n check columns above')
+            
+            
+    gdf = gpd.GeoDataFrame(df, geometry=geometry_col, crs=crs)
+    
+    return gdf
+
 # TODO adjust so this is useful in finding new list of countries.json file needed based on involved countries
 def rebuild_countriesjs(mapname, newcountriesjs):
 
