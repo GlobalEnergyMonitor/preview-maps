@@ -1,6 +1,6 @@
 import pandas as pd
 from helper_functions import replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
-from all_config import gspread_creds , mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
+from all_config import simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
 import geopandas as gpd
 import numpy as np
 from shapely import wkt
@@ -200,7 +200,29 @@ class MapObject:
             gdf.drop(invalid_geom_indices, inplace=True)
             
         # remove duplicate columns
-        gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
+        gdf = gdf.loc[:, ~gdf.columns.duplicated()] 
+        
+        # Drop columns where all values are empty strings or null
+        cols_to_drop = [col for col in gdf.columns if gdf[col].replace('', np.nan).isna().all()]
+        print(f'These are cols to drop because all empty: {cols_to_drop}')
+        gdf = gdf.drop(columns=cols_to_drop)
+        
+        
+        
+        if simplified:
+            simplified_cols_drop = []
+            for col in simplified_cols:
+                if col in gdf.columns:
+                    pass
+                else:
+                    print(f'this col is not there, was it expected? \n {col}')
+                    simplified_cols_drop.append(col) 
+            
+            simplified_cols_updated = [col for col in simplified_cols if col not in simplified_cols_drop]  # Result: ["a", "c"]
+            if simplified:
+                # remove columns
+                gdf = gdf[simplified_cols_updated]
+            
         self.trackers = gdf
     
     def save_file(self):
@@ -220,6 +242,7 @@ class MapObject:
         else:
             logger.info(f"No {self.name} is not in gas only maps")
             gdf = self.trackers.drop(['count-of-semi','multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) #  'multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
+             
 
         print(f'Final cols:\n')
         [print(col) for col in gdf.columns]
@@ -243,12 +266,21 @@ class MapObject:
         # ensure no duplicated columns
         gdf = gdf.loc[:, ~gdf.columns.duplicated()]  
 
-                
-        gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
-
-
-        gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+        
+        if simplified:
             
+            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
+
+
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv', encoding='utf-8')
+                            
+        else:
+            
+            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
+
+
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+                
         newcountriesjs = list(set(gdf['areas'].to_list()))
         rebuild_countriesjs(self.name, newcountriesjs)
 
