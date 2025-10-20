@@ -1,9 +1,11 @@
 import pandas as pd
 from helper_functions import replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
-from all_config import simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
+from all_config import official_tracker_name_to_mapname, releaseiso, simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
 import geopandas as gpd
 import numpy as np
 from shapely import wkt
+import subprocess
+
 
 class MapObject:
     def __init__(self,
@@ -123,9 +125,17 @@ class MapObject:
         gdf.columns = [col.replace('  ', ' ') for col in gdf.columns] 
         gdf.columns = [col.replace(' ', '-') for col in gdf.columns] 
 
+
+
+        entities = ['owner', 'parent', 'operator']
+        for col in entities:
+            if col in gdf.columns:
+                gdf[col] = gdf[col].apply(lambda x: str(x).replace('[unknown %]', ''))
         logger.info(f'Check all columns:')
         for col in gdf.columns:
             logger.info(col)
+            gdf[col] = gdf[col].apply(lambda x: str(x).replace('-100', '')) # default back to string, should make sure 0s areactually blank
+            gdf[col] = gdf[col].apply(lambda x: str(x).replace('nan', '')) # because fillna('') wouldnt work if all str
         logger.info('Is fuel-filter there?')
 
         # translate acronyms to full names for legend and table 
@@ -138,6 +148,7 @@ class MapObject:
 
         # make sure all null geo is removed
         gdf.dropna(subset=['geometry'],inplace=True)
+
 
         # make sure all of the units of m are removed for goget and gcmt that has no capacity
         for row in gdf.index:
@@ -161,6 +172,7 @@ class MapObject:
             gdf = pci_eu_map_read(gdf)
 
         gdf.fillna('', inplace = True)
+        
 
         # so all column names are lowercase 
         gdf.columns = [col.lower() for col in gdf.columns]
@@ -225,7 +237,7 @@ class MapObject:
             
         self.trackers = gdf
     
-    def save_file(self):
+    def save_file(self, tracker):
         logger.info(f'Saving file for map {self.name}')
         logger.info(f'This is len of gdf {len(self.trackers)}')
         # helps map to the right folder name
@@ -234,6 +246,15 @@ class MapObject:
             path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
         else:
             path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
+        
+        
+        # do for tracker too so no spaces and correct thing for s3 folder
+        if tracker in official_tracker_name_to_mapname.keys():
+            tracker = official_tracker_name_to_mapname[tracker]
+            if tracker in mapname_gitpages.keys():
+                tracker = mapname_gitpages[tracker]
+                
+            
         
         if self.name in gas_only_maps or self.geo == 'global': # will probably end up making all regional maps all energy I would think
             logger.info(f"Yes {self.name} is in gas only maps so skip 'area2', 'subnat2', 'capacity2'")
@@ -268,18 +289,53 @@ class MapObject:
 
         
         if simplified:
-            
-            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
+            output_file1 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv'
+            output_file2 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson'
 
 
             gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv', encoding='utf-8')
+            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
+
+            # save simplified csv and geojson to S3
+            # output_file
+            for output_file in [output_file1, output_file2]:
+                save_files_s3 = (
+                    f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
+                    f'aws s3 cp {output_file} s3://$BUCKETEER_BUCKET_NAME/{tracker}/{releaseiso}/ '
+                    f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
+                )            
+                
+            
+                runresults = subprocess.run(save_files_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print(runresults.stdout)  
+                print(f'saved csv and geojson map file to s3')
+                # input(f'update config.js {output_file} then press enter.')           
+                        
+            
+    
                             
         else:
-            
+            output_file1 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv'
+            output_file2 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson'
             gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
 
 
             gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+        
+            # save csv and geojson to S3
+            for output_file in [output_file1, output_file2]:
+                save_files_s3 = (
+                    f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
+                    f'aws s3 cp {output_file} s3://$BUCKETEER_BUCKET_NAME/{tracker}/{releaseiso}/ '
+                    f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
+                )            
+                
+            
+                runresults = subprocess.run(save_files_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print(runresults.stdout)  
+                print(f'saved csv and geojson map file to s3')
+                # input(f'update config.js {output_file} then press enter.')           
+                        
                 
         newcountriesjs = list(set(gdf['areas'].to_list()))
         rebuild_countriesjs(self.name, newcountriesjs)
@@ -547,7 +603,7 @@ class MapObject:
                 
                 logger.info(f"value counts for areas: {gdf['areas'].value_counts()}")
                 logger.info('check value counts for area after rename')
-                gdf.reset_index(inplace=True)
+                gdf.reset_index(drop=True, inplace=True)
                 # Reset index in place
                 if tracker_sel == 'GCMT':
                     logger.info(f'cols after rename in GCMT:\n{gdf.info()}')
@@ -579,8 +635,14 @@ class MapObject:
                 logger.info('check which tracker is missing subnat')
             logger.info(f'Adding {tracker_sel} gdf to renamed_gdfs')
             renamed_gdfs.append(gdf)
+        # handle for non unique indexes
+        # First, check all dataframes have unique indices
+        for i, gdf in enumerate(renamed_gdfs):
+            if gdf.index.has_duplicates:
+                logger.warning(f"DataFrame {i} has duplicate indices, resetting...")
+                renamed_gdfs[i] = gdf.reset_index(drop=True)
         
-        one_gdf = pd.concat(renamed_gdfs, sort=False, verify_integrity=True, ignore_index=True) 
+        one_gdf = pd.concat(renamed_gdfs, sort=False, ignore_index=True) 
         logger.info(one_gdf.index)
         
         cols_to_be_dropped = set(one_gdf.columns) - set(final_cols)
