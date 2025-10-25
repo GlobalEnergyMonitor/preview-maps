@@ -35,7 +35,7 @@
 
 # moved to helper functions cuz need it in make map file too
 # def save_to_s3(map_obj, path_dwn, df):
-#     parquet = save_as_parquet(df, map_obj.name, path_dwn)
+#     parquet = save_as_parquet(df, map_obj.mapname, path_dwn)
             
           
 #     do_command_s3 = (
@@ -52,12 +52,12 @@
 
             # save filtered df to s3 and log to config yaml how long it is after filter
             # TODO commenting this out for now since data mgmt process still in progress 
-            # save_mapfile_s3(map_obj.name, tracker.name, True, tracker.data)
+            # save_mapfile_s3(map_obj.mapname, tracker.name, True, tracker.data)
 
             # save filtered df to s3 and log to config yaml how long it is after filter
             # input('Check after geo filter')
             # TODO same as above 
-            # save_mapfile_s3(map_obj.name, tracker.name, True, main_or_h2, prod_or_og)
+            # save_mapfile_s3(map_obj.mapname, tracker.name, True, main_goget, prod_or_og)
 
 
 
@@ -75,8 +75,8 @@
             #     print(process.stderr.decode('utf-8'))
         
         # except Exception as e:
-        #     print(f'Issue with {map_obj.name}, let us skip it, go onto making maps and then come back.')
-        #     # remove problem map_obj.name from map_obj_list
+        #     print(f'Issue with {map_obj.mapname}, let us skip it, go onto making maps and then come back.')
+        #     # remove problem map_obj.mapname from map_obj_list
         #     map_obj_list.remove(map_obj)
         #     problem_map_objs.append((map_obj, e))
         #     print(e)   

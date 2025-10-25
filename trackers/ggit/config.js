@@ -1,7 +1,7 @@
 var config = {
     geometries: ['Point','LineString'],
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-10/ggit_map_2025-10-21.geojson', //'data/ggit_2024-12-20.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-10/ggit_map_2025-10-24.geojson', //'data/ggit_2024-12-20.geojson',
     color: {
         field: 'status-legend',
         values: {
@@ -61,6 +61,7 @@ var config = {
     //         'GGIT-export': 'trains',            
     //     }
     // },
+    linkField: 'pid',
     countryField: 'areas',
     nameField: 'name', 
     tableHeaders: {

@@ -1,6 +1,6 @@
 import pandas as pd
 from helper_functions import replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
-from all_config import official_tracker_name_to_mapname, releaseiso, simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
+from all_config import logpath, official_tracker_name_to_mapname, releaseiso, simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
 import geopandas as gpd
 import numpy as np
 from shapely import wkt
@@ -9,7 +9,7 @@ import subprocess
 
 class MapObject:
     def __init__(self,
-                 name="",
+                 mapname="",
                  source="",
                  geo="", 
                 # list of countries with get_needed_geo method
@@ -20,7 +20,7 @@ class MapObject:
                  aboutkey = "",
                  about=pd.DataFrame(),
                  ):
-        self.name = name
+        self.mapname = mapname
         self.source = source.split(", ")
         self.geo = geo
         self.needed_geo = []
@@ -34,7 +34,7 @@ class MapObject:
     def set_fuel_goit(self):
         # Oil, NGL should show up under both type options, Oil and NGL
         # LPG should be renamed to NGL 
-        if self.name == 'goit':
+        if self.mapname == 'goit':
             # Update all values in the 'Fuel' column from 'LPG' to 'NGL'
             logger.info('Creating fuel legend for goit')
             logger.info(set(self.trackers['Fuel'].to_list()))
@@ -46,7 +46,7 @@ class MapObject:
     
     def capacity_hide_goget_gcmt(self):
 
-        mapname = self.name
+        mapname = self.mapname
         gdf = self.trackers
         if mapname.lower() in ['gipt']:
             pass
@@ -76,6 +76,10 @@ class MapObject:
                     gdf.loc[row, 'capacity-details'] = gdf.loc[row, 'capacity']
         # TODO see if BOED is still in empty capacity details for GOIT in combination with last min fixes function below
         gdf['capacity-details'].fillna('',inplace=True)
+        gdf['capacity-table'].fillna('',inplace=True)
+        gdf['capacity'].fillna('',inplace=True)
+
+
         self.trackers = gdf
 
 
@@ -125,6 +129,8 @@ class MapObject:
         gdf.columns = [col.replace('  ', ' ') for col in gdf.columns] 
         gdf.columns = [col.replace(' ', '-') for col in gdf.columns] 
 
+        for col in gdf.columns:
+            gdf[col] = gdf[col].apply(lambda x: str(x).replace('nan',''))
 
 
         entities = ['owner', 'parent', 'operator']
@@ -132,20 +138,11 @@ class MapObject:
             if col in gdf.columns:
                 gdf[col] = gdf[col].apply(lambda x: str(x).replace('[unknown %]', ''))
         logger.info(f'Check all columns:')
-        for col in gdf.columns:
-            logger.info(col)
-            gdf[col] = gdf[col].apply(lambda x: str(x).replace('-100', '')) # default back to string, should make sure 0s areactually blank
-            gdf[col] = gdf[col].apply(lambda x: str(x).replace('nan', '')) # because fillna('') wouldnt work if all str
-        logger.info('Is fuel-filter there?')
+
 
         # translate acronyms to full names for legend and table 
         gdf['tracker-display'] = gdf['tracker-custom'].map(tracker_to_fullname)
         gdf['tracker-legend'] = gdf['tracker-custom'].map(tracker_to_legendname)
-
-        # make sure these are removed, though should have already been removed
-        gdf['capacity'] = gdf['capacity'].apply(lambda x: str(x).replace('--', ''))
-        gdf['capacity'] = gdf['capacity'].apply(lambda x: str(x).replace('*', ''))
-
         # make sure all null geo is removed
         gdf.dropna(subset=['geometry'],inplace=True)
 
@@ -167,11 +164,12 @@ class MapObject:
                 gdf[col] = gdf[col].apply(lambda x: str(x).split('.')[0])
                 gdf[col].replace('-1', 'not stated')
             
-        if self.name == 'europe':
-            logger.info(self.name)
+        if self.mapname == 'europe':
+            logger.info(self.mapname)
             gdf = pci_eu_map_read(gdf)
 
         gdf.fillna('', inplace = True)
+        
         
 
         # so all column names are lowercase 
@@ -206,7 +204,7 @@ class MapObject:
         # Remove rows with invalid geometry and log them
         if invalid_geoms:
             logger.warning(f"Found invalid geometries, removing: {invalid_geoms}")
-            pd.DataFrame(invalid_geoms, columns=['index', 'geometry']).to_csv(f'issues/{self.name}-invalid-geometries-{iso_today_date}.csv', index=False)
+            pd.DataFrame(invalid_geoms, columns=['index', 'geometry']).to_csv(f'{logpath}{self.mapname}-invalid-geometries-{iso_today_date}.csv', index=False)
             # Extract indices of invalid geometries for removal
             invalid_geom_indices = [idx for idx, _ in invalid_geoms]
             gdf.drop(invalid_geom_indices, inplace=True)
@@ -238,14 +236,14 @@ class MapObject:
         self.trackers = gdf
     
     def save_file(self, tracker):
-        logger.info(f'Saving file for map {self.name}')
+        logger.info(f'Saving file for map {self.mapname}')
         logger.info(f'This is len of gdf {len(self.trackers)}')
         # helps map to the right folder name
-        if self.name in mapname_gitpages.keys():
-            self.name = mapname_gitpages[self.name]
-            path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
+        if self.mapname in mapname_gitpages.keys():
+            self.mapname = mapname_gitpages[self.mapname]
+            path_for_download_and_map_files = gem_path + self.mapname + '/compilation_output/'
         else:
-            path_for_download_and_map_files = gem_path + self.name + '/compilation_output/'
+            path_for_download_and_map_files = gem_path + self.mapname + '/compilation_output/'
         
         
         # do for tracker too so no spaces and correct thing for s3 folder
@@ -256,12 +254,12 @@ class MapObject:
                 
             
         
-        if self.name in gas_only_maps or self.geo == 'global': # will probably end up making all regional maps all energy I would think
-            logger.info(f"Yes {self.name} is in gas only maps so skip 'area2', 'subnat2', 'capacity2'")
+        if self.mapname in gas_only_maps or self.geo == 'global': # will probably end up making all regional maps all energy I would think
+            logger.info(f"Yes {self.mapname} is in gas only maps so skip 'area2', 'subnat2', 'capacity2'")
             gdf = self.trackers.drop(['count-of-semi', 'multi-country', 'original-units', 'conversion-factor', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) # 'multi-country', 'original-units', 'conversion-factor', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
         
         else:
-            logger.info(f"No {self.name} is not in gas only maps")
+            logger.info(f"No {self.mapname} is not in gas only maps")
             gdf = self.trackers.drop(['count-of-semi','multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) #  'multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
              
 
@@ -278,7 +276,7 @@ class MapObject:
         if isinstance(gdf, gpd.GeoDataFrame):
             logger.info('Already a GeoDataFrame!')
         else:
-            logger.info(f'Converting to GeoDataFrame for {self.name} ...')
+            logger.info(f'Converting to GeoDataFrame for {self.mapname} ...')
             if 'geometry' not in gdf.columns:
                 raise ValueError("The dataframe does not have a 'geometry' column to convert to GeoDataFrame.")
             gdf = gpd.GeoDataFrame(gdf, geometry=gdf['geometry'])
@@ -289,12 +287,12 @@ class MapObject:
 
         
         if simplified:
-            output_file1 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv'
-            output_file2 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson'
+            output_file1 = f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}_simplified.csv'
+            output_file2 = f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}_simplified.geojson'
 
 
-            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.csv', encoding='utf-8')
-            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}_simplified.csv', encoding='utf-8')
+            gdf.to_file(f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}_simplified.geojson', driver='GeoJSON', encoding='utf-8')
 
             # save simplified csv and geojson to S3
             # output_file
@@ -315,12 +313,12 @@ class MapObject:
     
                             
         else:
-            output_file1 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv'
-            output_file2 = f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson'
-            gdf.to_file(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
+            output_file1 = f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}.csv'
+            output_file2 = f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}.geojson'
+            gdf.to_file(f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}.geojson', driver='GeoJSON', encoding='utf-8')
 
 
-            gdf.to_csv(f'{path_for_download_and_map_files}{self.name}_map_{iso_today_date}.csv', encoding='utf-8')
+            gdf.to_csv(f'{path_for_download_and_map_files}{self.mapname}_map_{iso_today_date}.csv', encoding='utf-8')
         
             # save csv and geojson to S3
             for output_file in [output_file1, output_file2]:
@@ -335,10 +333,8 @@ class MapObject:
                 print(runresults.stdout)  
                 print(f'saved csv and geojson map file to s3')
                 # input(f'update config.js {output_file} then press enter.')           
-                        
-                
         newcountriesjs = list(set(gdf['areas'].to_list()))
-        rebuild_countriesjs(self.name, newcountriesjs)
+        rebuild_countriesjs(self.mapname, newcountriesjs)
 
 
     def simplified(self):
@@ -353,7 +349,7 @@ class MapObject:
 
         gdf = self.trackers
 
-        if self.name in gas_only_maps:
+        if self.mapname in gas_only_maps:
             logger.info('no need to handle for hydro having two capacities')
         else:
             # first let's get GHPT cap added 
@@ -404,7 +400,7 @@ class MapObject:
 
         pd.options.display.float_format = '{:.0f}'.format
         # must be float for table to sort
-        if self.name in non_regional_maps: # map name
+        if self.mapname in non_regional_maps: # map name
             logger.info('skip converting to joules')
 
             gdf['scaling_capacity'] = gdf['cleaned_cap']
@@ -412,7 +408,7 @@ class MapObject:
 
         else:
             logger.info('not skipping conversion to joules...')
-            logger.info(f'{self.name}')
+            logger.info(f'{self.mapname}')
             logger.info('check name and why it is not in non_regional_maps')
             logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
@@ -458,6 +454,7 @@ class MapObject:
                     # mothballed
                     'mothballed': 'mothballed_plus',
                     'idle': 'mothballed_plus',
+                    'idled': 'mothballed-plus',
                     'shut in': 'mothballed_plus',
                     # retired
                     'retired': 'retired_plus',
@@ -472,7 +469,7 @@ class MapObject:
 
         if len(gdf_map_ready_no_status) > 0:
             logger.warning(f'check no status df, will be printed to issues as well: {gdf_map_ready_no_status}')
-            gdf_map_ready_no_status.to_csv(f'issues/{self.name}-no-status-{iso_today_date}.csv')
+            gdf_map_ready_no_status.to_csv(f'issues/{self.mapname}-no-status-{iso_today_date}.csv')
         
         # make sure all statuses align with no space rule
         gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
@@ -481,7 +478,7 @@ class MapObject:
         logger.info(set(gdf_map_ready['status'].to_list()))
         logger.warning('check list of statuses after replace space and _') 
         # TODO check that all legend filter columns go through what status goes through 
-        if self.name == 'gcmt':
+        if self.mapname == 'gcmt':
                 # make sure all filter cols align with no space rule
             legcols = ["coal-grade", "mine-type"]
             for col in legcols:
@@ -506,7 +503,7 @@ class MapObject:
 
         empty_areas = gdf_map_ready[gdf_map_ready['areas']=='']
         if len(empty_areas) > 0:
-            logger.warning(f'Check out which rows are empty for countries for map will also be printed in issues: {self.name}')
+            logger.warning(f'Check out which rows are empty for countries for map will also be printed in issues: {self.mapname}')
             logger.warning(empty_areas)
             empty_areas.to_csv(f'issues/{tracker_sel}-empty-areas-{iso_today_date}.csv')
 
@@ -537,7 +534,7 @@ class MapObject:
         # GGIT has comma separated in countries
 
             
-        if self.name in gas_only_maps:
+        if self.mapname in gas_only_maps:
             # handle for gas only maps (meaning no two cols for ghpt), the adding of the semicolon for js script
             logger.info('In gas only area of function map ready statuses and countries')
             gdf_map_ready['areas'] = gdf_map_ready['areas'].fillna('')
@@ -567,71 +564,56 @@ class MapObject:
         for tracker_obj in self.trackers:
             
             gdf = tracker_obj.data
+            print(f'This is data for {tracker_obj.acro}:{tracker_obj.data}')
+            print(f'This is: {tracker_obj.acro}')
+
             tracker_sel = tracker_obj.acro # GOGPT, GGIT, GGIT-lng, GOGET
             logger.info(f'tracker_sel is {tracker_sel} equal to tracker-acro...')
 
-            if tracker_sel == 'GOGPT-eu':
-                # 'passing because GOGPT-eu already renamed when concatted hy and plants tabs')
+            gdf['tracker-acro'] = tracker_sel
 
-                logger.info(f'this is df cols: {gdf.columns}')
+            logger.info(f"renaming on tracker acro: {gdf['tracker-acro'].iloc[0]}")
+            # all_trackers.append(tracker_sel)
+            # select the correct renaming dict from config.py based on tracker name
+            renaming_dict_sel = renaming_cols_dict[tracker_sel]
+            # rename the columns!
+            # check check_rename_keys(renaming_dict_sel)
+            logger.info(f'Check rename keys against cols for {tracker_sel}')
+            check_rename_keys(renaming_dict_sel, gdf)
+            gdf.columns = gdf.columns.str.strip()
+            gdf = gdf.rename(columns=renaming_dict_sel) 
+            
+            logger.info(f"value counts for areas: {gdf['areas'].value_counts()}")
+            logger.info('check value counts for area after rename')
+            gdf.reset_index(drop=True, inplace=True)
+            # Reset index in place
+            if tracker_sel == 'GCMT':
+                logger.info(f'cols after rename in GCMT:\n{gdf.info()}')
+                logger.info(gdf['start_year'])
+                # Handle for non-English Chinese wiki pages                    
+                # Using np.where 
+                gdf['wiki-from-name'] = np.where(
+                    gdf['areas'] == 'China',
+                    gdf['noneng_name'].apply(lambda x: f"https://www.gem.wiki/{x.strip().replace(' ', '_')}"),
+                    gdf['name'].apply(lambda x: f"https://www.gem.wiki/{x.strip().replace(' ', '_')}")
+                )  # check why subnat in there
+                gdf['url'] = gdf.apply(lambda row: row['wiki-from-name'] if 'gem.wiki' not in row['url'] else row['url'], axis=1)
                 
-                tracker_rename = gdf['tracker-acro'].iloc[0]
-                renaming_dict_sel = renaming_cols_dict[tracker_rename]
-                logger.info(f'This is renaming dict for {tracker_rename}: {renaming_dict_sel}')
-                logger.info(f'Check rename keys against cols for {tracker_rename}')
-                check_rename_keys(renaming_dict_sel, gdf)
-                gdf.columns = gdf.columns.str.strip()
-                gdf = gdf.rename(columns=renaming_dict_sel) 
-                
-                logger.info(f'This is len: {len(gdf)}: {set(gdf["tracker-acro"].to_list())}')
-                logger.info(f'This should be two, plants and plants_hy!')
-              
-                
-            else:
-                gdf['tracker-acro'] = tracker_sel
+                gdf['mine-type'] = gdf['mine-type'].fillna('').str.lower().replace(' ', '-').replace('&', 'and').replace('','-')
+                gdf['coal-grade'] = gdf['coal-grade'].fillna('').str.lower().replace(' ', '-').replace('&', 'and').replace('','-')
 
-                logger.info(f"renaming on tracker acro: {gdf['tracker-acro'].iloc[0]}")
-                # all_trackers.append(tracker_sel)
-                # select the correct renaming dict from config.py based on tracker name
-                renaming_dict_sel = renaming_cols_dict[tracker_sel]
-                # rename the columns!
-                # check check_rename_keys(renaming_dict_sel)
-                logger.info(f'Check rename keys against cols for {tracker_sel}')
-                check_rename_keys(renaming_dict_sel, gdf)
-                gdf.columns = gdf.columns.str.strip()
-                gdf = gdf.rename(columns=renaming_dict_sel) 
+            elif tracker_sel == 'GIST':
+            # make all unit status cap prod hyphenated and lowercase 
+            # silly workaround for getting the gist table set up for now
+                gdf.columns = gdf.columns.str.replace(' ', '-').str.lower().str.replace('latitude', 'Latitude').str.replace('longitude', 'Longitude')
                 
-                logger.info(f"value counts for areas: {gdf['areas'].value_counts()}")
-                logger.info('check value counts for area after rename')
-                gdf.reset_index(drop=True, inplace=True)
-                # Reset index in place
-                if tracker_sel == 'GCMT':
-                    logger.info(f'cols after rename in GCMT:\n{gdf.info()}')
-                    logger.info(gdf['start_year'])
-                    # Handle for non-English Chinese wiki pages                    
-                    # Using np.where 
-                    gdf['wiki-from-name'] = np.where(
-                        gdf['areas'] == 'China',
-                        gdf['noneng_name'].apply(lambda x: f"https://www.gem.wiki/{x.strip().replace(' ', '_')}"),
-                        gdf['name'].apply(lambda x: f"https://www.gem.wiki/{x.strip().replace(' ', '_')}")
-                    )  # check why subnat in there
-                    gdf['url'] = gdf.apply(lambda row: row['wiki-from-name'] if 'gem.wiki' not in row['url'] else row['url'], axis=1)
-                    
-                    gdf['mine-type'] = gdf['mine-type'].fillna('').str.lower().replace(' ', '-').replace('&', 'and').replace('','-')
-                    gdf['coal-grade'] = gdf['coal-grade'].fillna('').str.lower().replace(' ', '-').replace('&', 'and').replace('','-')
- 
-                elif tracker_sel == 'GIST':
-                # make all unit status cap prod hyphenated and lowercase 
-                # silly workaround for getting the gist table set up for now
-                    gdf.columns = gdf.columns.str.replace(' ', '-').str.lower().str.replace('latitude', 'Latitude').str.replace('longitude', 'Longitude')
-                    
                 
                 
             if 'subnat' in gdf.columns:
-                logger.info(f'subnat here for {tracker_obj.name}')
+                logger.info(f'subnat here for {tracker_obj.acro}')
                 
             else:
-                logger.info(f'subnat not here for {tracker_obj.name}') # TODO investigate for egt
+                logger.info(f'subnat not here for {tracker_obj.acro}') # TODO investigate for egt
                 logger.info('check which tracker is missing subnat')
             logger.info(f'Adding {tracker_sel} gdf to renamed_gdfs')
             renamed_gdfs.append(gdf)
@@ -655,10 +637,10 @@ class MapObject:
  
     def get_about(self):
         if self.aboutkey != '':
-            if self.name in ['africa', 'integrated', 'europe', 'asia', 'latam']:
+            if self.mapname in ['africa', 'integrated', 'europe', 'asia', 'latam']:
                 # proceed with gspread 
 
-                print(f'Opening about key for map {self.name}')
+                print(f'Opening about key for map {self.mapname}')
                 gsheets = gspread_creds.open_by_key(self.aboutkey)  
                 sheet_names = [sheet.title for sheet in gsheets.worksheets()]
                 multi_tracker_about_page = sheet_names[0]  
