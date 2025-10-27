@@ -27,8 +27,7 @@ def make_map(list_of_map_objs, tracker):
         for tracker_obj in map_obj.trackers:
             
             tracker_obj.clean_num_data() 
-            # TODO here lets see what cap for Abbot Point LNG Terminal is then check final last min checks
-
+    
             # this gets to each df within each map
             # first I should combine goget so we can stop filtering by tuple
             if tracker_obj.acro in ['GOGET']:

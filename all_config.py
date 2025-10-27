@@ -29,15 +29,9 @@ list_of_all_official = [
     "LNG Terminals",
     "Gas Pipelines",
     "Oil Pipelines",
-    # "Gas Pipelines EU",
-    # "LNG Terminals EU",
-    # "GOGPT EU",
     "Iron & Steel",
     "Iron Ore Mines",
-    "Plumes",
-    # "coal finance",
-    # "Energy Ownership",
-    # "Integrated",
+    # "Plumes",
     "Chemicals",
     "Cement and Concrete",
 
@@ -51,11 +45,11 @@ if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 
-
+testval = 'Abbot Point LNG Terminal'
 releaseiso = '2025-10'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ["ggit", "europe"] 
+priority = ["ggit", "asia", "latam", "africa"] 
 
 tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
@@ -373,7 +367,7 @@ renaming_cols_dict = {
                                 }, 
                     'GGIT-lng': {'ProjectID':'pid','Wiki': 'url', 'TerminalName': 'name', 'FacilityType': 'facilitytype',
                                 'UnitName': 'unit_name', 'Status': 'status', 'Country/Area': 'areas', 'Owner': 'owner', 
-                                'Parent': 'parent', 'CapacityInMtpa': 'capacity', 'OriginalStartYear': 'start_year', 'Region': 'region', 
+                                'Parent': 'parent', 'CapacityinMtpa': 'capacity', 'OriginalStartYear': 'start_year', 'Region': 'region', 
                                 'State/Province': 'subnat', 'Owner GEM Entity ID': 'owner-gem-id', 'Parent GEM Entity ID': 'parent-gem-id', 'Operator': 'operator'},
                         # # GOGPT-eu two tabs NOT NEEDED NOW THAT WE DO NOT RESEARCH HYDROGEN PLANTSs
                         # 'plants': {'gem-location-id':'pid', 'gem-unit-id': 'id','wiki-url': 'url','country/area': 'areas', 'plant-name': 'name', 'unit-name': 'unit_name',
