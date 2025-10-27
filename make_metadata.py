@@ -6,7 +6,7 @@
 
             
         # # save to metadata
-        # mfile_actual = f"/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/metadata_files/{map_obj.name}_{releaseiso}_{iso_today_date}_metadata.yaml"
+        # mfile_actual = f"/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/metadata_files/{map_obj.mapname}_{releaseiso}_{iso_today_date}_metadata.yaml"
         # print(f'this is mfile_actual: {mfile_actual}')
         # input('check if it matches')
         # # Prepare dictionary representations, but do not convert tracker_source_obj.data or map_obj.trackers

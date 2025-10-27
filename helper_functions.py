@@ -20,8 +20,6 @@ import openpyxl
 import xlsxwriter
 from all_config import *
 import re
-from openpyxl import Workbook
-from openpyxl import load_workbook
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
 import pickle
@@ -100,7 +98,7 @@ def save_raw_s3(map_obj, tracker_source_obj, TrackerObject):
     # metadata_dir = os.path.join(os.path.dirname(__file__), 'metadata_files')
     # os.makedirs(metadata_dir, exist_ok=True)
     # write to config file total length of dfs
-    mfile_actual = os.path.join(metadata_dir, f'{map_obj.name}_{releaseiso}_{iso_today_date}_metadata.yaml')
+    mfile_actual = os.path.join(metadata_dir, f'{map_obj.mapname}_{releaseiso}_{iso_today_date}_metadata.yaml')
 
      
     # save to metadata
@@ -164,18 +162,18 @@ def save_raw_s3(map_obj, tracker_source_obj, TrackerObject):
             iso_today_datenospace = iso_today_date.replace(' ', '_')
 
             originaldf.to_json(
-                f"{trackers}/{map_obj.name}/{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json",
+                f"{trackers}/{map_obj.mapname}/{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json",
                 force_ascii=False,
                 date_format='iso',
                 orient='records',
                 indent=2
                 )
             
-            originalfile = f'"{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json"'
-            originalfile_with_no_quote = f'{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json' 
+            originalfile = f'"{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json"'
+            originalfile_with_no_quote = f'{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}.json' 
             do_command_s3 = (
                 f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
-                f'aws s3 cp {originalfile_with_no_quote} s3://$BUCKETEER_BUCKET_NAME/{map_obj.name}/{releaseiso}/{originalfile_with_no_quote} --endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
+                f'aws s3 cp {originalfile_with_no_quote} s3://$BUCKETEER_BUCKET_NAME/{map_obj.mapname}/{releaseiso}/{originalfile_with_no_quote} --endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
                 )    
             
             subprocess.run(do_command_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -184,28 +182,28 @@ def save_raw_s3(map_obj, tracker_source_obj, TrackerObject):
                 os.remove(originalfile_with_no_quote)            
                 
         except AttributeError: 
-            main_or_h2_df = trackerobj.data[0]
+            main_goget_df = trackerobj.data[0]
             prod_or_og_df = trackerobj.data[1]
 
-            originaldfs = [main_or_h2_df, prod_or_og_df]
+            originaldfs = [main_goget_df, prod_or_og_df]
             for idx, df in enumerate(originaldfs):
                 trackernamenospaceoraperand = trackerobj.name.replace(' ', '_').replace('&', '')
                 
                 iso_today_datenospace = iso_today_date.replace(' ', '_')
                 df.to_json(
-                    f"{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json",
+                    f"{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json",
                     force_ascii=False,
                     date_format='iso',
                     orient='records',
                     indent=2
                     )
 
-                originalfile = f'"{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json"'
-                originalfile_with_no_quote = f'{map_obj.name}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json'
+                originalfile = f'"{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json"'
+                originalfile_with_no_quote = f'{map_obj.mapname}_{releaseiso}_{trackernamenospaceoraperand}_{iso_today_datenospace}_{idx}.json'
                 
                 do_command_s3 = (
                     f'export BUCKETEER_BUCKET_NAME=publicgemdata && '
-                    f'aws s3 cp {originalfile} s3://$BUCKETEER_BUCKET_NAME/{map_obj.name}/{releaseiso}/{originalfile} '
+                    f'aws s3 cp {originalfile} s3://$BUCKETEER_BUCKET_NAME/{map_obj.mapname}/{releaseiso}/{originalfile} '
                     f'--endpoint-url https://nyc3.digitaloceanspaces.com --acl public-read'
                     )    
                     
@@ -458,19 +456,24 @@ def create_prep_file(multi_tracker_log_sheet_key, prep_file_tab): # needed_map_l
     # else:
     prep_df = gspread_access_file_read_only(multi_tracker_log_sheet_key, prep_file_tab)
     # Add pickle format for prep_df
-    prep_df = prep_df[prep_df['official release tab name'] != ''] # skips rows at bottom
+    prep_df = prep_df[prep_df['tab name'] != ''] # skips rows at bottom
     # Convert 'gspread_tabs' and 'sample_cols' to lists
     prep_df['gspread_tabs'] = prep_df['gspread_tabs'].apply(lambda x: x.split(';'))
     # df['sample_cols'] = df['sample_cols'].apply(lambda x: x.split(';'))
     prep_df['gspread_tabs'] = prep_df['gspread_tabs'].apply(lambda lst: [s.strip() for s in lst])
     # df['sample_cols'] = df['sample_cols'].apply(lambda lst: [s.strip() for s in lst])
-    prep_df['official name'] = prep_df['official release tab name']
+    # first copy the column because we need it
+    prep_df['index_tabname'] = prep_df['tab name'].copy()
 
-    prep_df.set_index('official release tab name', inplace=True) # sets index on offical name
+    # # then set it as an index
+    prep_df.set_index('index_tabname', inplace=True) # sets index on tab name
     # prep_df['tracker-acro'] = prep_df['tracker-acro']
     
         # with open(f'local_pkl/prep_df{iso_today_date}.pkl', 'wb') as f:
         #     pickle.dump(prep_df, f)
+    
+    logger.info(f'This is prep_df {prep_df}')
+    print(f'This is prep_df {prep_df}')
     return prep_df
 
 
@@ -480,7 +483,7 @@ def clean_capacity(df):
         df['Capacity (MW)'] = df['Capacity (MW)'].apply(lambda x: check_and_convert_float(x))
         df = df.fillna('')
         
-        # round all capacity cols to 2 decimal places
+        # round all capacity cols to 
         df['Capacity (MW)'] = df['Capacity (MW)'].apply(lambda x: round(x, 4) if x != '' else x)    
     else:
         print(df.info())
@@ -566,6 +569,7 @@ def check_and_convert_int(x):
 def check_and_convert_float(x):
     if is_number(x):
         return float(x)
+    
     else:
         return np.nan
 
@@ -677,82 +681,7 @@ def convert_wkt_to_google_maps(pipes_df):
             
     return pipes_df
 
-# TODO check why this is NOT being applied ...
-def coordinate_qc(df):
-    issues_coords = {} # acro, df line
-    df = df.reset_index()
-    tracker = df['tracker-acro'].loc[0]
-    df.columns = df.columns.str.lower()
-    # wait_time = 5
-    # time.sleep(wait_time)
-    # gsheets = gspread_creds.open_by_key(multi_tracker_countries_sheet)
-    # spreadsheet = gsheets.worksheet('country_centroids')
-    # country_centroids = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-    # split on comma, check valid lat lng, 
-    # in a float valid range 
-    
-    # print(len(df))
-    # df['WKTFormat'] = df['WKTFormat'].make_valid()
-    # print(len(df))
-    # input('After make valid')
 
-    if 'WKTFormat' in df.columns: # special for hydrogen europe file
-        # df['wktformat_clean'] = df['Route'].apply(lambda x: check_and_convert_float(x))
-        pass
-
-
-    else:
-        df['float_col_clean_lat'] = df['latitude'].apply(lambda x: check_and_convert_float(x))
-        
-        df['float_col_clean_lng'] = df['longitude'].apply(lambda x: check_and_convert_float(x))
-    # after converting all to float nan, we filter out nan
-    # this assumes source data has gone through qc in separate file to find the comma situations
-        for row in df.index:
-            if pd.isna(df.loc[row, 'float_col_clean_lat']): 
-                issues_coords[tracker] = df.loc[row]
-                df.drop(index=row, inplace=True)
-            elif pd.isna(df.loc[row, 'float_col_clean_lng']): 
-                issues_coords[tracker] = df.loc[row]
-                df.drop(index=row, inplace=True)
-
-                
-        # check that the numbers fall within a range
-        # QC
-        acceptable_range = {
-            'lat': {'min': -90, 'max': 90},
-            'lng': {'min': -180, 'max': 180}
-        }
-        
-        df['float_col_clean_lat'] = df['float_col_clean_lat'].apply(
-            lambda x: check_in_range(x, acceptable_range['lat']['min'], acceptable_range['lat']['max'])
-        )
-        # print(df['float_col_clean_lat'])
-        # input('check after check in range or nan')
-        df['float_col_clean_lng'] = df['float_col_clean_lng'].apply(
-            lambda x: check_in_range(x, acceptable_range['lng']['min'], acceptable_range['lng']['max'])
-        )
-        # check_in_range could return nan if out of range so need to drop nans
-        # this should have been handled in QC the range stuff 
-        for row in df.index:
-            if pd.isna(df.loc[row, 'float_col_clean_lat']):
-                print(df.loc[row]) 
-                issues_coords[tracker] = df.loc[row]
-                df.drop(index=row, inplace=True)
-            elif pd.isna(df.loc[row, 'float_col_clean_lng']): 
-                print(df.loc[row])
-                issues_coords[tracker] = df.loc[row]
-                df.drop(index=row, inplace=True)
-    
-
-            else:
-                df.loc[row, 'latitude'] = df.loc[row, 'float_col_clean_lat']
-                df.loc[row, 'longitude'] = df.loc[row, 'float_col_clean_lng']
-
-
-        # write issues_coords dict to a csv file in gem_tracker_maps
-        issue_df = pd.DataFrame(issues_coords)
-        issue_df.to_csv('issues_coords.csv',  index=False)
-    return df, issues_coords
 
 # def find_missing_geometry(gdf,col_country_name):
 #     if gdf['geometry'] == '':
@@ -854,12 +783,7 @@ def create_conversion_df(conversion_key, conversion_tab):
 def rename_gdfs(df):
 
     tracker_sel = df['tracker-acro'].iloc[0] # plants, term, pipes, extraction
-    logger.info(tracker_sel)
-    logger.info(f"check above ...if not 'plants_hy', 'plants', 'GOGPT-eu' we found problem")
-    # TO DO remove this later 
-    if tracker_sel in ['plants_hy', 'plants', 'GOGPT-eu']:
-        df.columns = df.columns.str.lower()
-        df.columns = df.columns.str.replace(' ', '-')
+
     renaming_dict_sel = renaming_cols_dict[tracker_sel]
     # rename the columns!
     df = df.rename(columns=renaming_dict_sel)
@@ -1138,13 +1062,14 @@ def apply_representative_point(df):
     return df
 
 # TODO explore this working or use something else
-def bold_first_row(writer, sheet_name):
-    workbook = writer.book
-    worksheet = workbook.sheets[sheet_name]
-    for cell in worksheet[1]:  # First row
-        cell.font = Font(bold=True)
+# Workbook not a attribute of openpyxlWriter go with google api way
+# def bold_first_row(writer, sheet_name):
+#     workbook = writer.Workbook
+#     worksheet = workbook.sheets[sheet_name]
+#     for cell in worksheet[1]:  # First row
+#         cell.font = Font(bold=True)
     
-    return writer
+#     return writer
 
 
 
@@ -1191,14 +1116,17 @@ def convert_coords_to_point(df):
     # df.columns = df.columns.str.lower()
     df['geometry'] = None  # Initialize the geometry column
     if 'Longitude' in df.columns and 'Latitude' in df.columns:
-        print('Long in there')
+        # do qc on values
+        # remove white space
+        # convert to numerical coerce
+        
         df['geometry'] = df.apply(lambda row: Point(row['Longitude'], row['Latitude']), axis=1)
     elif 'longitude' in df.columns and 'latitude' in df.columns:
-        print('long in there')
         df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
     else:
         print('issues with finding lat lng to convert to gdf!!')
         print(f'{df.columns} \n check columns above')
+        input('issues with finding lat lng to convert to gdf!!')
             
             
     gdf = gpd.GeoDataFrame(df, geometry=geometry_col, crs=crs)
@@ -1528,7 +1456,7 @@ def workaround_table_float_cap(row, cap_col):
     cap = row[cap_col] 
     cap = check_and_convert_float(cap)
     if isinstance(cap, (int, float)):
-        cap = float((round(cap, 3))) # handle rounding and converting from string to float to round later 
+        cap = float((round(cap, 4))) # handle rounding and converting from string to float to round later 
     else:
         print(f'issue cap should be a float')
         
@@ -1628,20 +1556,20 @@ def split_coords(df):
     return df
 
 # TODO add to formatting numerical 
-def make_numerical(df, list_cols):
-    df = df.copy()
-    for col in list_cols:
-        # Replace blank spaces, '>0', and 'unknown' with NaN
-        df[col] = df[col].replace(['', '>0', 'unknown'], np.nan)
+# def make_numerical(df, list_cols):
+#     df = df.copy()
+#     for col in list_cols:
+#         # Replace blank spaces, '>0', and 'unknown' with NaN
+#         df[col] = df[col].replace(['', '>0', 'unknown'], np.nan)
         
-        # Fill NaN values with a default 
-        df[col] = df[col].fillna(0)
+#         # Fill NaN values with a default 
+#         df[col] = df[col].fillna(-100)
         
-        # Convert the column to integers
-        df[col] = df[col].astype(int)
+#         # Convert the column to integers
+#         df[col] = df[col].astype(int)
 
-    print(df[list_cols].info())
-    return df
+#     print(df[list_cols].info())
+#     return df
 
 
 def make_plant_level_status(unit_status_list, plant_id):

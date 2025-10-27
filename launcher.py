@@ -21,7 +21,7 @@ def main():
     # INSERT directory making things here from all_config.py and TODO tabs
     # list of trackers currently supported
     # trackers = ["cement", "coal mine", "combustion", "GOGET", "geothermal", "hydro", "iron mine", "methane", "nuclear", "solar", "steel", "wind"]
-    list_of_all_official = ["Oil & Gas Plants", "Coal Plants", "Solar", "Wind", "Nuclear", "Hydropower", "Bioenergy", "Geothermal", "Coal Terminals", "Oil & Gas Extraction", "Coal Mines", "LNG Terminals", "Gas Pipelines", "Oil Pipelines", "Iron & Steel", "Iron ore Mines", "Cement and Concrete"]
+    list_of_all_official = ["Oil & Gas Plants", "Coal Plants", "Solar", "Wind", "Nuclear", "Hydropower", "Bioenergy", "Geothermal", "Coal Terminals", "Oil & Gas Extraction", "Coal Mines", "LNG Terminals", "Gas Pipelines", "Oil Pipelines", "Iron & Steel", "Iron Ore Mines", "Cement and Concrete"]
     tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
 
     month_number = {
