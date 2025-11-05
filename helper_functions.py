@@ -779,35 +779,6 @@ def create_conversion_df(conversion_key, conversion_tab):
 
     return df  
 
-# TODO only used for h2 egt data so likely won't need soon
-def rename_gdfs(df):
-
-    tracker_sel = df['tracker-acro'].iloc[0] # plants, term, pipes, extraction
-
-    renaming_dict_sel = renaming_cols_dict[tracker_sel]
-    # rename the columns!
-    df = df.rename(columns=renaming_dict_sel)
-    df.reset_index(drop=True, inplace=True)
-    
-    
-    df.columns = df.columns.str.lower()
-    df.columns = df.columns.str.replace(' ', '-')
-    # find any duplicated column names
-    all_columns = df.columns
-    column_counts = Counter(all_columns)
-    duplicate_columns = [name for name, count in column_counts.items() if count > 1]
-    if len(duplicate_columns) > 0:
-        print(f"Duplicate column names found: {duplicate_columns} for {tracker_sel}")
-        input('FIX')
-    else:
-        print("No duplicate column names found.")
-    print(duplicate_columns)  # Output: ['geometry', 'tracker', 'capacity', ...]
-    # for i, col in enumerate(duplicate_columns):
-    #     df.rename(columns={col: f"{col}_{i+1}"}, inplace=True)
-
-    return df
-
-
 def check_in_range(value, min_val, max_val):
     # doesn't handle na because already was handled
     if min_val <= value <= max_val:
@@ -867,11 +838,9 @@ def check_in_range(value, min_val, max_val):
 
 def wait_n_sec(n):
     print(f"Starting {n} second wait...")
-    logger.info(f'started {n} second wait...')
 
     time.sleep(n)
     print(f"{n}-second wait completed.")
-    logger.info(f'{n}-second wait completed.')
     
 
 def get_key_tabs_prep_file(tracker):
