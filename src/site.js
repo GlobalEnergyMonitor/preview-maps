@@ -1417,8 +1417,8 @@ function displayDetails(features) {
         else {
 
             // this handles capacity adjustment for solo projects where it looks redundant to have Capacity written out twice
-            // Remove 'Capacity' prefix and parentheses from capacityLabel
-            capacityLabel = capacityLabel.replace(/^Capacity\s*/i, '').replace(/[()]/g, '');
+            // Remove 'Capacity' prefix and parentheses from capacityLabel TODO look into a better way to handle, issue if capacity is nan or undefined like intentionally is for GOGET
+            // capacityLabel = capacityLabel.replace(/^Capacity\s*/i, '').replace(/[()]/g, '');
 
             // and it allows status outside of the summary table to have the colored dot when status is the highest filter section
             if (config.color.field != config.statusDisplayField){

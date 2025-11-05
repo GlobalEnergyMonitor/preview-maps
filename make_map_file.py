@@ -25,13 +25,29 @@ def make_map(list_of_map_objs, tracker):
             log_file.write("Confirm all trackers in map\n")
 
         for tracker_obj in map_obj.trackers:
-            
-            tracker_obj.clean_num_data() 
-    
+            # do all data cleaning changes then go into tracker specific changes
+            if isinstance(tracker_obj.data, pd.DataFrame): 
+                tracker_obj.clean_num_data()
+                tracker_obj.clean_cat_data() 
+            else:
+                if tracker_obj.acro in ['GOGET']:
+                    # main, prod = tracker_obj.data
+                    print('We will handle numerical and categorical cleaning after special goget logic is handled. TODO in future change this so the functions are in helper not methods or can apply to each part of the tuple.')
+                     
+                else:
+                    logger.info("Error: 'self.data' is not a DataFrame.")
+                    
+                    logger.info(msg=f"Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+                    input('self.data is not in a dataframe')
+                    return
+                
             # this gets to each df within each map
             # first I should combine goget so we can stop filtering by tuple
             if tracker_obj.acro in ['GOGET']:
-                tracker_obj.process_goget_reserve_prod_data()
+                tracker_obj.process_goget_reserve_prod_data() #ends with one dataframe in data so now can run cleaning
+                tracker_obj.clean_num_data()
+                tracker_obj.clean_cat_data()                 
+                
                 if map_obj.geo in ['europe']:
                     # this fuel filter should happen after goget is put into one and only if its for a europe map
                     tracker_obj.set_fuel_filter_eu_and_maturity() 
