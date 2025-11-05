@@ -1,5 +1,5 @@
 from requests import HTTPError
-from all_config import about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
+from all_config import force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
 from helper_functions import check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
@@ -76,157 +76,168 @@ class TrackerObject:
         pkl_path = os.path.join(local_pkl_dir, f'trackerdf_for_{self.acro}_on_{iso_today_date}.pkl')
 
         # Check if local pkl file exists
-        if os.path.exists(pkl_path):
+        if force_refresh_flag or not os.path.exists(pkl_path):
+
+
+            s3_file_source_path = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/'
+
+            # this creates the dataframe for the tracker
+            if self.tab_name in ['Oil Pipelines']:
+                logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
+                
+                # to get the file names in latest
+                parquet_s3 = self.get_file_name(releaseiso)
+                logger.info(f'This is file: {parquet_s3}')
+                
+                if 'parquet' in parquet_s3:
+
+                    df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
+                
+                    df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+
+                    gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                
+                else:
+                    gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
+                
+                self.data = gdf
+                
+            elif self.tab_name in ['Gas Pipelines']:
+                
+
+                logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
+
+                # to get the file names in latest
+                parquet_s3 = self.get_file_name(releaseiso)
+                logger.info(f'This is file: {parquet_s3}')
+
+                if 'parquet' in parquet_s3:
+
+                    df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
+                
+                    df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+
+                    gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                
+                else:
+                    gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
+                
+                self.data = gdf
+
+            # don't need this anymore becaues different than pipelines becaues in db not shared as geojson in s3   
+            # elif self.tab_name == 'LNG Terminals':
+
+            #     logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
+                
+            #     # to get the file names in latest
+            #     parquet_s3 = self.get_file_name(releaseiso)
+            #     logger.info(f'This is file: {parquet_s3}')
+            #     if 'parquet' in parquet_s3:
+
+            #         df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
+                
+            #         df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+
+            #         gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                
+            #     else:
+            #         gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
+                    
+            #     self.data = gdf
+            
+
+            elif self.tab_name in ['Gas Pipelines EU']:
+                logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
+                
+                # to get the file names in latest
+                geojson_s3 = self.get_file_name(releaseiso)
+
+                
+                #assign gdf to data 
+
+                gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
+
+                gdf.set_crs("epsg:4326", inplace=True)
+
+                self.data = gdf
+                
+                
+            # don't need this anymore becaues different than pipelines becaues in db not shared as geojson in s3
+
+            # elif self.tab_name == 'LNG Terminals EU':
+            #     print('handle non_gsheet_data for pulling data from s3 already has coords')
+                
+            #     # to get the file names in latest
+            #     geojson_s3 = self.get_file_name(releaseiso)
+                
+            #     #assign gdf to data 
+
+            #     gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
+
+            #     gdf.set_crs("epsg:4326", inplace=True)
+
+            #     self.data = gdf                    
+                
+            # Won't need this ever again as long as hydrogen isn't partly researched by gogpt team again, keeping just in case.
+            # elif self.acro == 'GOGPT EU':  
+            #     # if new_h2_data 
+            #     if new_h2_data == True:
+            #         # do what worked in Jan
+            #         df_tuple = self.create_df_gogpt_eu() 
+            #         self.data = df_tuple
+
+            #     else:
+            #         df_tuple = self.create_df_gogpt_eu() 
+            #         if  df_tuple[0] == '':
+            #             logger.info('no new plant data in gogpt eu file so remove first tuple')
+            #             self.data = df_tuple[1]
+            #             logger.info('It is not a tuple GOGPT EU b/c using old H2 data for gogpt eu')
+            
+            elif self.tab_name in ['Oil & Gas Extraction']:
+                df_tuple = self.create_df_goget()
+
+                main = df_tuple[0]
+                prod = df_tuple[1]
+                
+                #assign df tuple to data 
+                self.data = df_tuple # not sure how to handle this, concat? 
+                print(len(self.data))
+                # input('Check lenght of goget data should be two for tuple')
+
+# NORMAL CASE JUST PULL FROM GSHEETS
+            else:
+                #assign df to data 
+                print(self.tab_name)
+                df = self.create_df()
+                
+                # #assign gdf to data 
+                self.data = df
+
+# USE LOCAL PKL FILE
+        else:
             # Get file creation/modification time
             pkl_timestamp = os.path.getmtime(pkl_path)
             pkl_date = datetime.fromtimestamp(pkl_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
             print(f'\nLocal pkl file found for {self.off_name}')
             print(f'File created/modified: {pkl_date}')
-            use_local = input(f'Use local pkl file? (y/n, default=n): ').strip().lower()
+            logger.info(msg=f'Local pkl file found for {self.off_name}\nFile created/modified: {pkl_date}')
+            # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
+            # # adjust so can easily press
+            # if use_local == 'y' or '':
+            try:
+                with open(pkl_path, 'rb') as f:
+                    logger.info(f'Loading data from local pkl: {pkl_path}')
+                    logger.info(f'File timestamp: {pkl_date}')
+                    print(f'Loading data from local pkl file...')
+                    self.data = pickle.load(f)
+                    print(f'Successfully loaded data for {self.off_name}')
+                    return  # Exit early if pkl loaded successfully
+            except Exception as e:
+                logger.error(f'Failed to load pkl file: {e}')
+                print(f'Error loading pkl file: {e}')
+                print('Proceeding to fetch data from remote source...')
 
-            if use_local == 'y':
-                try:
-                    with open(pkl_path, 'rb') as f:
-                        logger.info(f'Loading data from local pkl: {pkl_path}')
-                        logger.info(f'File timestamp: {pkl_date}')
-                        print(f'Loading data from local pkl file...')
-                        self.data = pickle.load(f)
-                        print(f'Successfully loaded data for {self.off_name}')
-                        return  # Exit early if pkl loaded successfully
-                except Exception as e:
-                    logger.error(f'Failed to load pkl file: {e}')
-                    print(f'Error loading pkl file: {e}')
-                    print('Proceeding to fetch data from remote source...')
-
-        s3_file_source_path = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/'
-
-        # this creates the dataframe for the tracker
-        if self.tab_name in ['Oil Pipelines']:
-            logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
-            
-            # to get the file names in latest
-            parquet_s3 = self.get_file_name(releaseiso)
-            logger.info(f'This is file: {parquet_s3}')
-            
-            if 'parquet' in parquet_s3:
-
-                df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
-            
-                df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
-
-                gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
-            
-            else:
-                gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
-            
-            self.data = gdf
-            
-        elif self.tab_name in ['Gas Pipelines']:
-            
-
-            logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
-
-            # to get the file names in latest
-            parquet_s3 = self.get_file_name(releaseiso)
-            logger.info(f'This is file: {parquet_s3}')
-
-            if 'parquet' in parquet_s3:
-
-                df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
-            
-                df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
-
-                gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
-            
-            else:
-                gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
-            
-            self.data = gdf
-
-            
-        # elif self.tab_name == 'LNG Terminals':
-
-        #     logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
-            
-        #     # to get the file names in latest
-        #     parquet_s3 = self.get_file_name(releaseiso)
-        #     logger.info(f'This is file: {parquet_s3}')
-        #     if 'parquet' in parquet_s3:
-
-        #         df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
-            
-        #         df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
-
-        #         gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
-            
-        #     else:
-        #         gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
-                
-        #     self.data = gdf
-        
-
-        elif self.tab_name in ['Gas Pipelines EU']:
-            logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
-            
-            # to get the file names in latest
-            geojson_s3 = self.get_file_name(releaseiso)
-
-            
-            #assign gdf to data 
-
-            gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
-
-            gdf.set_crs("epsg:4326", inplace=True)
-
-            self.data = gdf
-            
-        # elif self.tab_name == 'LNG Terminals EU':
-        #     print('handle non_gsheet_data for pulling data from s3 already has coords')
-            
-        #     # to get the file names in latest
-        #     geojson_s3 = self.get_file_name(releaseiso)
-            
-        #     #assign gdf to data 
-
-        #     gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
-
-        #     gdf.set_crs("epsg:4326", inplace=True)
-
-        #     self.data = gdf                    
-            
-        # elif self.acro == 'GOGPT EU':  
-        #     # if new_h2_data 
-        #     if new_h2_data == True:
-        #         # do what worked in Jan
-        #         df_tuple = self.create_df_gogpt_eu() 
-        #         self.data = df_tuple
-
-        #     else:
-        #         df_tuple = self.create_df_gogpt_eu() 
-        #         if  df_tuple[0] == '':
-        #             logger.info('no new plant data in gogpt eu file so remove first tuple')
-        #             self.data = df_tuple[1]
-        #             logger.info('It is not a tuple GOGPT EU b/c using old H2 data for gogpt eu')
-        
-        elif self.tab_name in ['Oil & Gas Extraction']:
-            df_tuple = self.create_df_goget()
-
-            main = df_tuple[0]
-            prod = df_tuple[1]
-            
-            #assign df tuple to data 
-            self.data = df_tuple # not sure how to handle this, concat? 
-            print(len(self.data))
-            # input('Check lenght of goget data should be two for tuple')
-
-        else:
-            #assign df to data 
-            print(self.tab_name)
-            df = self.create_df()
-            
-            # #assign gdf to data 
-            self.data = df
 
 
         with open(pkl_path, 'wb') as f:
@@ -239,6 +250,8 @@ class TrackerObject:
                 df_tuple = self.data
                 main = df_tuple[0]
                 prod_res = df_tuple[1]
+                # so you just unpack tuple to list out columns in logs ... maybe not necessary.
+
                 [logger.info (col) for col in main.columns]
                 [logger.info (col) for col in prod_res.columns]
                 
@@ -1073,9 +1086,9 @@ class TrackerObject:
         """
 
         if not isinstance(self.data, pd.DataFrame):
-            logger.info("Error: 'self.data' is not a DataFrame.")
+            logger.info("Error: 'self.data' is not a DataFrame. And should be even for GOGET since it has special handling now.")
             
-            logger.info(msg="Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+            logger.info(msg=f"Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
             input('self.data is not in a dataframe')
             return
 
@@ -1310,8 +1323,8 @@ class TrackerObject:
             issue_df = pd.DataFrame(missing_coordinate_row)
             issue_df.to_csv(f'{logpath}missing_coordinates_geo-{self.acro}_{releaseiso}_{iso_today_date}.csv',  index=False)     
         else:
-            logger.info("Error: 'self.data' is not a DataFrame.")
-            logger.info(msg="Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+            logger.info("Error: 'self.data' is not a DataFrame. And should be even for GOGET since it is run at a special point for it.")
+            logger.info(msg=f"Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
             
 
     
