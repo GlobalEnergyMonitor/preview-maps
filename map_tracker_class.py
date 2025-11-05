@@ -1,6 +1,6 @@
 from requests import HTTPError
 from all_config import about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
-from helper_functions import check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, rename_gdfs, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
+from helper_functions import check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
 import geopandas as gpd
@@ -13,7 +13,6 @@ import pickle
 from datetime import datetime
 import urllib.parse # quote() and quote_plus() for query params
 import os
-import shapely
 from shapely.geometry import shape, Point, MultiLineString
 import geopandas as gpd
 
@@ -75,17 +74,31 @@ class TrackerObject:
         # TODO move all these to all_config to make relative path set up cleaner
 
         pkl_path = os.path.join(local_pkl_dir, f'trackerdf_for_{self.acro}_on_{iso_today_date}.pkl')
-        # print(f'See if data already exists locally for {self.off_name}...')
-        # try: 
-        # with open(pkl_path, 'rb') as f:
-            
-        #     print(f'opened from {f}')
-        #     logger.info(f'opened from {f}')
 
-        #     self.data = pickle.load(f)
+        # Check if local pkl file exists
+        if os.path.exists(pkl_path):
+            # Get file creation/modification time
+            pkl_timestamp = os.path.getmtime(pkl_path)
+            pkl_date = datetime.fromtimestamp(pkl_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
-        # except:
-        
+            print(f'\nLocal pkl file found for {self.off_name}')
+            print(f'File created/modified: {pkl_date}')
+            use_local = input(f'Use local pkl file? (y/n, default=n): ').strip().lower()
+
+            if use_local == 'y':
+                try:
+                    with open(pkl_path, 'rb') as f:
+                        logger.info(f'Loading data from local pkl: {pkl_path}')
+                        logger.info(f'File timestamp: {pkl_date}')
+                        print(f'Loading data from local pkl file...')
+                        self.data = pickle.load(f)
+                        print(f'Successfully loaded data for {self.off_name}')
+                        return  # Exit early if pkl loaded successfully
+                except Exception as e:
+                    logger.error(f'Failed to load pkl file: {e}')
+                    print(f'Error loading pkl file: {e}')
+                    print('Proceeding to fetch data from remote source...')
+
         s3_file_source_path = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/'
 
         # this creates the dataframe for the tracker
@@ -413,7 +426,7 @@ class TrackerObject:
 
     def create_df(self):
         logger.info('in create_df')
-        wait_n_sec(45)
+        # wait_n_sec(n=45)
         dfs = []
         
         if self.off_name == 'Iron and Steel':
@@ -1053,7 +1066,134 @@ class TrackerObject:
             logger.info('Nothing should be printed here, length of df is 1 or 2 if its goget tuple')
             logger.info('Check create_filtered_geo_df')
 
+    def clean_cat_data(self):
+        """
+        Comprehensive cleaning for categorical (non-numeric) data entered by humans.
+        Handles whitespace, case issues, null variations, and validates data quality.
+        """
 
+        if not isinstance(self.data, pd.DataFrame):
+            logger.info("Error: 'self.data' is not a DataFrame.")
+            
+            logger.info(msg="Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+            input('self.data is not in a dataframe')
+            return
+
+        cleaning_issues = []  # Track issues for reporting
+
+        # Define columns to skip (numeric columns handled elsewhere)
+        numeric_keywords = ['CapacityInMtpa', 'Capacity (MW)', 'Capacity (Mt)', 'Capacity (Mtpa)',
+                          'CapacityBcm/y', 'CapacityBOEd', 'Capacity (MT)', 'Production - Gas',
+                          'Production - Oil', 'Production (Mt)', 'Production (Mtpa)', 'Capacity (ttpa)',
+                          'Latitude', 'Longitude', 'year']
+
+        # Iterate through each column
+        for col in self.data.columns:
+            # Skip numeric columns and geometry and helper col like country_to_check
+            if col in ['geometry', 'country_to_check'] or any(keyword in col for keyword in numeric_keywords):
+                continue
+
+            # Skip if column is not object/string type
+            if self.data[col].dtype not in ['object', 'string']:
+                continue
+
+            logger.info(f"Cleaning categorical column: {col}")
+            original_unique_count = self.data[col].nunique() # unhashable type list uniques = table.unique(values)
+
+            # Convert to string for consistent processing
+            self.data[col] = self.data[col].astype(str)
+
+            # 1. Handle null variations BEFORE other operations
+            null_variations = ['nan', 'NaN', 'None', 'N/A', 'NA', 'n/a', 'null', 'NULL',
+                             '-', '--', '?', 'unknown', 'Unknown', 'UNKNOWN', '*', '']
+            self.data[col] = self.data[col].replace(null_variations, pd.NA)
+            self.data[col] = self.data[col].fillna('')
+
+            # 2. Strip whitespace (leading/trailing/multiple internal spaces)
+            self.data[col] = self.data[col].str.strip()
+            self.data[col] = self.data[col].str.replace(r'\s+', ' ', regex=True)  # Multiple spaces to single
+
+            # 3. Remove non-printable characters (tabs, newlines, etc.)
+            self.data[col] = self.data[col].str.replace(r'[\t\n\r\f\v]', ' ', regex=True)
+
+            # 4. Handle case inconsistencies for likely categorical columns
+            # Keep original case for proper nouns (countries, names, etc.)
+            # HOLD OFF TO DO HAVE CLASS OBJECT FOR ALL COLUMN RENAMING IS DONE
+            # if col in ['Status', 'Fuel', 'Fuel type', 'FacilityType']:
+            #     # Standardize case for status-like fields
+            #     before_case = self.data[col].copy()
+            #     self.data[col] = self.data[col].str.title()
+            #     changed = (before_case != self.data[col]) & before_case.notna()
+            #     if changed.sum() > 0:
+            #         logger.info(f"  Standardized case for {changed.sum()} entries in {col}")
+
+            # 5. Length validation - flag suspiciously short or long entries
+            if col not in ['Country/Area', 'Subnational unit (province, state)', 'GEM wiki page', 'Wiki URL']:
+                # Check for very short entries (< 2 chars) - might be data entry errors
+                short_entries = self.data[self.data[col].str.len() < 2][col]
+                if len(short_entries) > 0:
+                    cleaning_issues.append({
+                        'column': col,
+                        'issue_type': 'short_entry',
+                        'count': len(short_entries),
+                        'examples': short_entries.unique()[:5].tolist()
+                    })
+                    logger.warning(f"  Found {len(short_entries)} suspiciously short entries in {col}")
+
+                # Check for very long entries (> 200 chars) - might be concatenated data
+                long_entries = self.data[self.data[col].str.len() > 200][col]
+                if len(long_entries) > 0:
+                    cleaning_issues.append({
+                        'column': col,
+                        'issue_type': 'long_entry',
+                        'count': len(long_entries),
+                        'examples': [str(x)[:50] + '...' for x in long_entries.unique()[:3].tolist()]
+                    })
+                    logger.warning(f"  Found {len(long_entries)} suspiciously long entries in {col}")
+
+            # 6. Check for numeric contamination in text fields
+            if col not in ['Unit ID', 'Plant ID', 'Owner GEM ID', 'Parent GEM ID']:
+                # Check for entries that are purely numeric when they shouldn't be
+                numeric_pattern = r'^\d+$'
+                numeric_entries = self.data[self.data[col].str.match(numeric_pattern, na=False)][col]
+                if len(numeric_entries) > 0:
+                    cleaning_issues.append({
+                        'column': col,
+                        'issue_type': 'unexpected_numeric',
+                        'count': len(numeric_entries),
+                        'examples': numeric_entries.unique()[:5].tolist()
+                    })
+                    logger.warning(f"  Found {len(numeric_entries)} purely numeric entries in {col}")
+
+            # 7. Check for entries with only whitespace after cleaning
+            whitespace_only = self.data[self.data[col].str.isspace()][col]
+            if len(whitespace_only) > 0:
+                self.data.loc[self.data[col].str.isspace(), col] = pd.NA
+                logger.info(f"  Replaced {len(whitespace_only)} whitespace-only entries with NA in {col}")
+
+            # 8. Log significant changes in unique value count
+            new_unique_count = self.data[col].nunique()
+            if original_unique_count != new_unique_count:
+                reduction = original_unique_count - new_unique_count
+                logger.info(f"  Reduced unique values in {col} from {original_unique_count} to {new_unique_count} ({reduction} duplicates cleaned)")
+                cleaning_issues.append({
+                    'column': col,
+                    'issue_type': 'duplicates_cleaned',
+                    'original_unique': original_unique_count,
+                    'new_unique': new_unique_count,
+                    'reduction': reduction
+                })
+
+        # Save cleaning issues report
+        if cleaning_issues:
+            issues_df = pd.DataFrame(cleaning_issues)
+            issues_path = f'{logpath}categorical_cleaning_issues_{self.acro}_{releaseiso}_{iso_today_date}.csv'
+            issues_df.to_csv(issues_path, index=False)
+            logger.info(f"Saved categorical cleaning issues report to {issues_path}")
+
+        logger.info(f"Completed categorical data cleaning for {self.acro}")
+        
+    
     def clean_num_data(self):
         # apply df['b'] = pd.to_numeric(df['b'], errors='coerce')
         # clean df
@@ -1171,6 +1311,8 @@ class TrackerObject:
             issue_df.to_csv(f'{logpath}missing_coordinates_geo-{self.acro}_{releaseiso}_{iso_today_date}.csv',  index=False)     
         else:
             logger.info("Error: 'self.data' is not a DataFrame.")
+            logger.info(msg="Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+            
 
     
 
