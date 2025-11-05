@@ -51,7 +51,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
             logger.info(f'Is this release date correct for {tracker_source_obj.off_name}? {tracker_source_obj.release}\nEdit the map tracker log sheet in GEM maps if not.')
             
         # We SET UP DF AND ABOUT HERE
-        tracker_source_obj.set_df()
+        tracker_source_obj.set_df() # need to set this up at the map level so sharing data pull, or add to a dictionary
         tracker_source_obj.get_about()
             
         # set data and about attributes for each tracker

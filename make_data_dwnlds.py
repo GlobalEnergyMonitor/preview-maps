@@ -26,7 +26,6 @@ def make_data_dwnlds(tracker):
     map_obj_list = []  # Initialize map_obj_list outside the loop
     
     if not map_obj_list:
-        print('Have not created files recently')
         map_tab_df = gspread_access_file_read_only(multi_tracker_log_sheet_key, map_tab)
         print(map_tab_df)
         prep_dict = source_tab_df.to_dict(orient='index')            
