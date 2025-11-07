@@ -27,7 +27,8 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
     for item in map_obj.source:
         logger.info(f'Creating source object for: {map_obj.mapname} {item}')
         logger.info(f'Remember to clear out the local pkl files if needed!')
-
+        # logger.info(msg=f'{prep_dict[item]}')
+        item = item.strip()
         tracker_source_obj = TrackerObject(
             key = prep_dict[item]['gspread_key'],
             off_name = prep_dict[item]['official name'], 

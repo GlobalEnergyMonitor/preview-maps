@@ -37,19 +37,21 @@ list_of_all_official = [
 
 ]
 
+# TODO maybe have the script make the folder based on the acro in map tarcker log
+
 pm_preview_mode = False # For Baird's testing work
-trackers_to_update = ["LNG Terminals"] # official tracker tab name in map tracker log sheet
-new_release_date = 'October_2025' # for within about page NEEDS TO BE FULL MONTH
+trackers_to_update = ["Chemicals"] # official tracker tab name in map tracker log sheet
+new_release_date = 'November_2025' # for within about page NEEDS TO BE FULL MONTH
+releaseiso = '2025-11'
 new_release_dateinput = input(f'In {new_release_date} format, with no spaces, tell me the public release date. Or press enter if {new_release_date} is the right month.')
 if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 
 testval = 'Abbot Point LNG Terminal'
-releaseiso = '2025-10'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ["ggit", "asia", "latam", "africa", "europe"] 
+priority = [""] 
 force_refresh_flag = False
 tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
@@ -186,6 +188,7 @@ official_tracker_name_to_mapname = {
     "Energy Ownership": "ownership",
     "Integrated": "integrated",
     "Cement and Concrete": "gcct",
+    "Chemicals": "GChI",
 }
 
 
@@ -275,25 +278,30 @@ steel_gist_table_cols = [
 
 # TODO keep in retired year or closed year for longitudinal, and make sure start year is there too
 final_cols = [
-                'model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id','owner-noneng','retired-year',
-                'plant-status','noneng_owner', 'parent_gem_id', 'status_display','owner_gem_id',
-                'facilitytype','unit_id', 'loc-oper', 'loc-owner', 'tech-type','ea_scaling_capacity', 'operator', 'Operator', 'Binational', 'binational', 'loc-accu','units-of-m','mapname','tracker-acro','official_name','url',
-                'areas','name', 'unit_name', 'capacity',
-                'status', 'start_year', 'subnat', 'region', 'owner', 'parent', 'tracker', 'tracker_custom', 'operator-name-(local-lang/script)', 'owner-name-(local-lang/script)',
+                'feedacc','feedstock', 'secprod', 'primprod','model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id',
+                'owner-noneng','retired-year','plant-status','noneng_owner', 'parent_gem_id', 'status_display','owner_gem_id', 'facilitytype','unit_id', 'loc-oper', 'loc-owner', 'tech-type','ea_scaling_capacity', 'operator', 'Operator', 
+                'Binational', 'binational', 'loc-accu','units-of-m','mapname','tracker-acro','official_name','url', 'sfid'
+                'areas','name', 'unit_name', 'capacity','status', 'start_year', 'subnat', 'region', 'owner', 'parent', 'tracker', 'tracker_custom', 'operator-name-(local-lang/script)', 'owner-name-(local-lang/script)',
                 'original_units', 'location-accuracy','conversion_factor', 'geometry', 'river', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2',
                 'prod-coal', 'Latitude', 'Longitude', 'pid','id', 'prod_oil', 'prod_gas', 'prod_year_oil', 'prod_year_gas', 'fuel', 'PCI5', 'PCI6', 'pci5','pci6','WKTFormat', 'Fuel', 'maturity', 'fuel-filter', 
-                'pci-list', 'coal-grade', 'mine-type', 'prod-coal', 'owners_noneng', 'noneng_name', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year', 'pci-list', 
-                'coal-grade', 'mine-type', 'prod-coal', 'owners_noneng', 'noneng_name', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year',
+                'pci-list', 'coal-grade', 'mine-type',  'owners_noneng', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year', 'pci-list', 
+                'coal-grade', 'mine-type',  'noneng_name', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year',
                 'claycal-yn', 'altf-yn', 'ccs-yn', 'prod-type', 'plant-type', 'entity-id', 'color', 'capacity-display', 'Clinker Capacity (millions metric tonnes per annum)', 'Cement Capacity (millions metric tonnes per annum)', "cem-type",
                 'wiki-from-name', 'capacity-details', 'parent-search', 'owner-search', 'name-search', 'areas-subnat-sat-display', 'multi-country', 'noneng-name', "prod-method-tier-display", "prod-method-tier", "main-production-equipment"]
 # add two together because gist list is so long and should be refactored soon
 final_cols.extend(steel_gist_table_cols)
 
 # need to adjust when handle sorting column names TODO 
+# TODO ASAP for gsheet get columns, use script to match them to final cols, show remiaining, and test if any have changed
+# and with add a TEST that check if any key variables in configs are all empty .... or nan (to fix ggit update)
 simplified_cols = ['url', 'areas','name','capacity', 'capacity-details', 'latitude', 'longitude', 'pid','id', 'type', 'areas-subnat-sat-display', 'geometry']
 
 # TODO this is what could be replaced by a class, tip from Hannah
 renaming_cols_dict = {
+                    'GChI': {'Plant name (English)':'name','Country/area': 'areas', 'Subnational unit': 'subnat', 'Plant name (other language)': 'noneng_name', 'SFI ID': 'sfid',
+                               'GEM wiki page': 'url', 'GEM plant ID':'pid', 'Owner (English)': 'owner', 'Owner (other language)': 'owners_noneng', 'Owner GEM entity ID': 'owner_gem_id',
+                               'Coordinate accuracy': 'coordinate-accuracy', 'Primary products': 'primprod', 'Secondary products': 'secprod', 'Feedstock': 'feedstock', 'Feedstock accuracy':'feedacc'},
+                    
                     'GMET': {'Country/Area': 'areas', 'Plume Origin Latitude': 'Latitude', 'Plume Origin Longitude': 'Longitude', 'Subnational Unit': 'subnat', 
                                'GEM Wiki': 'url', 'GEM Methane Plume ID':'pid', 'Name':' name', 'Emissions (kg/hr)': 'capacity'}, # TODO need to add the others and add to final_cols
                     

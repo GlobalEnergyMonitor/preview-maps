@@ -264,77 +264,88 @@ class TrackerObject:
     def get_about(self):
         # this gets the about page for this tracker data
         print(f'Creating about for: {self.off_name}')
-
-        # these are the json files like ggit that we need to use its google doc version not geojson version
-        if self.about_key != '':
-            tracker_key = self.about_key
-        
-        # this case is for the normies where we'll loop through their final data dwld file and find the about page
-        else:
-            tracker_key = self.key
-        about_df = self.find_about_page(tracker_key)
-        
+        skipabout = input(f'If you want to skip creating an about page click enter! Otherwise press any other key')
+                    # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
+            # # adjust so can easily press
+            # if use_local == 'y' or '':
+        if skipabout == '':
             
-       
-        tracker_official_name = f"{self.off_name}"
-        if self.tab_name in trackers_to_update:
-            # use new date not old one in map log gsheets
-            release_month_year = f"{new_release_dateinput.replace('_', ' ')}" 
+
+            # these are the json files like ggit that we need to use its google doc version not geojson version
+            if self.about_key != '':
+                tracker_key = self.about_key
+            
+            # this case is for the normies where we'll loop through their final data dwld file and find the about page
+            else:
+                tracker_key = self.key
+            about_df = self.find_about_page(tracker_key)
+            
+                
+        
+            tracker_official_name = f"{self.off_name}"
+            if self.tab_name in trackers_to_update:
+                # use new date not old one in map log gsheets
+                release_month_year = f"{new_release_dateinput.replace('_', ' ')}" 
+            else:
+                # TODO keep the gsheet up to date by automatic or a test at least
+                release_month_year = self.release
+
+
+            # NEEDS 
+            # Copyright © Global Energy Monitor. Global Wind Power Tracker, February 2025 release. Distributed under a Creative Commons Attribution 4.0 International License.
+            # Recommended Citation: "Global Energy Monitor, Global Wind Power Tracker, February 2025 release" (See the CC license for attribution requirements if sharing or adapting the data set.)
+            
+            copyright_full = f"Copyright © Global Energy Monitor. Global {tracker_official_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
+            citation_full = f'Recommended Citation: "Global Energy Monitor, Global {tracker_official_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
+            
+            
+            # TODO redo this because it is so buggy if there are multiple headers or collapsed cells in about pages (re COAL), create about pages like wiki template
+            # currently I manually check the about pages to be sure it all looks ok and fix little things
+            
+            # if either are not in there fully then insert into the df after first row
+            # elif partially in there, delete row and insert
+            # else pass
+            if (about_df == copyright_full).any().any():
+                logger.info(f'Already has full copyright: {copyright_full}')
+            elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1).any():
+                logger.info('Partial copyright, delete row and insert full')
+                # find row number in df that holds partial
+                logger.warning(f'need to add full copyright to about template for {self.off_name}')
+            else:
+                logger.info('Inserting full copyright into second row') 
+                # insert a new blank row in the second row
+                full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
+                # split the existing df in two at the second row, concat full copy row like a sandwich in between
+                about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
+
+            about_df.reset_index(drop=True, inplace=True)
+            
+            
+            if (about_df == citation_full).any().any():
+                logger.info(f'Already has full citation: {citation_full}')
+            elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1).any():
+                logger.info('Partial citation, delete row and insert full')
+                logger.warning(f'need to add full citation to about template for {self.off_name}')
+
+            else:
+                logger.info('Inserting full citation_full into second row') 
+                # insert a new blank row in the second row
+                full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
+                # split the existing df in two at the second row, concat full copy row like a sandwich in between
+                about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
+            
+            about_df.reset_index(drop=True, inplace=True)
+            
+
+            about_df = clean_about_df(about_df) 
+
+        
+            self.about = about_df
+            
         else:
-            # TODO keep the gsheet up to date by automatic or a test at least
-            release_month_year = self.release
+            self.about = 'skipped'
+            
 
-
-        # NEEDS 
-        # Copyright © Global Energy Monitor. Global Wind Power Tracker, February 2025 release. Distributed under a Creative Commons Attribution 4.0 International License.
-        # Recommended Citation: "Global Energy Monitor, Global Wind Power Tracker, February 2025 release" (See the CC license for attribution requirements if sharing or adapting the data set.)
-        
-        copyright_full = f"Copyright © Global Energy Monitor. Global {tracker_official_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
-        citation_full = f'Recommended Citation: "Global Energy Monitor, Global {tracker_official_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
-        
-        
-        # TODO redo this because it is so buggy if there are multiple headers or collapsed cells in about pages (re COAL), create about pages like wiki template
-        # currently I manually check the about pages to be sure it all looks ok and fix little things
-        
-        # if either are not in there fully then insert into the df after first row
-        # elif partially in there, delete row and insert
-        # else pass
-        if (about_df == copyright_full).any().any():
-            logger.info(f'Already has full copyright: {copyright_full}')
-        elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1).any():
-            logger.info('Partial copyright, delete row and insert full')
-            # find row number in df that holds partial
-            logger.warning(f'need to add full copyright to about template for {self.off_name}')
-        else:
-            logger.info('Inserting full copyright into second row') 
-            # insert a new blank row in the second row
-            full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
-            # split the existing df in two at the second row, concat full copy row like a sandwich in between
-            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
-
-        about_df.reset_index(drop=True, inplace=True)
-        
-        
-        if (about_df == citation_full).any().any():
-            logger.info(f'Already has full citation: {citation_full}')
-        elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1).any():
-            logger.info('Partial citation, delete row and insert full')
-            logger.warning(f'need to add full citation to about template for {self.off_name}')
-
-        else:
-            logger.info('Inserting full citation_full into second row') 
-            # insert a new blank row in the second row
-            full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
-            # split the existing df in two at the second row, concat full copy row like a sandwich in between
-            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
-        
-        about_df.reset_index(drop=True, inplace=True)
-        
-
-        about_df = clean_about_df(about_df) 
-
-    
-        self.about = about_df
 
 
 
@@ -868,6 +879,15 @@ class TrackerObject:
 
         self.data = df 
 
+    def gchi_changes(self):
+        
+        df = self.data
+        # filler for now so all assets are sized the same
+        df['capacity'] = 0.0
+        df[['Latitude', 'Longitude']] = df['Coordinates'].str.split(', ', expand=True)
+        df[['Latitude', 'Longitude']] = df['Coordinates'].str.split(',', expand=True) # qc test
+
+        self.data = df        
 
 
     def gcct_changes(self):
@@ -1700,11 +1720,20 @@ class TrackerObject:
             gdf['original_units'] = 'n/a'
             gdf['conversion_factor'] = 'n/a'
             gdf = gdf.reset_index(drop=True) 
+        # TODO need to have this get skipped for certain trackers where regional maps don't get created or this kind of measure isn't relevant 
+        elif self.acro == 'GChI':
+            gdf['tracker_custom'] = 'GChI'
+            gdf['original_units'] = 'n/a'
+            gdf['conversion_factor'] = 'n/a'
+            gdf = gdf.reset_index(drop=True)             
+            
+            
 
 
         else:
 
             if len(gdf) > 0:
+                
                 gdf = gdf.reset_index(drop=True)
                 conversion_df = conversion_df.reset_index(drop=True)
                 logger.info(f'Setting acro as tracker custom: {self.acro} which is needed to look up conversion factor')

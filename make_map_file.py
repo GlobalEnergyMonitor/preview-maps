@@ -80,6 +80,9 @@ def make_map(list_of_map_objs, tracker):
                 tracker_obj.gist_changes() 
             elif tracker_obj.acro in ['GIOMT']:
                 tracker_obj.giomt_changes() 
+            elif tracker_obj.acro in ['GChI']:
+                input(prompt='in GChI') # TODO remove once this is up and running
+                tracker_obj.gchi_changes()
         
             # GIST checks
             # [print(tracker_obj.data[col]) for col in tracker_obj.data.columns if col == 'Clinker Capacity (millions metric tonnes per annum)']
