@@ -229,7 +229,7 @@ gspread_creds = gspread.oauth(
 # helpful to pass over specialty logic
 gas_only_maps = ['asia', 'europe', 'ggit'] 
 non_gsheet_data = ['Gas Pipelines', 'Oil Pipelines', 'Gas Pipelines EU']
-non_regional_maps = ['gist', 'gmet', 'giomt', 'gcct']
+non_regional_maps = ['gist', 'gmet', 'giomt', 'gcct', 'gchi']
 
 conversion_key = '1fOPwhKsFVU5TnmkbEyPOylHl3XKZzDCVJ29dtTngkew'
 conversion_tab = ['data']
@@ -278,7 +278,7 @@ steel_gist_table_cols = [
 
 # TODO keep in retired year or closed year for longitudinal, and make sure start year is there too
 final_cols = [
-                'feedacc','feedstock', 'secprod', 'primprod','model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id',
+                'areas', 'feedacc','feedstock', 'secprod', 'primprod','model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id',
                 'owner-noneng','retired-year','plant-status','noneng_owner', 'parent_gem_id', 'status_display','owner_gem_id', 'facilitytype','unit_id', 'loc-oper', 'loc-owner', 'tech-type','ea_scaling_capacity', 'operator', 'Operator', 
                 'Binational', 'binational', 'loc-accu','units-of-m','mapname','tracker-acro','official_name','url', 'sfid'
                 'areas','name', 'unit_name', 'capacity','status', 'start_year', 'subnat', 'region', 'owner', 'parent', 'tracker', 'tracker_custom', 'operator-name-(local-lang/script)', 'owner-name-(local-lang/script)',
@@ -450,7 +450,8 @@ tracker_to_legendname = {
                     "GCMT": "coal-mine",
                     "GCTT": "coal-terminal",
                     "GIST": "iron-steel",
-                    "GIOMT": "iron-mine"
+                    "GIOMT": "iron-mine",
+                    "GChI": "chem-inventory"
 }
 
 multi_tracker_log_sheet_key = '15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8'
