@@ -883,7 +883,8 @@ class TrackerObject:
         
         df = self.data
         # filler for now so all assets are sized the same
-        df['capacity'] = 0.0
+        df['capacity'] = 30.0
+        df['status'] = 'operating'
         df[['Latitude', 'Longitude']] = df['Coordinates'].str.split(', ', expand=True)
         df[['Latitude', 'Longitude']] = df['Coordinates'].str.split(',', expand=True) # qc test
 
