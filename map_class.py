@@ -492,6 +492,9 @@ class MapObject:
             tracker_sel = gdf_map_ready['tracker-acro'].iloc[0] 
             if tracker_sel == 'GCMT':
                 gdf_map_ready['status'] = gdf_map_ready['status'].replace('not-found', 'retired')
+        else:
+            # bandaid to just have gchi work for now even though they have no statuses
+            gdf_map_ready = gdf.copy()
 
         
         # check that areas isn't empty

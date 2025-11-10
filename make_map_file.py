@@ -81,7 +81,6 @@ def make_map(list_of_map_objs, tracker):
             elif tracker_obj.acro in ['GIOMT']:
                 tracker_obj.giomt_changes() 
             elif tracker_obj.acro in ['GChI']:
-                input(prompt='in GChI') # TODO remove once this is up and running
                 tracker_obj.gchi_changes()
         
             # GIST checks
