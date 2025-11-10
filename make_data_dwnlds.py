@@ -43,9 +43,10 @@ def make_data_dwnlds(tracker):
             
             
             if tracker in map_tab_df.loc[row, 'source']:
+                logger.info(f'{tracker} is in source tab of gsheet map log')
                 # create a map object from that row if tracker is in the source col
                 
-                map_obj = make_map_tracker_objs(map_tab_df, row, prep_dict)
+                map_obj = make_map_tracker_objs(map_tab_df, row, prep_dict=prep_dict)
 
                 pkl_path = os.path.join(local_pkl_dir, f'map_obj_for_{map_obj.mapname}_on_{iso_today_date}.pkl')
                 with open(pkl_path, 'wb') as f:
@@ -54,6 +55,7 @@ def make_data_dwnlds(tracker):
                 logger.info(f"Updated map_obj.trackers for {map_obj.mapname}: {map_obj.source}")
                 logger.info(f'Length of tracker list for {map_obj.mapname} {len(map_obj.trackers)}')
                 map_obj_list.append(map_obj)
+
     
     else:
         logger.info(f'{len(map_obj_list)} maps to be updated with new {tracker} data!')

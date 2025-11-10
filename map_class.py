@@ -422,75 +422,79 @@ class MapObject:
     def map_ready_statuses_and_countries(self):
         
         gdf = self.trackers
-
-        gdf['status'] = gdf['status'].fillna('Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
-        gdf['status'] = gdf['status'].replace('', 'Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
-        logger.info(f'set of statuses: {set(gdf["status"].to_list())}')
-        gdf_map_ready = fix_status_inferred(gdf)
-    
-        # Create masks for the 'tracker-acro' conditions
-        mask_gcmt = gdf_map_ready['tracker-acro'] == 'GCMT'
-        mask_goget = gdf_map_ready['tracker-acro'] == 'GOGET'
-    
-        # Update 'status' to 'Retired' where both masks are True
-        gdf_map_ready['status'].fillna('', inplace=True)
-        mask_status_empty = gdf_map_ready['status'] == ''
+        if 'status' in gdf.columns:
+            # accounting for gchi with no status
+            gdf['status'] = gdf['status'].fillna('Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
+            gdf['status'] = gdf['status'].replace('', 'Not Found') # ValueError: Cannot mask with non-boolean array containing NA / NaN values
+            logger.info(f'set of statuses: {set(gdf["status"].to_list())}')
+            gdf_map_ready = fix_status_inferred(gdf)
         
-        # Update 'status' to 'Not Found' where both masks are True
-        gdf_map_ready.loc[mask_status_empty & mask_gcmt, 'status'] = 'retired'
-        gdf_map_ready.loc[mask_status_empty & mask_goget, 'status'] = 'not found'
-        gdf_map_ready['status_legend'] = gdf_map_ready.copy()['status'].str.lower().replace({
-                    # proposed_plus
-                    'proposed': 'proposed_plus',
-                    'announced': 'proposed_plus',
-                    'discovered': 'proposed_plus',
-                    # pre-construction_plus
-                    'pre-construction': 'pre-construction_plus',
-                    'pre-permit': 'pre-construction_plus',
-                    'permitted': 'pre-construction_plus',
-                    # construction_plus
-                    'construction': 'construction_plus',
-                    'in development': 'construction_plus',
-                    # mothballed
-                    'mothballed': 'mothballed_plus',
-                    'idle': 'mothballed_plus',
-                    'idled': 'mothballed-plus',
-                    'shut in': 'mothballed_plus',
-                    # retired
-                    'retired': 'retired_plus',
-                    'closed': 'retired_plus',
-                    'decommissioned': 'retired_plus',
-                    'not found': 'not-found'})
+            # Create masks for the 'tracker-acro' conditions
+            mask_gcmt = gdf_map_ready['tracker-acro'] == 'GCMT'
+            mask_goget = gdf_map_ready['tracker-acro'] == 'GOGET'
         
+            # Update 'status' to 'Retired' where both masks are True
+            gdf_map_ready['status'].fillna('', inplace=True)
+            mask_status_empty = gdf_map_ready['status'] == ''
+            
+            # Update 'status' to 'Not Found' where both masks are True
+            gdf_map_ready.loc[mask_status_empty & mask_gcmt, 'status'] = 'retired'
+            gdf_map_ready.loc[mask_status_empty & mask_goget, 'status'] = 'not found'
+            gdf_map_ready['status_legend'] = gdf_map_ready.copy()['status'].str.lower().replace({
+                        # proposed_plus
+                        'proposed': 'proposed_plus',
+                        'announced': 'proposed_plus',
+                        'discovered': 'proposed_plus',
+                        # pre-construction_plus
+                        'pre-construction': 'pre-construction_plus',
+                        'pre-permit': 'pre-construction_plus',
+                        'permitted': 'pre-construction_plus',
+                        # construction_plus
+                        'construction': 'construction_plus',
+                        'in development': 'construction_plus',
+                        # mothballed
+                        'mothballed': 'mothballed_plus',
+                        'idle': 'mothballed_plus',
+                        'idled': 'mothballed-plus',
+                        'shut in': 'mothballed_plus',
+                        # retired
+                        'retired': 'retired_plus',
+                        'closed': 'retired_plus',
+                        'decommissioned': 'retired_plus',
+                        'not found': 'not-found'})
+            
 
-        # Create a mask for rows where 'status' is empty
+            # Create a mask for rows where 'status' is empty
 
-        gdf_map_ready_no_status = gdf_map_ready.loc[mask_status_empty]
+            gdf_map_ready_no_status = gdf_map_ready.loc[mask_status_empty]
 
-        if len(gdf_map_ready_no_status) > 0:
-            logger.warning(f'check no status df, will be printed to issues as well: {gdf_map_ready_no_status}')
-            gdf_map_ready_no_status.to_csv(f'issues/{self.mapname}-no-status-{iso_today_date}.csv')
-        
-        # make sure all statuses align with no space rule
-        gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
-        gdf_map_ready['status_legend'] = gdf_map_ready['status_legend'].apply(lambda x: x.strip().replace('_','-'))
-        gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.lower())
-        logger.info(set(gdf_map_ready['status'].to_list()))
-        logger.warning('check list of statuses after replace space and _') 
-        # TODO check that all legend filter columns go through what status goes through 
-        if self.mapname == 'gcmt':
-                # make sure all filter cols align with no space rule
-            legcols = ["coal-grade", "mine-type"]
-            for col in legcols:
-                gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
-                gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.strip().replace('_','-'))
-                gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.lower())        
-                
-        logger.info(set(gdf_map_ready['areas'].to_list()))
+            if len(gdf_map_ready_no_status) > 0:
+                logger.warning(f'check no status df, will be printed to issues as well: {gdf_map_ready_no_status}')
+                gdf_map_ready_no_status.to_csv(f'issues/{self.mapname}-no-status-{iso_today_date}.csv')
+            
+            # make sure all statuses align with no space rule
+            gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
+            gdf_map_ready['status_legend'] = gdf_map_ready['status_legend'].apply(lambda x: x.strip().replace('_','-'))
+            gdf_map_ready['status'] = gdf_map_ready['status'].apply(lambda x: x.lower())
+            logger.info(set(gdf_map_ready['status'].to_list()))
+            logger.warning('check list of statuses after replace space and _') 
+            # TODO check that all legend filter columns go through what status goes through 
+            if self.mapname == 'gcmt':
+                    # make sure all filter cols align with no space rule
+                legcols = ["coal-grade", "mine-type"]
+                for col in legcols:
+                    gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.strip().replace(' ','-')) # TODO why was this commented out?
+                    gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.strip().replace('_','-'))
+                    gdf_map_ready[col] = gdf_map_ready[col].apply(lambda x: x.lower())        
+                    
+            logger.info(set(gdf_map_ready['areas'].to_list()))
 
-        tracker_sel = gdf_map_ready['tracker-acro'].iloc[0] 
-        if tracker_sel == 'GCMT':
-            gdf_map_ready['status'] = gdf_map_ready['status'].replace('not-found', 'retired')
+            tracker_sel = gdf_map_ready['tracker-acro'].iloc[0] 
+            if tracker_sel == 'GCMT':
+                gdf_map_ready['status'] = gdf_map_ready['status'].replace('not-found', 'retired')
+        else:
+            # bandaid to just have gchi work for now even though they have no statuses
+            gdf_map_ready = gdf.copy()
 
         
         # check that areas isn't empty
