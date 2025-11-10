@@ -1,20 +1,7 @@
 var config = {
+    // geojson: 'compilation_output/gchi_map_2025-11-10.geojson',
     geojson:  'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GChI/2025-11/gchi_map_2025-11-10.geojson',// 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/mapfiles/gcct_map_2025-06-18.geojson', // Saying can't be found? TODO march 24th
-//  gem_tracker_maps/trackers/gcct/compilation_output/gcct_map_2025-05-30.geojson
-    // colors: {
-    //     'light red': '#f28b82',
-    //     'red': '#c74a48',
-    //     'light blue': '#5dade2',
-    //     'blue': '#5c62cf',
-    //     'green': '#4c9d4f',
-    //     'light green': '#66c26e',
-    //     'light grey': '#e0e0e0',
-    //     'grey': '#8f8f8e',
-    //     'orange': '#FF8C00',
-    //     'yellow': '#f3ff00',
-    //     'black': '#000000',
-    //     'purple': '#9370db'
-    // },
+
     
     color: { 
         field: 'region', // prod type
@@ -29,14 +16,12 @@ var config = {
 
         }
     },
-    // //     },
         filters: [
         {
             field: 'region',
             label: 'Region',
             values: ['Africa', 'Central and South America', 'Asia Pacific', 'Europe',
                 'Eurasia', 'Middle East', 'North America'],
-            // values_labels: ['Announced', 'Construction', 'Operating', 'Operating Pre-Retirement', 'Cancelled', 'Retired', 'Mothballed', 'Not Found'],
             primary: true
         },
     ],
@@ -60,13 +45,13 @@ var config = {
         // }
         // ],
 
-        linkField: 'pid',
-        urlField: 'url',
-        // statusField: 'status-legend',
-        // statusDisplayField: 'status',
-        countryField: 'areas',
-        capacityField: 'capacity', // change to scaling col once added
-    capacityDisplayField: 'capacity',
+    linkField: 'pid',
+    urlField: 'url',
+    // statusField: 'status-legend',
+    // statusDisplayField: 'status',
+    countryField: 'areas',
+    capacityField: 'scaling-capacity', // change to scaling col once added
+    // capacityDisplayField: 'capacity',
 
     capacityLabel: '',  //(millions metric tonnes per annum)
     // context-layers: [
@@ -90,20 +75,21 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them,
         and designated which column has the link */
     tableHeaders: {
-        values: ['name','owner', 'status', 'Cement-Capacity-(millions-metric-tonnes-per-annum)', 'start-year','plant-type','prod-type', 'subnat','areas'],
-        labels: ['Project','Owner','Status', 'Cement Capacity (mmtpa)', 'Start date', 'Plant type', 'Production type','Subnational Unit','Country/Area'],
+        values: ['name','owner', 'primprod', 'feedstock', 'secprod','status', 'subnat','areas'],
+        labels: ['Project','Owner', 'Primary Product', 'Feedstock','Secondary Product','Status', 'Subnational Unit','Country/Area'],
         clickColumns: ['name'],
         rightAlign: [],
         removeLastComma: ['areas'], 
-        toLocaleString: ['Cement-Capacity-(millions-metric-tonnes-per-annum)'], 
+        toLocaleString: [], 
 
     },
-
+    // locationColumns: ['latitude','longitude'],
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
-    searchFields: { 'Project': ['name', 'plant-name-(other-language)', 'other-plant-names-(english)', 'other-plant-names-(other-language)'], 
-        'Companies': ['owner', 'parent', 'loc-owner', 'entity-id'],
-        'Type ': ['plant-type', 'prod-type','color']
+    searchFields: { 'Project': ['name', 'noneng-name'], 
+        'Companies': ['owner',  'owners-noneng', 'owner-gem-id'],
+        'Primary Products': ['primprod'],
+        'Feedstock': ['feedstock']
     },
 
     /* define fields and how they are displayed. 
@@ -117,15 +103,13 @@ var config = {
     detailView: {
         // ned to add cement type but unsure what that is in the data
         'name': {'display': 'heading'},
-        // 'plant-type': {'label': 'Plant Type'},
-        // 'prod-type': {'label': 'Production Type'},
-        // 'Cement-Capacity-(millions-metric-tonnes-per-annum)': {'label': 'Cement Capacity (mmtpa)'},
-        // 'Clinker-Capacity-(millions-metric-tonnes-per-annum)': {'label': 'Clinker Capacity (mmtpa)'},
-        // 'cem-type': {'label': 'Cement Type'},
-        // 'color': {'label': 'Cement Color'},
         'owner': {'label': 'Owner'},
-        // 'start_year': {'label': 'Start date'},
-        // 'location-accuracy': {'label': 'Coordinate Accuracy'},
+        'primprod': {'label': 'Primary Products'},
+        'secprod': {'label': 'Secondary Products'},
+
+        'feedstock': {'label': 'Feedstock'},
+        'feedacc': {'label': 'Feedstock Accuracy'},
+
         'subnat': {'display': 'location'},
         'areas': {'display': 'location'}
     },
