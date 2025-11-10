@@ -4,64 +4,40 @@ var config = {
 
     
     color: { 
-        field: 'region', // prod type
+        field: 'status', // prod type
         values: {
-            'Africa': 'green', 
-            'Central and South America': 'green',
-            'Asia Pacific': 'green', 
-            'Europe': 'green',
-            'Eurasia': 'green',
-            'Middle East': 'green',
-            'North America': 'green',
+            'operating': 'green', 
+            // 'Central and South America': 'green',
+            // 'Asia Pacific': 'green', 
+            // 'Europe': 'green',
+            // 'Eurasia': 'green',
+            // 'Middle East': 'green',
+            // 'North America': 'green',
 
         }
     },
         filters: [
         {
-            field: 'region',
-            label: 'Region',
-            values: ['Africa', 'Central and South America', 'Asia Pacific', 'Europe',
-                'Eurasia', 'Middle East', 'North America'],
+            field: 'status',
+            label: 'Status',
+            values: ['operating'],
+            values_labels: ['Operating'],
+
             primary: true
         },
     ],
-        // {
-        //     field: 'secprod',
-        //     label: 'Plant type',
-        //     values: ['clinker only', 'grinding', 'integrated', ''],
-        //     values_labels: ['Clinker only', 'Grinding', 'Integrated', 'Not found']
-        // },
-        // {
-        //     field: 'feedstock',
-        //     label: 'Clinker Production Method',
-        //     values: ['dry', 'mixed', 'semidry', 'wet', '', 'n/a'],
-        //     values_labels: ['Dry', 'Mixed', 'Semi-dry', 'Wet', 'Not found', 'N/A (Grinding Plants)']
-        // },
-        // {
-        //     field: 'color',
-        //     label: 'Cement Color',
-        //     values: ['both', 'grey', 'white', ''],
-        //     values_labels: ['Grey & White', 'Grey', 'White', 'Not found']
-        // }
-        // ],
+
 
     linkField: 'pid',
     urlField: 'url',
-    // statusField: 'status-legend',
-    // statusDisplayField: 'status',
+    statusField: 'status-legend',
+    statusDisplayField: 'status',
     countryField: 'areas',
-    capacityField: 'scaling-capacity', // change to scaling col once added
+    capacityField: 'capacity', // change to scaling col once added
     // capacityDisplayField: 'capacity',
 
     capacityLabel: '',  //(millions metric tonnes per annum)
-    // context-layers: [
-    //     {
-    //         field: 'coalfield',
-    //         'label': 'Coal Fields',
-    //         'tileset': '[mapbox tile url]',
-    //         paint: {}
-    //     }
-    // ],
+
 
 
     /* Labels for describing the assets */
@@ -70,20 +46,17 @@ var config = {
 
     /* the column that contains the asset name. this varies between trackers */
     nameField: 'name',
-
-    
     /* configure the table view, selecting which columns to show, how to label them,
         and designated which column has the link */
     tableHeaders: {
-        values: ['name','owner', 'primprod', 'feedstock', 'secprod','status', 'subnat','areas'],
-        labels: ['Project','Owner', 'Primary Product', 'Feedstock','Secondary Product','Status', 'Subnational Unit','Country/Area'],
+        values: ['name','owner', 'primprod', 'feedstock', 'secprod', 'subnat','areas'],
+        labels: ['Project','Owner', 'Primary Product', 'Feedstock','Secondary Product','Subnational Unit','Country/Area'],
         clickColumns: ['name'],
         rightAlign: [],
         removeLastComma: ['areas'], 
         toLocaleString: [], 
 
     },
-    // locationColumns: ['latitude','longitude'],
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
     searchFields: { 'Project': ['name', 'noneng-name'], 
@@ -113,8 +86,13 @@ var config = {
         'subnat': {'display': 'location'},
         'areas': {'display': 'location'}
     },
-    // multiCountry: true,
-    // // maxCapacityLabel: 'millions metric tonnes per annum',
+
+
+    minRadius: 4,
+    maxRadius: 10,
+    highZoomMinRadius: 6,
+    highZoomMaxRadius: 32,
+
     showMaxCapacity: false,
     
 }

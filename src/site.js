@@ -432,24 +432,32 @@ function addPointLayer() {
     }
     let interpolateExpression = ('interpolate' in config ) ? config.interpolate :  ["linear"];
     try {
-        paint['circle-radius'] = [
-            "interpolate", ["exponential", .5], ["zoom"],
-            1, ["interpolate", interpolateExpression,
-                ["to-number",["get", config.capacityField]],
-                config.minPointCapacity, config.minRadius,
-                config.maxPointCapacity, config.maxRadius
-            ],
-            10, ["interpolate", interpolateExpression,
-                ["to-number",["get", config.capacityField]],
-                config.minPointCapacity, config.highZoomMinRadius,
-                config.maxPointCapacity, config.highZoomMaxRadius
-            ],
-        ];
+        // Handle case where all capacity values are the same
+        if (config.minPointCapacity === config.maxPointCapacity) {
+            paint['circle-radius'] = [
+                "interpolate", ["exponential", .5], ["zoom"],
+                1, config.minRadius,
+                10, config.highZoomMinRadius
+            ];
+        } else {
+            paint['circle-radius'] = [
+                "interpolate", ["exponential", .5], ["zoom"],
+                1, ["interpolate", interpolateExpression,
+                    ["to-number",["get", config.capacityField]],
+                    config.minPointCapacity, config.minRadius,
+                    config.maxPointCapacity, config.maxRadius
+                ],
+                10, ["interpolate", interpolateExpression,
+                    ["to-number",["get", config.capacityField]],
+                    config.minPointCapacity, config.highZoomMinRadius,
+                    config.maxPointCapacity, config.highZoomMaxRadius
+                ]
+            ];
+        }
     } catch (e) {
         console.error("Error setting circle-radius. config.capacityField:", config.capacityField);
         throw e;
     }
-    
     map.addLayer({
         'id': 'assets-points',
         'type': 'circle',
@@ -526,28 +534,34 @@ function addPointLayer() {
 }
 function addLineLayer() {
     let paint = config.linePaint;
-    if ('color' in config) {
-        paint["line-color"] = [
-            "match",
-            ["get", config.color.field],
-            ...Object.keys(config.color.values).flatMap(key => [key, config.color.values[key]]),
-            "#000000"
+    let interpolateExpression = ('interpolate' in config ) ? config.interpolate :  ["linear"];
+    // Handle case where all capacity values are the same
+    if (config.minLineCapacity === config.maxLineCapacity) {
+        paint['line-width'] = [
+            "interpolate", ["linear"], ["zoom"],
+            1, config.minLineWidth,
+            10, config.highZoomMinLineWidth
+        ];
+    } else {
+        paint['line-width'] = [
+            "interpolate", ["linear"], ["zoom"],
+            1, ["interpolate", interpolateExpression,
+                ["to-number",["get", config.capacityField]],
+                config.minLineCapacity, config.minLineWidth,
+                config.maxLineCapacity, config.maxLineWidth
+            ],
+            10, ["interpolate", interpolateExpression,
+                ["to-number",["get", config.capacityField]],
+                config.minLineCapacity, config.highZoomMinLineWidth,
+                config.maxLineCapacity, config.highZoomMaxLineWidth
+            ]
         ];
     }
-
-    let interpolateExpression = ('interpolate' in config ) ? config.interpolate :  ["linear"];
-    paint['line-width'] = [
-        "interpolate", ["linear"], ["zoom"],
-        1, ["interpolate", interpolateExpression,
-            ["to-number",["get", config.capacityField]],
-            config.minLineCapacity, config.minLineWidth,
             config.maxLineCapacity, config.maxLineWidth
-        ],
         10, ["interpolate", interpolateExpression,
             ["to-number",["get", config.capacityField]],
             config.minLineCapacity, config.highZoomMinLineWidth,
             config.maxLineCapacity, config.highZoomMaxLineWidth
-        ],
 
     ];
 
