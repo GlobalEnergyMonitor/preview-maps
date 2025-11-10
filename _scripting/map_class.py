@@ -334,7 +334,8 @@ class MapObject:
                 print(f'saved csv and geojson map file to s3')
                 # input(f'update config.js {output_file} then press enter.')           
         newcountriesjs = list(set(gdf['areas'].to_list()))
-        rebuild_countriesjs(self.mapname, newcountriesjs)
+        # SKIP THIS
+        # rebuild_countriesjs(mapname=self.mapname, newcountriesjs)
 
 
     def simplified(self):
@@ -633,10 +634,10 @@ class MapObject:
         
         cols_to_be_dropped = set(one_gdf.columns) - set(final_cols)
         logger.info(f'These cols will be dropped: {cols_to_be_dropped}')
-        logger.info('Check that')
-        
-        final_gdf = one_gdf.drop(columns=cols_to_be_dropped)
-        self.trackers = final_gdf
+        logger.info('Check that - skipping dropping for now')
+        # TODO CHECK THIS PROBLEM with dropping
+        # final_gdf = one_gdf.drop(columns=cols_to_be_dropped)
+        self.trackers = one_gdf
             
  
     def get_about(self):
