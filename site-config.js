@@ -4,7 +4,6 @@ var site_config = {
 
     /* Mapbox Base Map Style */
     mapStyle: 'mapbox://styles/gemteam1/cls98k6sf02li01p2fqtu67lc',
-
     center: [0, 0],
     projection: 'naturalEarth',
 
@@ -57,7 +56,6 @@ var site_config = {
     linkField: 'url',
 
     urlField: 'url',
-
     countryField: 'country',
     statusField: 'status',
     statusDisplayField: 'status',
