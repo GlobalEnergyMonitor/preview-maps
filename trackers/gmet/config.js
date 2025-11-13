@@ -1,5 +1,5 @@
 var config = {
-    json: 'data/data.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/data.geojson',
 
     colors: {
         'red': '#c74a48',
