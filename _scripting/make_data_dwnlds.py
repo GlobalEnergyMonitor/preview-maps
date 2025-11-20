@@ -28,6 +28,9 @@ def make_data_dwnlds(tracker):
     if not map_obj_list:
         map_tab_df = gspread_access_file_read_only(multi_tracker_log_sheet_key, map_tab)
         print(map_tab_df)
+        # before orienting this df remove the rows we skip like Integrated, Coal Finance, Energy Ownership source_tab_df with SKIP THIS - We do not make this map with main script
+        source_tab_df = source_tab_df[source_tab_df['tab name']!='SKIP THIS - We do not make this map with main script']
+        
         prep_dict = source_tab_df.to_dict(orient='index')            
   
         for row in map_tab_df.index:
