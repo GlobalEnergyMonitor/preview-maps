@@ -150,14 +150,7 @@ def run_maps():
             )
             runresults = subprocess.run(do_aws_bucket, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print(runresults.stdout)
-
-          
-        elif tracker == 'Plumes':
-            print(f'Starting GMET for release {tracker}')
-
             
-        elif tracker == 'LNG Terminals':
-            print('Starting on lng terminals')
 
 if __name__ == "__main__":
     # main() this log file folder creater i sin all_config for now maybe want to move later!
