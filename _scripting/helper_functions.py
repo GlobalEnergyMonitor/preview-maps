@@ -19,13 +19,15 @@ from datetime import date
 import openpyxl
 import xlsxwriter
 from all_config import *
-import re
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
 import pickle
 from collections import Counter
 import subprocess
 import yaml
+import sys
+import re
+from pathlib import Path
 
 
 # #### useful general functions ####
@@ -39,6 +41,46 @@ import yaml
 #                     # print(len(df[df['tracker-acro']==acro]))
 #                     # input('Check that this number aligns with the number of units in the map')
 #     return 
+
+def update_col_formatting_config(fcl, rd):
+    # taking updated fc list and renaming dict as inputs
+    # then convert to json
+    # then write to json file same file name
+    fcl_path = Path(__file__).parent / '_final_cols.json'
+    rd_path = Path(__file__).parent / '_renaming_cols.json'
+    
+
+    input(f'DEBUG this is fcl_path: {fcl_path}')
+    # with open(fcl_path, 'r', encoding='utf-8') as f:
+        # content = f.read() no need to read just overwrite
+        # update 
+        # convert fcl and rd to json then write it to content
+        # Write back to file
+    # content_fcl = json.dumps(fcl)
+    if fcl:
+        with open(fcl_path, 'w', encoding='utf-8') as f_fcl:
+            json.dump(fcl, f_fcl, indent=4)
+    else:
+        print("Warning: fcl is empty, skipping write to file")
+            
+            
+    input(f'DEBUG this is rd_path: {rd_path}')
+    # with open(rd_path, 'r', encoding='utf-8') as f:
+    #     content = f.read()
+    #     # update 
+    #     # convert fcl and rd to json then write it to content
+    #     # Write back to file
+    # content_rd = json.dumps(rd)
+    if rd:
+        
+        with open(rd_path, 'w', encoding='utf-8') as rd_f:
+            json.dump(rd, rd_f, indent=4)
+    else:
+        print("Warning: rd is empty, skipping write to file")
+        
+
+        
+
 
 def save_to_s3(obj, df, filetype='', path_dwn=''):
     geojsonpath = f"{path_dwn}{obj.name}_map_{iso_today_date}.geojson" # for africa or regular    
@@ -481,7 +523,7 @@ def clean_capacity(df):
     # clean df
     if 'Capacity (MW)' in df.columns:
         df['Capacity (MW)'] = df['Capacity (MW)'].apply(lambda x: check_and_convert_float(x))
-        df = df.fillna('')
+        # df = df.fillna('')
         
         # round all capacity cols to 
         df['Capacity (MW)'] = df['Capacity (MW)'].apply(lambda x: round(x, 4) if x != '' else x)    
@@ -499,7 +541,7 @@ def semicolon_for_mult_countries_gipt(df):
     # only need to do that when there is a second country, in those cases cap2 is not 0
     # the country and cap cols (main) is the first country and combined cap
     # multiple countries separated by ;
-    df = df.fillna('')
+    # df = df.fillna('')
     for row in df.index:
         if df.loc[row, 'Country/area 2 (hydropower only)'] != '':
             print(f"Country 1: {df.loc[row, 'Country/area 1 (hydropower only)']}")
@@ -857,55 +899,56 @@ def get_key_tabs_prep_file(tracker):
     return key, tabs
 
 
-# TODO instances to remove from run_maps.py after tested, then in specifci_temp for asia, and in assign_hy_pci for europe
-def create_df(key, tabs=['']):
-    # print(tabs)
-    dfs = []
-    # other logic for goget 
-    if trackers_to_update[0] == 'Oil & Gas Extraction':
-        for tab in tabs:
-            # print(tab)
-            if tab == 'Main data':
-                gsheets = gspread_creds.open_by_key(key)
-                spreadsheet = gsheets.worksheet(tab)
-                main_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-                print(main_df.info())
-            elif tab == 'Production & reserves':
-                gsheets = gspread_creds.open_by_key(key)
-                spreadsheet = gsheets.worksheet(tab)
-                prod_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-                print(prod_df.info())
-        return main_df, prod_df
+# COMMENTING OUT FOR NOW CAN SHOULD BE ABLE TO REMOVE TESTING THAT THE MAP CLASS ONE IS USED FOR ALL
+# # TODO instances to remove from run_maps.py after tested, then in specifci_temp for asia, and in assign_hy_pci for europe
+# def create_df(key, tabs=['']):
+#     # print(tabs)
+#     dfs = []
+#     # other logic for goget 
+#     if trackers_to_update[0] == 'Oil & Gas Extraction':
+#         for tab in tabs:
+#             # print(tab)
+#             if tab == 'Main data':
+#                 gsheets = gspread_creds.open_by_key(key)
+#                 spreadsheet = gsheets.worksheet(tab)
+#                 main_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+#                 print(main_df.info())
+#             elif tab == 'Production & reserves':
+#                 gsheets = gspread_creds.open_by_key(key)
+#                 spreadsheet = gsheets.worksheet(tab)
+#                 prod_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+#                 print(prod_df.info())
+#         return main_df, prod_df
     
-    elif trackers_to_update[0] == 'Iron & Steel':
-        # keytab = key
-        # print(keytab)
-        # for k,v in keytab.items(): # dict of tuples the tuple being key and tabs 
-        #     # print(f'this is key: {k}')
-        #     # print(f'this is v: {v}')
-        #     tabtype = k
-        #     key = v[0]
-        #     tabs = v[1]
-        #     # Iron & Steel: plant (unit-level not needed anymore)
-        for tab in tabs:
-            gsheets = gspread_creds.open_by_key(key)
-            spreadsheet = gsheets.worksheet(tab)
-            df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-            df['tab-type'] = tab
-            dfs += [df]
+#     elif trackers_to_update[0] == 'Iron & Steel':
+#         # keytab = key
+#         # print(keytab)
+#         # for k,v in keytab.items(): # dict of tuples the tuple being key and tabs 
+#         #     # print(f'this is key: {k}')
+#         #     # print(f'this is v: {v}')
+#         #     tabtype = k
+#         #     key = v[0]
+#         #     tabs = v[1]
+#         #     # Iron & Steel: plant (unit-level not needed anymore)
+#         for tab in tabs:
+#             gsheets = gspread_creds.open_by_key(key)
+#             spreadsheet = gsheets.worksheet(tab)
+#             df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+#             df['tab-type'] = tab
+#             dfs += [df]
 
-        df = pd.concat(dfs).reset_index(drop=True)
-        print(df.info())
+#         df = pd.concat(dfs).reset_index(drop=True)
+#         print(df.info())
 
-    else:
-        for tab in tabs:
-            gsheets = gspread_creds.open_by_key(key)
-            spreadsheet = gsheets.worksheet(tab)
-            df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-            dfs += [df]
-        df = pd.concat(dfs).reset_index(drop=True)
+#     else:
+#         for tab in tabs:
+#             gsheets = gspread_creds.open_by_key(key)
+#             spreadsheet = gsheets.worksheet(tab)
+#             df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+#             dfs += [df]
+#         df = pd.concat(dfs).reset_index(drop=True)
 
-    return df
+#     return df
 
 
 # TODO can probably remove this once figure out waht specifci_temp.py in asia is used for
@@ -1208,27 +1251,27 @@ def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or dele
                         
     return df
 
-def rename_cols(df):
-    print(f'Cols before: {df.columns}')
+# def rename_cols(df):
+#     print(f'Cols before: {df.columns}')
 
-    df = df.copy()
-    df = df.rename(columns=str.lower)
-    [print(col) for col in df.columns]
-    df.columns = df.columns.str.replace(' ', '-')
-    df.columns = df.columns.str.replace('.', '')
-    if 'gem-wiki-url' in df.columns:
-        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gem-wiki-url': 'url'})
-    elif 'wiki-url' in df.columns:
-        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'wiki-url': 'url'})
+#     df = df.copy()
+#     df = df.rename(columns=str.lower)
+#     [print(col) for col in df.columns]
+#     df.columns = df.columns.str.replace(' ', '-')
+#     df.columns = df.columns.str.replace('.', '')
+#     if 'gem-wiki-url' in df.columns:
+#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gem-wiki-url': 'url'})
+#     elif 'wiki-url' in df.columns:
+#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'wiki-url': 'url'})
     
-    elif 'gemwiki-url' in df.columns:
-        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gemwiki-url': 'url'})
+#     elif 'gemwiki-url' in df.columns:
+#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gemwiki-url': 'url'})
 
-    else:
-        print(f'Not sure about wiki url column name.')
-        input('check above to adjust rename_cols')
-    print(f'Cols after: {df.columns}')
-    return df
+#     else:
+#         print(f'Not sure about wiki url column name.')
+#         input('check above to adjust rename_cols')
+#     print(f'Cols after: {df.columns}')
+#     return df
 
 # TODO explore whether we want this or just a flag in launcher?
 def reduce_cols(df):
@@ -1468,11 +1511,39 @@ def check_rename_keys(renaming_dict_sel, gdf):
     for k, v in renaming_dict_sel.items():
         # print(f"Key: {k}, Value: {v}")
         if k not in gdf_cols:
-            print(f'Missing {k}')
+            print(f'Missing {k} from df columns, and will try to rename on it in a moment')
+            logger.info(f'Missing {k} from df columns, and will try to rename on it in a moment')
+            print(f'This is all cols in df: \n {gdf_cols} \n')
+            logger.info(f'This is all cols in df: \n {gdf_cols} \n')
+            input(f'Adjust the all_config.py column name dict to match new file.')
+            logger.info(f'Adjust the all_config.py column name dict to match new file.')
     
     logger.info(f'This is all cols in df: \n {gdf_cols} \n')
     
+def drop_cols_df_a_rename_value_avoid_dup(renaming_dict_sel, gdf):
+    # gdf cols
+    cols_to_drop = []
+    gdf_cols = gdf.columns.to_list()
+    for col in gdf_cols:
+        # if column lower is in values but not column regular is not in key then drop it
+        # example: Capacity for ggit-lng. where we use Capacity MTPA instead but rename to capacity
+        if col.lower() in renaming_dict_sel.values():
+            if col not in renaming_dict_sel.keys():
+                print(f'Duplicate df col {col} in renaming dict value so df one will be dropped!')
+                input('Check duplicate col')
+                logger.info(f'Duplicate df col {col} in renaming dict value so df one will be dropped!')
+                cols_to_drop.append(col)
+                
     
+    logger.info(f'This is all #{len(gdf.columns)} cols in df before drop: \n {gdf_cols} \n')
+    print(f'This is all cols in df before drop: \n {gdf_cols} \n')
+    gdf.drop(columns=cols_to_drop, inplace=True)
+    logger.info(f'This is all #{len(gdf.columns)} cols in df after drop: \n {gdf_cols} \n')
+    print(f'This is all cols in df after drop: \n {gdf_cols} \n')
+    input('Check that this drop is dropping capacity!')
+    return gdf
+
+  
 def fix_status_space(df):
     # input('check all status options')
     # df['status'] = df['status'].replace('in development', 'in_development')

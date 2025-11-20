@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import os
 import gspread
@@ -6,6 +5,7 @@ from numpy import true_divide
 from creds import *
 import logging
 from pathlib import Path
+import json
 
 # Format the date in ISO format
 # Get today's date
@@ -31,7 +31,7 @@ list_of_all_official = [
     "Oil Pipelines",
     "Iron & Steel",
     "Iron Ore Mines",
-    # "Plumes",
+    "Plumes",
     "Chemicals",
     "Cement and Concrete",
 
@@ -40,7 +40,7 @@ list_of_all_official = [
 # TODO maybe have the script make the folder based on the acro in map tarcker log
 
 pm_preview_mode = False # For Baird's testing work
-trackers_to_update = ["Chemicals"] # official tracker tab name in map tracker log sheet
+trackers_to_update = ["Gas Pipelines"]  # tab name in map tracker log sheet
 new_release_date = 'November_2025' # for within about page NEEDS TO BE FULL MONTH
 releaseiso = '2025-11'
 new_release_dateinput = input(f'In {new_release_date} format, with no spaces, tell me the public release date. Or press enter if {new_release_date} is the right month.')
@@ -48,14 +48,42 @@ if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 
-testval = 'Abbot Point LNG Terminal'
+testval = 'Toscana FSRU' #'Toscana FSRU' #optional for debugging
+testfilekey = '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' # '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' #optional for debugging
+testtracker = 'ggit-lng' #'ggit-lng'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = [""] 
-force_refresh_flag = False
+priority = ["ggit"]  # tracker_mapnames
+force_refresh_flag = True
 tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
 
+final_cols = []
+# st_path = Path(__file__).parent / '_steel_cols.json'
+fcl_path = Path(__file__).parent / '_final_cols.json'
+rd_path = Path(__file__).parent / '_renaming_cols.json'
+# what is thetype here? 
+# with open(st_path) as f:
+#     steel_cols_list = json.load(f)
+    # print(steel_cols) # dict
+    # print(type(steel_cols))
+with open(fcl_path) as f:
+    final_cols_list = json.load(f)
+    print(type(final_cols)) # list
+
+
+# for item in steel_cols_list.values(): # did once done now.
+#     final_cols += item
+
+# input(f'DEBUG final_cols \n{final_cols}') # a list!
+    
+with open(rd_path) as f:
+    renaming_cols_dict = json.load(f)
+
+# print(type(renaming_cols_dict))
+# print(renaming_cols_dict['GOGET'])
+# input('Check goget')
+# input(f'DEBUG renaming_cols_dict \n{renaming_cols_dict}') # a nested dict! 
 
 def ensure_compilation_folders():
     """Ensure compilation_output folders exist in all tracker directories"""
@@ -234,179 +262,25 @@ non_regional_maps = ['gist', 'gmet', 'giomt', 'gcct', 'gchi']
 conversion_key = '1fOPwhKsFVU5TnmkbEyPOylHl3XKZzDCVJ29dtTngkew'
 conversion_tab = ['data']
 
-
-steel_gist_table_cols = [
-    "announced-nominal-bf-capacity-(ttpa)",
-    "announced-nominal-bof-steel-capacity-(ttpa)",
-    "announced-nominal-dri-capacity-(ttpa)",
-    "announced-nominal-eaf-steel-capacity-(ttpa)",
-    "announced-other/unspecified-steel-capacity-(ttpa)",
-    "cancelled-nominal-bf-capacity-(ttpa)",
-    "cancelled-nominal-bof-steel-capacity-(ttpa)",
-    "cancelled-nominal-dri-capacity-(ttpa)",
-    "cancelled-nominal-eaf-steel-capacity-(ttpa)",
-    "cancelled-other/unspecified-steel-capacity-(ttpa)",
-    "construction-nominal-bf-capacity-(ttpa)",
-    "construction-nominal-bof-steel-capacity-(ttpa)",
-    "construction-nominal-dri-capacity-(ttpa)",
-    "construction-nominal-eaf-steel-capacity-(ttpa)",
-    "construction-other/unspecified-steel-capacity-(ttpa)",
-    "mothballed-nominal-bf-capacity-(ttpa)",
-    "mothballed-nominal-bof-steel-capacity-(ttpa)",
-    "mothballed-nominal-dri-capacity-(ttpa)",
-    "mothballed-nominal-eaf-steel-capacity-(ttpa)",
-    "mothballed-nominal-ohf-steel-capacity-(ttpa)",
-    "mothballed-other/unspecified-steel-capacity-(ttpa)",
-    "mothballed-pre-retirement-nominal-bf-capacity-(ttpa)",
-    "operating-nominal-bf-capacity-(ttpa)",
-    "operating-nominal-bof-steel-capacity-(ttpa)",
-    "operating-nominal-dri-capacity-(ttpa)",
-    "operating-nominal-eaf-steel-capacity-(ttpa)",
-    "operating-nominal-ohf-steel-capacity-(ttpa)",
-    "operating-other/unspecified-steel-capacity-(ttpa)",
-    "operating-pre-retirement-nominal-bf-capacity-(ttpa)",
-    "operating-pre-retirement-nominal-bof-steel-capacity-(ttpa)",
-    "operating-pre-retirement-nominal-dri-capacity-(ttpa)",
-    "operating-pre-retirement-nominal-eaf-steel-capacity-(ttpa)",
-    "operating-pre-retirement-other/unspecified-steel-capacity-(ttpa)",
-    "retired-nominal-bf-capacity-(ttpa)",
-    "retired-nominal-bof-steel-capacity-(ttpa)",
-    "retired-nominal-eaf-steel-capacity-(ttpa)",
-    "retired-nominal-ohf-steel-capacity-(ttpa)"
-        ]
-
-
-# TODO keep in retired year or closed year for longitudinal, and make sure start year is there too
-final_cols = [
-                'areas', 'feedacc','feedstock', 'secprod', 'primprod','model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id',
-                'owner-noneng','retired-year','plant-status','noneng_owner', 'parent_gem_id', 'status_display','owner_gem_id', 'facilitytype','unit_id', 'loc-oper', 'loc-owner', 'tech-type','ea_scaling_capacity', 'operator', 'Operator', 
-                'Binational', 'binational', 'loc-accu','units-of-m','mapname','tracker-acro','official_name','url', 'sfid'
-                'areas','name', 'unit_name', 'capacity','status', 'start_year', 'subnat', 'region', 'owner', 'parent', 'tracker', 'tracker_custom', 'operator-name-(local-lang/script)', 'owner-name-(local-lang/script)',
-                'original_units', 'location-accuracy','conversion_factor', 'geometry', 'river', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2',
-                'prod-coal', 'Latitude', 'Longitude', 'pid','id', 'prod_oil', 'prod_gas', 'prod_year_oil', 'prod_year_gas', 'fuel', 'PCI5', 'PCI6', 'pci5','pci6','WKTFormat', 'Fuel', 'maturity', 'fuel-filter', 
-                'pci-list', 'coal-grade', 'mine-type',  'owners_noneng', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year', 'pci-list', 
-                'coal-grade', 'mine-type',  'noneng_name', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year',
-                'claycal-yn', 'altf-yn', 'ccs-yn', 'prod-type', 'plant-type', 'entity-id', 'color', 'capacity-display', 'Clinker Capacity (millions metric tonnes per annum)', 'Cement Capacity (millions metric tonnes per annum)', "cem-type",
-                'wiki-from-name', 'capacity-details', 'parent-search', 'owner-search', 'name-search', 'areas-subnat-sat-display', 'multi-country', 'noneng-name', "prod-method-tier-display", "prod-method-tier", "main-production-equipment"]
-# add two together because gist list is so long and should be refactored soon
-final_cols.extend(steel_gist_table_cols)
+# # TODO keep in retired year or closed year for longitudinal, and make sure start year is there too
+# final_cols = [
+#                 'areas', 'feedacc','feedstock', 'secprod', 'primprod','model','reactor-type','lat', 'lng','coordinate-accuracy','total-resource-(inferred', 'parent-gem-id', 'total-reserves-(proven-and-probable','start_date', 'owner-gem-id',
+#                 'owner-noneng','retired-year','plant-status','noneng_owner', 'parent_gem_id', 'status_display','owner_gem_id', 'facilitytype','unit_id', 'loc-oper', 'loc-owner', 'tech-type','ea_scaling_capacity', 'operator', 'Operator', 
+#                 'Binational', 'binational', 'loc-accu','units-of-m','mapname','tracker-acro','official_name','url', 'sfid'
+#                 'areas','name', 'unit_name', 'capacity','status', 'start_year', 'subnat', 'region', 'owner', 'parent', 'tracker', 'tracker_custom', 'operator-name-(local-lang/script)', 'owner-name-(local-lang/script)',
+#                 'original_units', 'location-accuracy','conversion_factor', 'geometry', 'river', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2',
+#                 'prod-coal', 'Latitude', 'Longitude', 'pid','id', 'prod_oil', 'prod_gas', 'prod_year_oil', 'prod_year_gas', 'fuel', 'PCI5', 'PCI6', 'pci5','pci6','WKTFormat', 'Fuel', 'maturity', 'fuel-filter', 
+#                 'pci-list', 'coal-grade', 'mine-type',  'owners_noneng', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year', 'pci-list', 
+#                 'coal-grade', 'mine-type',  'noneng_name', 'coalfield', 'workforce', 'prod_year', 'opening-year', 'closing-year', 'opening_year', 'closing_year', 'end-year',
+#                 'claycal-yn', 'altf-yn', 'ccs-yn', 'prod-type', 'plant-type', 'entity-id', 'color', 'capacity-display', 'Clinker Capacity (millions metric tonnes per annum)', 'Cement Capacity (millions metric tonnes per annum)', "cem-type",
+#                 'wiki-from-name', 'capacity-details', 'parent-search', 'owner-search', 'name-search', 'areas-subnat-sat-display', 'multi-country', 'noneng-name', "prod-method-tier-display", "prod-method-tier", "main-production-equipment"]
+# # add two together because gist list is so long and should be refactored soon
+# final_cols.extend(steel_gist_table_cols)
 
 # need to adjust when handle sorting column names TODO 
 # TODO ASAP for gsheet get columns, use script to match them to final cols, show remiaining, and test if any have changed
 # and with add a TEST that check if any key variables in configs are all empty .... or nan (to fix ggit update)
 simplified_cols = ['url', 'areas','name','capacity', 'capacity-details', 'latitude', 'longitude', 'pid','id', 'type', 'areas-subnat-sat-display', 'geometry']
-
-# TODO this is what could be replaced by a class, tip from Hannah
-renaming_cols_dict = {
-                    'GChI': {'Plant name (English)':'name','Country/area': 'areas', 'Subnational unit': 'subnat', 'Plant name (other language)': 'noneng_name', 'SFI ID': 'sfid',
-                               'GEM wiki page': 'url', 'GEM plant ID':'pid', 'Owner (English)': 'owner', 'Owner (other language)': 'owners_noneng', 'Owner GEM entity ID': 'owner_gem_id',
-                               'Coordinate accuracy': 'coordinate-accuracy', 'Primary products': 'primprod', 'Secondary products': 'secprod', 'Feedstock': 'feedstock', 'Feedstock accuracy':'feedacc'},
-                    
-                    'GMET': {'Country/Area': 'areas', 'Plume Origin Latitude': 'Latitude', 'Plume Origin Longitude': 'Longitude', 'Subnational Unit': 'subnat', 
-                               'GEM Wiki': 'url', 'GEM Methane Plume ID':'pid', 'Name':' name', 'Emissions (kg/hr)': 'capacity'}, # TODO need to add the others and add to final_cols
-                    
-                    'GIOMT': {'GEM Asset ID': 'pid','Coordinate accuracy': 'coordinate-accuracy','GEM wiki page URL': 'url', 'Operating status': 'status', 'Asset name (English)': 'name', 'Asset name (other language)': 'noneng_name',
-                                  'Design capacity (ttpa)': 'capacity', 'Owner': 'owner', 'Parent': 'parent', 'Start date': 'start_date', 'Country/Area':'areas',
-                                  'Total resource (inferred, indicated and measured, thousand metric tonnes)': 'total-resource-(inferred', 
-                                  'Total reserves (proven and probable, thousand metric tonnes)': 'total-reserves-(proven-and-probable', 'Parent GEM Entity ID': 'parent-gem-id',
-                                  'Owner name in local language/script': 'owner-noneng', 'Owner GEM Entity ID': 'owner-gem-id', 'Subnational unit': 'subnat'},
-                            
-                    'GCCT': {'GEM Plant ID': 'pid', 'GEM Asset name (English)': 'name', 'Asset name (other language)': 'noneng_name', 'Coordinate accuracy': 'location-accuracy', 
-                             'Subnational unit': 'subnat', 'Country/Area': 'areas',
-                             'Cement Color': 'color', 'Operating status': 'status', 'Start date':'start_year', 'Owner name (English)': 'owner',
-                             'Owner name (other language)': 'loc-owner', 'GEM Entity ID':'entity-id', 'Plant type':'plant-type', 
-                             'Production type':'prod-type',
-                             'CCS/CCUS': 'ccs-yn', 'Alternative Fuel': 'altf-yn', 'Clay Calcination': 'claycal-yn', 'GEM wiki page': 'url', "Majority Cement Type": "cem-type"},
-
-                    'GIST': {'Plant ID': 'pid','plant-status':'status', 'GEM wiki page': 'url', 'tab-type_x': 'tab-type', 'Country/Area': 'areas', 'Plant name (English)': 'name','Start date': 'start_year',
-                            'Coordinate accuracy': 'location-accuracy', 'Plant name (other language)': 'noneng_name', 'Owner': 'owner', 'Owner (other language)': 'noneng_owner', 'Owner GEM ID': 'owner_gem_id',
-                            'Parent': 'parent', 'Parent GEM ID': 'parent_gem_id', 'Subnational unit (province/state)': 'subnat'},
-
-                    'GOGPT': {'GEM location ID':'pid', 'GEM unit ID': 'id','Wiki URL': 'url','Country/Area': 'areas', 'Plant name': 'name', 'Unit name': 'unit_name', 
-                              'Capacity (MW)': 'capacity', 'Status': 'status', 'Fuel': 'fuel', 'Owner(s)': 'owner', 'Parent(s)': 'parent',
-                                'Start year': 'start_year', 'State/Province': 'subnat', 'Region': 'region'},
-                    
-                    'GCPT': {'GEM location ID':'pid', 'GEM unit/phase ID': 'id','Country/Area': 'areas', 'Wiki URL':'url',
-                                   'Plant name': 'name', 'Unit name':'unit_name', 'Plant name (other)': 'other_name', 'Plant name (local)': 'noneng_name',
-                                   'Owner': 'owner', 'Parent': 'parent', 'Capacity (MW)': 'capacity', 'Status': 'status', 
-                                   'Start year': 'start_year', 'Subnational unit (province, state)': 'subnat', 'Region': 'region', "Retired year": "retired-year"},
-                    
-                    'GSPT': {'GEM location ID':'pid', 'GEM phase ID':'id','Country/Area': 'areas', 'Project Name': 'name', 'Phase Name': 'unit_name',
-                               'Capacity (MW)': 'capacity', 'Status': 'status', 'Start year': 'start_year', 'Owner': 'owner',
-                               'Region': 'region', 'State/Province':'subnat', 'Wiki URL': 'url'},
-                    
-                    'GWPT': {'GEM location ID':'pid', 'GEM phase ID': 'id','Country/Area': 'areas', 'Project Name': 'name', 'Phase Name': 'unit_name',
-                               'Capacity (MW)': 'capacity', 'Status': 'status', 'Start year': 'start_year', 'Owner': 'owner',
-                               'Region': 'region', 'State/Province':'subnat', 'Wiki URL': 'url'},
-                    
-                    'GNPT': {'GEM location ID':'pid', 'Reactor Type':'reactor-type', 'Model':'model','GEM unit ID': 'id','Country/Area': 'areas', 'Project Name': 'name', 'Unit Name': 'unit_name',
-                               'Capacity (MW)': 'capacity', 'Status': 'status', 'Start Year': 'start_year', 'Owner': 'owner', 'Operator': 'operator',
-                               'Region': 'region', 'State/Province':'subnat', 'Location Accuracy': 'location-accuracy','Wiki URL': 'url', 'Owner Name in Local Language / Script': 'owners_noneng', 
-                               'Project Name in Local Language / Script': 'noneng_name'}, 
-                    
-                    'GHPT': {'GEM location ID':'pid', 'GEM unit ID':'id','Country/Area 1': 'areas', 'Country/Area 2': 'area2','Project Name': 'name', 
-                               'Country/Area 1 Capacity (MW)': 'capacity', 'Country/Area 2 Capacity (MW)': 'capacity2',
-                               'Status': 'status', 'Start Year': 'start_year', 'Owner': 'owner', 'Operator': 'operator', 'Binational': 'binational',
-                               'Region 1': 'region', 'Region 2': 'region2','State/Province 1':'subnat', 'State/Province 2':'subnat2', 'Owner Name (local lang/script)': 'loc-owner', 
-                               'Operator Name (local lang/script)': 'loc-oper',
-                               'Wiki URL': 'url', 'River / Watercourse': 'river', 'Location Accuracy': 'loc-accu', 'Technology Type': 'tech-type'},
-                    
-                    'GBPT': {'GEM location ID':'pid', 'GEM phase ID':'id','Country/Area': 'areas', 'Project Name': 'name', 'Unit Name': 'unit_name',
-                               'Capacity (MW)': 'capacity', 'Status': 'status', 'Start Year': 'start_year', 'Owner(s)': 'owner', 'Operator(s)': 'operator',
-                               'Region': 'region', 'State/Province':'subnat', 'Wiki URL': 'url'},
-    
-                    'GGPT': {'GEM location ID':'pid', 'GEM unit ID':'id', 'Country/Area': 'areas', 'Project Name': 'name', 'Unit Name': 'unit_name',
-                               'Unit Capacity (MW)': 'capacity', 'Status': 'status', 'Start Year': 'start_year', 'Owner': 'owner', 'Operator': 'operator',
-                               'Region': 'region', 'State/Province':'subnat', 'Wiki URL': 'url'},
-                      
-                    'GCTT': {'GEM Terminal ID':'pid', 'GEM Unit/Phase ID': 'unit_id','Coal Terminal Name': 'name', 'Coal Terminal Name (detail or other)': 'other_name','Parent Port Name': 'port','Wiki URL': 'url', 'Status': 'status', 'Owner': 'owner', 'Capacity (Mt)':'capacity',
-                               'Start Year': 'start_year', 'Region': 'region', 'State/Province':'subnat', 'Country/Area': 'areas'},
-                      
-                      # TODO change GOGET to pid
-                    'GOGET': {'Unit ID':'id', 'Wiki name': 'name', 'Country/Area': 'areas', 'Subnational unit (province, state)': 'subnat', 'Status': 'status', 'Discovery year': 'start_year', 'Production start year': 'prod_start_year',
-                            'GEM region': 'region','Owner': 'owner', 'Parent': 'parent', 'Wiki URL': 'url', 'Production - Oil (Million bbl/y)': 'prod_oil', 'Production - Gas (Million m³/y)': 'prod_gas',
-                            'Production - Total (Oil, Gas and Hydrocarbons) (Million boe/y)': 'capacity','Production Year - Oil': 'prod_year_oil', 'Production Year - Gas': 'prod_year_gas'
-                            , 'Country List':'mult_countries', 'Fuel type': 'fuel'},
-                    'GCMT': {'GEM Mine ID':'pid','Country / Area': 'areas', 'Mine Name': 'name', 'Mine Name (Non-ENG)': 'noneng_name','Status': 'status', 'Owners': 'owner', 'Owners (Non-ENG)': 'owners_noneng','Parent Company': 'parent', 'Capacity (Mtpa)': 'capacity', 
-                            'Production (Mtpa)':'prod-coal', 'Year of Production': 'prod_year','Opening Year': 'start_year', 'Closing Year': 'end_year','State, Province': 'subnat', 'Region': 'region', 'GEM Wiki Page (ENG)': 'url', 'GEM Wiki Page (Non-ENG)': 'urlchina', 'Coalfield': 'coalfield', 'Workforce Size': 'workforce', 'Coal Grade': 'coal-grade',
-                            'Mine Type': 'mine-type'},
-                    'GOIT': {'ProjectID':'pid','Countries': 'areas', 'Wiki': 'url', 'PipelineName': 'name', 'SegmentName': 'unit_name', 'Status': 'status', 'Owner': 'owner',
-                            'Parent': 'parent', 'CapacityBOEd': 'capacity', 'StartYear1': 'start_year', 'EndState/Province':'subnat', 'StartRegion': 'region',
-                            'EndRegion': 'region2'},
-                    'GGIT': {'ProjectID':'pid','Countries': 'areas','Wiki': 'url',
-                                'PipelineName':'name', 'SegmentName':'unit_name', 'Status':'status', 'Owner':'owner', 'Parent': 'parent',
-                                'StartYear1': 'start_year', 'CapacityBcm/y': 'capacity', 'StartState/Province': 'subnat',
-                                'StartRegion': 'region', 'EndState/Province': 'subnat2', 'EndRegion': 'region2'
-                                }, 
-                    'GGIT-lng': {'ProjectID':'pid','Wiki': 'url', 'TerminalName': 'name', 'FacilityType': 'facilitytype',
-                                'UnitName': 'unit_name', 'Status': 'status', 'Country/Area': 'areas', 'Owner': 'owner', 
-                                'Parent': 'parent', 'CapacityinMtpa': 'capacity', 'OriginalStartYear': 'start_year', 'Region': 'region', 
-                                'State/Province': 'subnat', 'Owner GEM Entity ID': 'owner-gem-id', 'Parent GEM Entity ID': 'parent-gem-id', 'Operator': 'operator'},
-                        # # GOGPT-eu two tabs NOT NEEDED NOW THAT WE DO NOT RESEARCH HYDROGEN PLANTSs
-                        # 'plants': {'gem-location-id':'pid', 'gem-unit-id': 'id','wiki-url': 'url','country/area': 'areas', 'plant-name': 'name', 'unit-name': 'unit_name',
-                        #         'capacity-(mw)': 'capacity', 'owner(s)': 'owner', 'parent(s)': 'parent', 'plant-name-in-local-language-/-script': 'other-local', 'other-name(s)': 'other-name',
-                        #         'start-year': 'start_year', 'state/province': 'subnat'},
-
-                        # 'plants_hy': {'gem-location-id':'pid', 'gem-unit-id': 'id','wiki-url': 'url','country/area': 'areas', 'plant-name': 'name', 'unit-name': 'unit_name',
-                        #         'capacity-(mw)': 'capacity', 'owner(s)': 'owner', 'parent(s)': 'parent', 'plant-name-in-local-language-/-script': 'other-local', 'other-name(s)': 'other-name',
-                        #         'start-year': 'start_year', 'state/province': 'subnat'},
-
-                        # gas pipelines eu
-                    
-                    # TODO for gas pipelines update change this in set_fuel_filter_eu so the cols don't lower, so its' in line with rest of projects
-
-                    'EGT-gas': {'projectid':'pid','countries': 'areas','wiki': 'url',
-                                'pipelinename':'name', 'segmentname':'unit_name',
-                                'startyear1': 'start_year', 'capacity': 'given_capacity','capacitybcm/y': 'capacity', 'startstate/province': 'subnat',
-                                'startregion': 'region', 'endstate/province': 'subnat2', 'endregion': 'region2', 'otherenglishnames': 'other-name',
-                                'otherlanguageprimarypipelinename': 'other-local',
-                                },
-                    # gas terminals eu same as global LNG now so below is idnetical, should remove EGT-term in future perhaps
-                    'EGT-term':  {'ProjectID':'pid','Wiki': 'url', 'TerminalName': 'name', 'FacilityType': 'facilitytype',
-                                'UnitName': 'unit_name', 'Status': 'status', 'Country/Area': 'areas', 'Owner': 'owner', 
-                                'Parent': 'parent', 'CapacityInMtpa': 'capacity', 'OriginalStartYear': 'start_year', 'Region': 'region', 
-                                'State/Province': 'subnat', 'Owner GEM Entity ID': 'owner-gem-id', 'Parent GEM Entity ID': 'parent-gem-id', 'Operator': 'operator'},
-                    }
 
 tracker_to_fullname = {
                     "GCPT": "coal power station",
@@ -597,20 +471,6 @@ dd_tab_mapping = {'africa': 'Africa Energy',
             'internal': 'internal',
             
             }
-
-
-DATABASE_URL = 'postgresql://readonly:pc1d65885e80e7709675a2e635adcd9cb71bf91a375e5276f8ee143c623e2fb34@ec2-44-222-6-135.compute-1.amazonaws.com:5432/d8ik14rsae6026'
-SQL = ''' 
-    select unit_id, string_agg(all_entity_names, ', ') all_entity_names from (
-    select 
-    coalesce(pu.id, po.powerplant_unit_id) unit_id, 
-    coalesce(c.name, '') || coalesce(c."nameOther"::text, '') || 
-    coalesce(c.abbreviation, '') ||
-    coalesce(c.name_local, '') all_entity_names
-    from plant_owner po left join powerplant_unit pu on pu.plant_id = po.plant_id join company c on c.id = po.company_id) a
-    group by unit_id;
-    '''
-    
     
 diacritic_map = {
     'a': ["a", "á", "à", "â", "ã", "ä", "å"],
