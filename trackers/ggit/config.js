@@ -1,7 +1,7 @@
 var config = {
     geometries: ['Point','LineString'],
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-10/ggit_map_2025-10-26.geojson', //'data/ggit_2024-12-20.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-19.geojson', //'data/ggit_2024-12-20.geojson',
     color: {
         field: 'status-legend',
         values: {
@@ -82,7 +82,7 @@ var config = {
     detailView: {
         'name': {'display': 'heading'},
         // 'status': {'label': 'Status'},
-        // 'capacity-table': {'label': 'Capacity'},
+        'capacity-table': {'label': 'Capacity'},
         'owner': {'label': 'Owner'},
         'parent': {'label': 'Parent'},
         'start-year': {'label': 'Start Year'},
