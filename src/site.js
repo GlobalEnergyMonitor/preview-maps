@@ -534,6 +534,16 @@ function addPointLayer() {
 }
 function addLineLayer() {
     let paint = config.linePaint;
+
+    if ('color' in config) {
+        paint["line-color"] = [
+            "match",
+            ["get", config.color.field],
+            ...Object.keys(config.color.values).flatMap(key => [key, config.color.values[key]]),
+            "#000000"
+        ];
+    }
+
     let interpolateExpression = ('interpolate' in config ) ? config.interpolate :  ["linear"];
     // Handle case where all capacity values are the same
     if (config.minLineCapacity === config.maxLineCapacity) {
