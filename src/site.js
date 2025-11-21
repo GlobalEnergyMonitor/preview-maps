@@ -469,30 +469,65 @@ function addPointLayer() {
     });
     config.layers.push('assets-points');
 
-
     // Add layer with proportional icons
-    map.addLayer({
-        'id': 'assets-symbol', 
-        'type': 'symbol',
-        'source': 'assets-source',
-        'filter': ["==",["geometry-type"],'Point'],
-        ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
-        'layout': {
-            'icon-image': ["get", "icon"],
-            'icon-allow-overlap': true,
-            'icon-size': [
-                "interpolate", ["exponential", .5], ["zoom"],
-                1, ['interpolate', interpolateExpression,
-                    ["to-number", ["get", config.capacityField]],
-                    config.minPointCapacity, config.minRadius * 2 / 64,
-                    config.maxPointCapacity, config.maxRadius * 2 / 64],
-                10, ['interpolate', interpolateExpression,
-                    ["to-number", ["get", config.capacityField]],
-                    config.minPointCapacity, config.highZoomMinRadius * 2 / 64,
-                    config.maxPointCapacity, config.highZoomMaxRadius * 2 / 64]
-            ]
-        }
-    });
+    if (config.sqrt === true) {
+        // interpolateExpression = ["exponential", 1.5]
+        console.log('in sqrt')
+        const sqrtMin = Math.sqrt(config.minPointCapacity);
+        const sqrtMax = Math.sqrt(config.maxPointCapacity);
+        console.log(sqrtMin, sqrtMax)
+
+        map.addLayer({
+            'id': 'assets-symbol', 
+            'type': 'symbol',
+            'source': 'assets-source',
+            'filter': ["==",["geometry-type"],'Point'],
+            ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
+            'layout': {
+                'icon-image': ["get", "icon"],
+                'icon-allow-overlap': true,
+                'icon-size': [
+                    "interpolate", ["linear"], ["zoom"],
+                    1, ['interpolate', interpolateExpression,
+                        ['sqrt',["to-number", ['get', config.capacityField]]],
+                        // ["to-number", ["get", config.capacityField]],
+                        sqrtMin, config.minRadius * 2 / 64,
+                        sqrtMax, config.maxRadius * 2 / 64],
+                    10, ['interpolate', interpolateExpression,
+                        ['sqrt',["to-number", ['get', config.capacityField]]],
+                        // ["to-number", ["get", config.capacityField]],
+                        sqrtMin, config.highZoomMinRadius * 2 / 64,
+                        sqrtMax, config.highZoomMaxRadius * 2 / 64]
+                    ]
+            }
+        });
+    }
+
+    else {
+        // Add layer with proportional icons
+        map.addLayer({
+            'id': 'assets-symbol', 
+            'type': 'symbol',
+            'source': 'assets-source',
+            'filter': ["==",["geometry-type"],'Point'],
+            ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
+            'layout': {
+                'icon-image': ["get", "icon"],
+                'icon-allow-overlap': true,
+                'icon-size': [
+                    "interpolate", ["exponential", .5], ["zoom"],
+                    1, ['interpolate', interpolateExpression,
+                        ["to-number", ["get", config.capacityField]],
+                        config.minPointCapacity, config.minRadius * 2 / 64,
+                        config.maxPointCapacity, config.maxRadius * 2 / 64],
+                    10, ['interpolate', interpolateExpression,
+                        ["to-number", ["get", config.capacityField]],
+                        config.minPointCapacity, config.highZoomMinRadius * 2 / 64,
+                        config.maxPointCapacity, config.highZoomMaxRadius * 2 / 64]
+                ]
+            }
+        });
+    }
 
     // Add highlight layer
     paint = config.pointPaint;
@@ -1471,7 +1506,7 @@ function displayDetails(features) {
             console.log(typeof capacityFloat)
 
             if (typeof capacityFloat === 'string'){
-                capacityFloatandLabel = 'Not found'
+                capacityFloatandLabel = 'Not found or N/A'
             }
             else {
                 capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
@@ -1894,6 +1929,15 @@ function spinGlobe() {
         }
     }
 }
+
+function getStandardDeviation (array) {
+    if (!array || array.length === 0) {return 0;}
+
+    const n = array.length
+    const mean = array.reduce((a, b) => a + b) / n
+    return Math.sqrt(array.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+    }
+
 
 
 map.on('moveend', () => {

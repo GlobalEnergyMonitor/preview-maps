@@ -81,6 +81,6 @@ var site_config = {
     multiCountry: false,
 
     hitArea: 5, 
-
+    sqrt: true,
     geometries: ['Point']
 };
