@@ -1,6 +1,6 @@
 from requests import HTTPError
-from all_config import force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
-from helper_functions import check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
+from all_config import renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
+from helper_functions import update_col_formatting_config, check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
 import geopandas as gpd
@@ -15,6 +15,7 @@ import urllib.parse # quote() and quote_plus() for query params
 import os
 from shapely.geometry import shape, Point, MultiLineString
 import geopandas as gpd
+
 
 class TrackerObject:
     def __init__(self,
@@ -69,9 +70,9 @@ class TrackerObject:
         self.data_official = df_official
     
 
-    def set_df(self):
+    def set_df(self, final_cols, renaming_cols_dict):
+        # DATA LOADING HAPPENS HERE
         f'This is {self.off_name} {self.acro} {self.tab_name}'
-        # TODO move all these to all_config to make relative path set up cleaner
 
         pkl_path = os.path.join(local_pkl_dir, f'trackerdf_for_{self.acro}_on_{iso_today_date}.pkl')
 
@@ -124,27 +125,6 @@ class TrackerObject:
                 
                 self.data = gdf
 
-            # don't need this anymore becaues different than pipelines becaues in db not shared as geojson in s3   
-            # elif self.tab_name == 'LNG Terminals':
-
-            #     logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
-                
-            #     # to get the file names in latest
-            #     parquet_s3 = self.get_file_name(releaseiso)
-            #     logger.info(f'This is file: {parquet_s3}')
-            #     if 'parquet' in parquet_s3:
-
-            #         df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
-                
-            #         df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
-
-            #         gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
-                
-            #     else:
-            #         gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
-                    
-            #     self.data = gdf
-            
 
             elif self.tab_name in ['Gas Pipelines EU']:
                 logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
@@ -161,38 +141,7 @@ class TrackerObject:
 
                 self.data = gdf
                 
-                
-            # don't need this anymore becaues different than pipelines becaues in db not shared as geojson in s3
 
-            # elif self.tab_name == 'LNG Terminals EU':
-            #     print('handle non_gsheet_data for pulling data from s3 already has coords')
-                
-            #     # to get the file names in latest
-            #     geojson_s3 = self.get_file_name(releaseiso)
-                
-            #     #assign gdf to data 
-
-            #     gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
-
-            #     gdf.set_crs("epsg:4326", inplace=True)
-
-            #     self.data = gdf                    
-                
-            # Won't need this ever again as long as hydrogen isn't partly researched by gogpt team again, keeping just in case.
-            # elif self.acro == 'GOGPT EU':  
-            #     # if new_h2_data 
-            #     if new_h2_data == True:
-            #         # do what worked in Jan
-            #         df_tuple = self.create_df_gogpt_eu() 
-            #         self.data = df_tuple
-
-            #     else:
-            #         df_tuple = self.create_df_gogpt_eu() 
-            #         if  df_tuple[0] == '':
-            #             logger.info('no new plant data in gogpt eu file so remove first tuple')
-            #             self.data = df_tuple[1]
-            #             logger.info('It is not a tuple GOGPT EU b/c using old H2 data for gogpt eu')
-            
             elif self.tab_name in ['Oil & Gas Extraction']:
                 df_tuple = self.create_df_goget()
 
@@ -203,15 +152,45 @@ class TrackerObject:
                 self.data = df_tuple # not sure how to handle this, concat? 
                 print(len(self.data))
                 # input('Check lenght of goget data should be two for tuple')
+                # COME BACK IF INTERACTIVE COLUMN THING WORKS ADD TO ALL NON NORMAL CASES!! 
 
-# NORMAL CASE JUST PULL FROM GSHEETS
+            # NORMAL CASE JUST PULL FROM GSHEETS
             else:
                 #assign df to data 
-                print(self.tab_name)
-                df = self.create_df()
+                # print(self.tab_name)
+                df = self.create_df(testtracker)
                 
-                # #assign gdf to data 
+                # only need to deal with this once (not every time with pkl file)                 
+                # deal with seeing what needs to be changed in all_config
+                print(F'***List of all cols in original tracker df for {self.acro}: \n {df.columns}\n')
+                # existing expected columns
+                exp_cols = renaming_cols_dict[self.acro]
+                print(F'***List of all expected columns and their renaming mappings for {self.acro}: \n {exp_cols}\n')
+                net_new_cols = set(exp_cols) - set(df.columns)
+                print(f'***Net new cols for {self.acro}: \n {net_new_cols}\n')
+                # example I paste in ['Plant Age']
+                cols_to_add = input('***Paste in all net new cols you want to add to dictionary as kv pairs and will use keys for final_cols in list of tuple format:\n')
+                
+                cols_to_remove = input(f'Paste in all kv pairs to be removed in list of tuple format:\n')
+
+                for tp in cols_to_add:
+                    # add value to final cols
+                    final_cols.append(tp[1])
+                    renaming_cols_dict[self.acro][tp[0]] = tp[1]
+                    
+                for tp in cols_to_remove:
+                    final_cols = final_cols.remove(tp[1])
+                    input(f'DEBUT this is final cols: {final_cols}')
+                    renaming_cols_dict.pop(tp[0])
+                print(f'***Full list of final cols now after net new for {self.acro} added: \n {final_cols}\n')
+                print(f'***Full dict of renaming_cols_dict now after net new for {self.acro} added and other removed: \n {renaming_cols_dict}\n')
+
+                # by reading in these variables just updated final_cols, renaming_cols_dict we can make this column mess less tedious
+
+                update_col_formatting_config(final_cols, renaming_cols_dict) # passing in list and dict
+                               
                 self.data = df
+
 
 # USE LOCAL PKL FILE
         else:
@@ -353,8 +332,10 @@ class TrackerObject:
         # REDO this based on standardized file names in s3
         # TODO egt change what gets added so it is JUST the file 
         # not both: ['egt-term/2025-02/', 'egt-term/2025-02/GEM-EGT-Terminals-2025-02 DATA TEAM COPY.geojson']
-        acro = self.acro # eu, ggit
+        acro = self.acro.lower() # eu, ggit
         name = self.tab_name.lower() # pipelines, terminals, gas        
+        logger.info(f'DEBUG {acro} {name} {release}')
+
         list_all_contents = [] # should be one file, if not then we need to remove / update
         # Initialize a session using DigitalOcean Spaces
         session = boto3.session.Session()
@@ -378,23 +359,17 @@ class TrackerObject:
         # Try to parse folder names as dates and find the latest
         date_folders = []
         for folder in folders:
-            try:
-            # Accept formats like YYYY-MM or YYYY-MM-DD
-                date_obj = datetime.strptime(folder, '%Y-%m')
-            except ValueError:
-                try:
-                    date_obj = datetime.strptime(folder, '%Y-%m-%d')
-                except ValueError:
-                    continue
+            logger.info(f'This is folders that should be dates of release {folder}')
+
+            date_obj = datetime.strptime(folder, '%Y-%m')
+            logger.info(f'This is date obj for folders {date_obj}')
+ 
             date_folders.append((date_obj, folder))
 
-        if date_folders:
-            # Get the folder with the latest date
-            latest_folder = max(date_folders, key=lambda x: x[0])[1]
-            folder_prefix = f'{acro}/{latest_folder}/'
-        else:
-            print(f'Could not find any dates in folder for {acro}')
-            folder_prefix = f'{acro}/'
+        # if date_folders:
+        # Get the folder with the latest date
+        latest_folder = max(date_folders, key=lambda x: x[0])[1]
+        folder_prefix = f'{acro.lower()}/{latest_folder}/'
 
         # List objects in the latest folder
         response = client.list_objects_v2(Bucket=bucket_name, Prefix=folder_prefix)
@@ -408,12 +383,12 @@ class TrackerObject:
                     logger.info(f"Using this {acro} and this {name} to look")                   
                     list_all_contents.append(obj['Key'])
                 else:
-                    logger.info(f'DATA TEAM COPY not in file name for {acro}')
-               
+                    logger.info(f'DATA TEAM COPY not in file name for {acro} so skipped.')
+
                 
         else:
             print("No files found in the specified folder.")
-            input(f'LOOK INTO THIS list_all_contents for acro: {acro} and folder_prefix: {folder_prefix}')
+            input(f'LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
     
         return list_all_contents
 
@@ -432,6 +407,8 @@ class TrackerObject:
                 else:
                     path_name = path_name_all[0]
                     logger.warning(f'There are more than 2 so picked first:\n{path_name}')
+                    print(f'{path_name}')
+                    input('There are more than 2 so picked first:\n{path_name} approved? Hit enter')
                 
         # if theres more than two and its not EGT then we need to clean latest folder to remove old
         elif len(set(path_name_all)) == 1:
@@ -448,36 +425,64 @@ class TrackerObject:
 
     
 
-    def create_df(self):
+    def create_df(self, testtracker):
         logger.info('in create_df')
-        # wait_n_sec(n=45)
         dfs = []
+        if testtracker != '':
+            print(f'testracker var in all_config IS NOT EMPTY so we are using TEST INPUT DATA held in key testfilekey!')
+            print(f'{testfilekey}')
+            print(f'{testtracker}')
+            yesusetestinputdata = input(f'CONFIRM that is OK by pressing enter! Or override by pressing any other key!')
+            logger.info(f'testracker var in all_config IS NOT EMPTY so we are using TEST INPUT DATA held in key testfilekey!\n {testfilekey} {testtracker}')
+            if yesusetestinputdata != '': # if didn't press enter then just use actual map tracker log data from https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1875432780#gid=1875432780 source tab
+                testtracker = '' # override testtracker variable
         
-        if self.off_name == 'Iron and Steel':
-
-            for tab in self.tabs:
-                gsheets = gspread_creds.open_by_key(self.key)
-                spreadsheet = gsheets.worksheet(tab)
+        elif self.off_name == 'Iron and Steel':
+            
+            if testtracker.lower() in ['gist']:
+                gsheets = gspread_creds.open_by_key(testfilekey)
+                spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
                 df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-                df['tab-type'] = tab
-                dfs += [df]
+                logger.info(df.info())
+                logger.info('Check df info plz')                
+            else: 
 
-            df = pd.concat(dfs).reset_index(drop=True)
+                for tab in self.tabs:
+                    gsheets = gspread_creds.open_by_key(self.key)
+                    spreadsheet = gsheets.worksheet(tab)
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    df['tab-type'] = tab
+                    dfs += [df]
+
+                df = pd.concat(dfs).reset_index(drop=True)
 
         else:
-            for tab in self.tabs:
-                print(self.off_name)
-                # print(self.tab_name)
-                gsheets = gspread_creds.open_by_key(self.key)
-                spreadsheet = gsheets.worksheet(tab)
-                df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-                dfs += [df]
-            df = pd.concat(dfs).reset_index(drop=True)
+            # FOR TESTING QUICKLY 
+            if testtracker != '':
+                if testtracker.lower() in self.acro.lower():
+                    gsheets = gspread_creds.open_by_key(testfilekey)
+                    spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    logger.info(df.info())
+                    logger.info('Check df info plz')     
+                
+            # NORMAL CASE                    
+            else: 
 
-            logger.info(df.info())
-            logger.info('Check df info plz')
+                for tab in self.tabs:
 
-        df.columns = df.columns.str.strip()
+                    gsheets = gspread_creds.open_by_key(self.key)
+                    spreadsheet = gsheets.worksheet(tab)
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+
+                    dfs += [df]
+
+                df = pd.concat(dfs).reset_index(drop=True)
+
+                logger.info(df.info())
+                logger.info('Check df info plz')
+
+        df.columns = df.columns.str.strip() # TODO MOVE THIS TO DATA CLEANING FUNCTION? 
         
         return df
     
@@ -504,44 +509,6 @@ class TrackerObject:
 
         return main_df, prod_df            
 
-    # def create_df_gogpt_eu(self):
-    #     print(f'This is tabs for GOGPT EU: {self.tabs}')
-    #     if new_h2_data == True:
-    #         if 'H2 Proposals at Oil & Gas Plant' in self.tabs: 
-    #             for tab in self.tabs:
-    #                 print(f'This is tab: {tab}')
-    #                 if tab == 'Oil & Gas Plants':
-                        
-    #                     gsheets = gspread_creds.open_by_key(self.key)
-    #                     spreadsheet = gsheets.worksheet(tab)
-    #                     plants_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-    #                     plants_df.columns = plants_df.columns.str.strip()
-    #                     plants_df['tracker-acro'] = 'plants'
-    #                 else:
-    #                     gsheets = gspread_creds.open_by_key(self.key)
-    #                     spreadsheet = gsheets.worksheet(tab)
-    #                     plants_hy_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-    #                     plants_hy_df.columns = plants_hy_df.columns.str.strip()
-    #                     plants_hy_df['tracker-acro'] = 'plants_hy'
-
-    #     else:
-    #         # only take the hy from gogpt eu so its not a tuple
-    #         if 'H2 Proposals at Oil & Gas Plant' in self.tabs: 
-    #             for tab in self.tabs:
-    #                 logger.info(f'This is tab: {tab}')
-    #                 if tab == 'Oil & Gas Plants':
-                        
-
-    #                     plants_df = '' # pass later 
-    #                 else:
-    #                     gsheets = gspread_creds.open_by_key(self.key)
-    #                     spreadsheet = gsheets.worksheet(tab)
-    #                     plants_hy_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-    #                     plants_hy_df.columns = plants_hy_df.columns.str.strip()
-    #                     plants_hy_df['tracker-acro'] = 'plants_hy'
-                
-    #     return plants_df, plants_hy_df
-    
     
     def set_fuel_filter_eu_and_maturity(self):
         
@@ -891,6 +858,14 @@ class TrackerObject:
         self.data = df        
 
 
+    def gmet_changes(self):
+        
+        df = self.data
+        
+        
+        self.data = df
+    
+    
     def gcct_changes(self):
             # before renaming 
             # before clean_num_data()
@@ -977,7 +952,7 @@ class TrackerObject:
             while tries <= 3:
                 time.sleep(wait_time)
                 try:
-                    logger.info("First sheet name:", sheet.title)
+                    logger.info(f"First sheet name:{first_sheet.title}")
                     if 'About' not in first_sheet.title:
                         logger.info('Looking for about page in last tab now, first one no.')
                         # handle for goget and ggit, goit who put it in the last tab
@@ -1247,10 +1222,10 @@ class TrackerObject:
                     try:
                         # Clean the column first - strip whitespace and handle common non-numeric values
                         self.data[col] = self.data[col].astype(str).str.strip()
-                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*'], pd.NA)
+                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>'], pd.NA)
                         
                         # Use pandas to_numeric which is more robust than custom function
-                        self.data[col] = pd.to_numeric(self.data[col], errors='coerce')
+                        self.data[col] = pd.to_numeric(self.data[col], errors='raise') # raise
                         
                         # # Fill NaN values with empty string after conversion
                         # self.data[col] = self.data[col].fillna('')
@@ -1751,7 +1726,7 @@ class TrackerObject:
 
 
 
-def create_filtered_fuel_df(df, self): # TODO HOW ARE WE HANDLING GGIT LNG?!
+def create_filtered_fuel_df(df, self): 
     # self.acro, self.fuelcol
     if self.acro == 'GOGET':
         drop_row = []

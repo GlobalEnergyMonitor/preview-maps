@@ -1246,6 +1246,7 @@ function displayDetails(features) {
     let all_details_gist = [];
 
     Object.keys(config.detailView).forEach((detail) => {
+        
         if (features[0].properties[detail] == "" || features[0].properties[detail] == 'unknown' || features[0].properties[detail] == 'undefined' || features[0].properties[detail] ==0 || features[0].properties[detail] == NaN || features[0].properties[detail] == 'nan' || features[0].properties[detail] == null){
             detail_text += ''
         } else if (Object.keys(config.detailView[detail]).includes('display')) {
@@ -1354,7 +1355,7 @@ function displayDetails(features) {
             }
 
         } else {
-            if (features[0].properties[detail] != "" && features[0].properties[detail] != 'undefined' && features[0].properties[detail] !=0 && features[0].properties[detail] != NaN && features[0].properties[detail] != 'nan' && features[0].properties[detail] != null && features[0].properties[detail] != 'Unknown [unknown %]' && features[0].properties[detail] != 'unknown') {
+            if (features[0].properties[detail] !== "" && features[0].properties[detail] !== undefined && features[0].properties[detail] !==0 && features[0].properties[detail] !== 'nan' && features[0].properties[detail] !== null && features[0].properties[detail] !== 'Unknown [unknown %]' && features[0].properties[detail] !== 'unknown') {
                 if (config.multiCountry == true && config.detailView[detail] && config.detailView[detail]['label'] && config.detailView[detail]['label'].includes('Country')) {
                     detail_text += '<span class="fw-bold">' + config.detailView[detail]['label'] + '</span>: ' + removeLastComma(features[0].properties[detail]) + '<br/>';
                 }
@@ -1388,27 +1389,53 @@ function displayDetails(features) {
             }
 
         // Initialize capacity and count objects using reduce to avoid summary build bug
-        let capacity = config.filters[filterIndex].values.reduce((acc, f) => {
-            acc[f] = 0;
-            return acc;
-        }, {});
-
-        let count = config.filters[filterIndex].values.reduce((acc, f) => {
-            acc[f] = 0;
-            return acc;
-        }, {});
+        // first builds an array of filter values then with reduce makes it an object
+        // then initializes the start point with 0 though the bug is showing NaN, is it being cached??, because it also shows 2.5 in operating
+        
+        // starting fresh so no reuse of capacity value to prevent bug where some statuses start with NaN or undefined so cannot add any capacity value and shows up as NaN
+        // even though the data is correctly displayed in the table view
+        let capacity = Object.fromEntries(
+            config.filters[filterIndex].values.map(f => [f, 0])
+        );
+        
+        let count = Object.fromEntries(
+            config.filters[filterIndex].values.map(f => [f, 0])
+        );
 
         features.forEach((feature) => {
-            let capacityFloat = parseFloat(feature.properties[config.capacityDisplayField]);
+            let capacityFloat = feature.properties[config.capacityDisplayField]
 
+            if (typeof feature.properties[config.capacityDisplayField] === 'string' ){
+                capacityFloat = Number(capacityFloat);
+                console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+            } // or typeof === string
+            else {
+                capacityFloat = parseFloat(capacityFloat);
+                console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+
+
+            }
+
+            // to fix bug where it is not a clean slate for some reason
+            // now it adds correctly, the data file was fine and shows the value correctly in table view
+            // the values of the capacities were converted carefully so used Number() to avoid NaN so could add to an integer
+            // still the array had been initialized to start with 0 but had NaN in some even right after initialization
+            // so this resets it when it is undefined but, still would be good to get to the bottom of why it is undefined when it should be 0, and why its only some statuses
+            if (typeof capacity[feature.properties[config.statusField]] === 'undefined') {
+                capacity[feature.properties[config.statusField]] = 0
+            }
             capacity[feature.properties[config.statusField]] += capacityFloat;
+
+            if (typeof count[feature.properties[config.statusField]] === 'undefined') {
+                count[feature.properties[config.statusField]] = 0
+            }
             count[feature.properties[config.statusField]]++;
 
         });
 
             let detail_capacity = '';
-
             Object.keys(count).forEach((k) => {
+
                 if (config.color.field == config.statusField){ 
                     if (count[k] != 0) {
                         detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
@@ -1429,7 +1456,16 @@ function displayDetails(features) {
         }
         // else when there is only one feature or one unit per project in the popup modal
         else {
+            console.log(features[0].properties[config.capacityDisplayField])
+            capacityFloat = features[0].properties[config.capacityDisplayField]
+            console.log(typeof capacityFloat)
 
+            if (typeof capacityFloat === 'string'){
+                capacityFloatandLabel = 'Not found'
+            }
+            else {
+                capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
+            }
             // this handles capacity adjustment for solo projects where it looks redundant to have Capacity written out twice
             // Remove 'Capacity' prefix and parentheses from capacityLabel TODO look into a better way to handle, issue if capacity is nan or undefined like intentionally is for GOGET
             // capacityLabel = capacityLabel.replace(/^Capacity\s*/i, '').replace(/[()]/g, '');
@@ -1440,12 +1476,12 @@ function displayDetails(features) {
                 // and then display the projects type field with the appropriate color based on the value and the dictionary
                 detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
                 '<span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
-                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + parseFloat(features[0].properties[config.capacityDisplayField]).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel;
+                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
             }
             else {
                 detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
                     '<span class="legend-dot" style="background-color:' + config.color.values[ features[0].properties[config.statusDisplayField] ] + '"></span><span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
-                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + parseFloat(features[0].properties[config.capacityDisplayField]).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel;
+                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
             }
             }
     }

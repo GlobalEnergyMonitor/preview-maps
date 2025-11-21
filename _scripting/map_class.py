@@ -1,5 +1,5 @@
 import pandas as pd
-from helper_functions import replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
+from helper_functions import drop_cols_df_a_rename_value_avoid_dup, testval, replace_old_date_about_page_reg, rebuild_countriesjs, pci_eu_map_read, check_and_convert_float, remove_diacritics, check_rename_keys, fix_status_inferred, conversion_multiply, workaround_table_float_cap, workaround_table_units
 from all_config import logpath, official_tracker_name_to_mapname, releaseiso, simplified_cols, simplified, gspread_creds, mapname_gitpages, non_regional_maps, logger, client_secret_full_path, gem_path, tracker_to_fullname, tracker_to_legendname, iso_today_date, gas_only_maps, final_cols, renaming_cols_dict
 import geopandas as gpd
 import numpy as np
@@ -77,7 +77,7 @@ class MapObject:
         # TODO see if BOED is still in empty capacity details for GOIT in combination with last min fixes function below
         gdf['capacity-details'].fillna('',inplace=True)
         gdf['capacity-table'].fillna('',inplace=True)
-        gdf['capacity'].fillna('',inplace=True)
+        # gdf['capacity'].fillna('',inplace=True)
 
 
         self.trackers = gdf
@@ -104,15 +104,15 @@ class MapObject:
     
     
     def last_min_fixes(self):
-        # do filter out oil
         gdf = self.trackers
-        
+
         # handle situation where Guinea-Bissau IS official and ok not to be split into separate countries 
         gdf['areas'] = gdf['areas'].apply(lambda x: x.replace('Guinea,Bissau','Guinea-Bissau')) 
         gdf['areas'] = gdf['areas'].apply(lambda x: x.replace('Timor,Leste','Timor-Leste')) 
 
         gdf['name'].fillna('',inplace=True)
         gdf['name'] = gdf['name'].astype(str)
+
         # handles for empty url rows and also non wiki cases SHOULD QC FOR THIS BEFOREHAND!! TO QC
         gdf['wiki-from-name'] = gdf.apply(lambda row: f"https://www.gem.wiki/{row['name'].strip().replace(' ', '_')}", axis=1)
 
@@ -122,7 +122,7 @@ class MapObject:
 
         gdf['url'] = gdf.apply(lambda row: row['wiki-from-name'] if 'gem.wiki' not in row['url'] else row['url'], axis=1)
         logger.info(f'gem.wiki was not in url column so used formatted wiki-from-nae url, this should be qcd')
-                
+             
         # one last check since this'll ruin the filter logic
         gdf.columns = [col.replace('&', '') for col in gdf.columns]
         gdf.columns = [col.replace('_', '-') for col in gdf.columns] 
@@ -139,13 +139,12 @@ class MapObject:
                 gdf[col] = gdf[col].apply(lambda x: str(x).replace('[unknown %]', ''))
         logger.info(f'Check all columns:')
 
-
         # translate acronyms to full names for legend and table 
         gdf['tracker-display'] = gdf['tracker-custom'].map(tracker_to_fullname)
         gdf['tracker-legend'] = gdf['tracker-custom'].map(tracker_to_legendname)
         # make sure all null geo is removed
-        gdf.dropna(subset=['geometry'],inplace=True)
 
+        gdf.dropna(subset=['geometry'],inplace=True)
 
         # make sure all of the units of m are removed for goget and gcmt that has no capacity
         for row in gdf.index:
@@ -163,18 +162,13 @@ class MapObject:
             if col in gdf.columns:
                 gdf[col] = gdf[col].apply(lambda x: str(x).split('.')[0])
                 gdf[col].replace('-1', 'not stated')
-            
+                
         if self.mapname == 'europe':
             logger.info(self.mapname)
             gdf = pci_eu_map_read(gdf)
 
-        gdf.fillna('', inplace = True)
-        
-        
-
-        # so all column names are lowercase 
-        gdf.columns = [col.lower() for col in gdf.columns]
-                       
+        # gdf.fillna('', inplace = True)
+                    
         # Check for invalid geometries in the 'geometry' column
         invalid_geoms = []
         for idx, geom in gdf['geometry'].items():
@@ -208,15 +202,14 @@ class MapObject:
             # Extract indices of invalid geometries for removal
             invalid_geom_indices = [idx for idx, _ in invalid_geoms]
             gdf.drop(invalid_geom_indices, inplace=True)
-            
-        # remove duplicate columns
-        gdf = gdf.loc[:, ~gdf.columns.duplicated()] 
+
         
         # Drop columns where all values are empty strings or null
         cols_to_drop = [col for col in gdf.columns if gdf[col].replace('', np.nan).isna().all()]
         print(f'These are cols to drop because all empty: {cols_to_drop}')
+        input('Check those cols above that are empty!')
         gdf = gdf.drop(columns=cols_to_drop)
-        
+        gdf.columns = [col.lower() for col in gdf.columns]
         
         
         if simplified:
@@ -232,7 +225,11 @@ class MapObject:
             if simplified:
                 # remove columns
                 gdf = gdf[simplified_cols_updated]
-            
+        
+        # make sure everything is a number than can be
+        # so js functions as expected and no NaNs
+        gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(x, errors='raise'))
+        
         self.trackers = gdf
     
     def save_file(self, tracker):
@@ -262,9 +259,6 @@ class MapObject:
             logger.info(f"No {self.mapname} is not in gas only maps")
             gdf = self.trackers.drop(['count-of-semi','multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) #  'multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
              
-
-        print(f'Final cols:\n')
-        [print(col) for col in gdf.columns]
 
         logger.info(f'Final cols:\n')
         cols = [(col) for col in gdf.columns]
@@ -413,8 +407,6 @@ class MapObject:
             logger.info('check name and why it is not in non_regional_maps')
             logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
-        # must be float for table to sort
-        gdf['capacity'] = gdf['capacity'].fillna('') # issue if it's natype so filling in
         gdf['capacity-table'] = gdf.apply(lambda row: pd.Series(workaround_table_float_cap(row, 'capacity')), axis=1)
         gdf['units-of-m'] = gdf.apply(lambda row: pd.Series(workaround_table_units(row)), axis=1)
  
@@ -576,7 +568,6 @@ class MapObject:
             logger.info(f'tracker_sel is {tracker_sel} equal to tracker-acro...')
 
             gdf['tracker-acro'] = tracker_sel
-
             logger.info(f"renaming on tracker acro: {gdf['tracker-acro'].iloc[0]}")
             # all_trackers.append(tracker_sel)
             # select the correct renaming dict from config.py based on tracker name
@@ -585,6 +576,7 @@ class MapObject:
             # check check_rename_keys(renaming_dict_sel)
             logger.info(f'Check rename keys against cols for {tracker_sel}')
             check_rename_keys(renaming_dict_sel, gdf)
+            gdf = drop_cols_df_a_rename_value_avoid_dup(renaming_dict_sel, gdf)
             gdf.columns = gdf.columns.str.strip()
             gdf = gdf.rename(columns=renaming_dict_sel) 
             

@@ -49,28 +49,12 @@ def update_col_formatting_config(fcl, rd):
     fcl_path = Path(__file__).parent / '_final_cols.json'
     rd_path = Path(__file__).parent / '_renaming_cols.json'
     
-
-    input(f'DEBUG this is fcl_path: {fcl_path}')
-    # with open(fcl_path, 'r', encoding='utf-8') as f:
-        # content = f.read() no need to read just overwrite
-        # update 
-        # convert fcl and rd to json then write it to content
-        # Write back to file
-    # content_fcl = json.dumps(fcl)
     if fcl:
         with open(fcl_path, 'w', encoding='utf-8') as f_fcl:
             json.dump(fcl, f_fcl, indent=4)
     else:
         print("Warning: fcl is empty, skipping write to file")
             
-            
-    input(f'DEBUG this is rd_path: {rd_path}')
-    # with open(rd_path, 'r', encoding='utf-8') as f:
-    #     content = f.read()
-    #     # update 
-    #     # convert fcl and rd to json then write it to content
-    #     # Write back to file
-    # content_rd = json.dumps(rd)
     if rd:
         
         with open(rd_path, 'w', encoding='utf-8') as rd_f:

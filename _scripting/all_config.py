@@ -48,9 +48,9 @@ if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 
-testval = 'Toscana FSRU' #'Toscana FSRU' #optional for debugging
-testfilekey = '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' # '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' #optional for debugging
-testtracker = 'ggit-lng' #'ggit-lng'
+testval = '' #'Toscana FSRU' #optional for debugging
+testfilekey = '' # '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' #optional for debugging
+testtracker = ''  #'ggit-lng'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
 priority = ["ggit"]  # tracker_mapnames
@@ -72,18 +72,8 @@ with open(fcl_path) as f:
     print(type(final_cols)) # list
 
 
-# for item in steel_cols_list.values(): # did once done now.
-#     final_cols += item
-
-# input(f'DEBUG final_cols \n{final_cols}') # a list!
-    
 with open(rd_path) as f:
     renaming_cols_dict = json.load(f)
-
-# print(type(renaming_cols_dict))
-# print(renaming_cols_dict['GOGET'])
-# input('Check goget')
-# input(f'DEBUG renaming_cols_dict \n{renaming_cols_dict}') # a nested dict! 
 
 def ensure_compilation_folders():
     """Ensure compilation_output folders exist in all tracker directories"""
@@ -94,8 +84,6 @@ def ensure_compilation_folders():
             compilation_dir = tracker_dir / 'compilation_output'
             compilation_dir.mkdir(exist_ok=True)
 
-# def main():
-# Run at import time
 ensure_compilation_folders()
 
 

@@ -59,8 +59,8 @@ var site_config = {
     countryField: 'country',
     statusField: 'status',
     statusDisplayField: 'status',
-    capacityField: 'capacity',
-    capacityDisplayField: 'capacity',
+    capacityField: 'capacity', // 
+    capacityDisplayField: 'capacity', // this is what gets used in the details summary unit feature where applicable
     locationColumns:{
         lat: 'lat',
         lng: 'lng'
