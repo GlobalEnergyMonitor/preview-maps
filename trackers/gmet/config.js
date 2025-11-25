@@ -23,6 +23,8 @@ var config = {
             'plumes-unattrib': 'orange',
             'oil-and-gas-extraction-areas': 'blue',
             'coal-mines': 'green',
+            // 'pipelines': 'green',
+            // 'lng-terminals': 'green'
         }
     },
     filters: [
@@ -30,7 +32,7 @@ var config = {
             field: 'tracker',
             label: 'Plume and Infrastructure Projects',
             values: ['oil-and-gas-extraction-areas', 'coal-mines','plumes-attrib', 'plumes-unattrib'],
-            values_labels: ['Oil and Gas Extraction Areas', 'Coal Mines','Plumes (has attribution information) ', 'Plumes (no attribution information)'],
+            values_labels: ['Oil and Gas Extraction Areas', 'Coal Mines','GEM Reviewed plumes (has attribution information) ', 'GEM Reviewed plumes (no attribution information)'],
             primary: true
         },
         {
@@ -52,26 +54,12 @@ var config = {
     capacityField: 'scaling_col',
     capacityLabel: '', // for gmet that has no capacity but only emissions data
 
-    // capacityLabel: 'not applicable'
-
-    // context_layers: [
-    //     {
-    //         field: 'coalfield',
-    //         'label': 'Coal Fields',
-    //         'tileset': '[mapbox tile url]',
-
-    //         paint: {}
-    //     }
-    // ],
-
-
     /* Labels for describing the assets */
     assetFullLabel: "Projects",
     assetLabel: 'projects',
 
     /* the column that contains the asset name. this varies between trackers */
     nameField: 'name',
-
 
     // urlField: 'url', // wikiField
 
@@ -108,6 +96,11 @@ var config = {
         `'label': '...'` prepends a label. If a range, two values for singular and plural.
     */
     detailView: {
+        //TO ADD 
+        // satDataProvider instrument emissionsUncert typeInfra geminfrawiki 
+        // emissionsIfOp, NEED TO PULL IN piplines geometry and owner on pid 
+        // unit-name, inportExport
+
         'name': {'display': 'heading'},
         // 'tracker': {'label': 'Tracker Type'},
         'owner': {'label': 'Owner'},
@@ -116,15 +109,13 @@ var config = {
         'emission_uncertainty': {'label': 'Emissions Uncertainity (kg/hr)'},
         'infra_type': {'label': 'Type of Infrastructure'},
         'infra_name': { 'label': 'Nearby Infrastructure Project Name'},
-        'related_cm_field': {'label': 'ClimateTrace Field'},
-        'mtyr-gcmt_emissions': {'label': 'GEM Coal Mine Methane Emissions Estimate (mt/yr)'},
+        'mtyr-gcmt_emissions': {'label': 'Coal Mine Methane Emissions Estimate (mt/yr)'},
         'capacity_output': {'label': 'Coal Output (Annual, Mst)'},
         'capacity_prod': {'label': 'Production (Mtpa)'},
         'tonnesyr-pipes_emissions': {'label': 'Emissions if Operational (tonnes/yr)'},
         'length': {'label': 'Length (km)'},
         'capacity': {'label': 'Capacity (cubic meters/day)'},
-        'tonnes-goget_emissions': {'label': 'Climate TRACE Field Emissions (tonnes)'},
-        'tonnes-goget-reserves_emissions': {'label': 'Emissions for whole reserves (tonnes)'},
+        'tonnes-goget-reserves_emissions': {'label': 'Potential Emissions for whole reserves (tonnes)'},
         'date': {'label': 'Observation Date'},
         'status': {'label': 'Status'},
         'instrument': {'label': 'Instrument'},

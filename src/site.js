@@ -472,10 +472,10 @@ function addPointLayer() {
     // Add layer with proportional icons
     if (config.sqrt === true) {
         // interpolateExpression = ["exponential", 1.5]
-        console.log('in sqrt')
+        // console.log('in sqrt')
         const sqrtMin = Math.sqrt(config.minPointCapacity);
         const sqrtMax = Math.sqrt(config.maxPointCapacity);
-        console.log(sqrtMin, sqrtMax)
+        // console.log(sqrtMin, sqrtMax)
 
         map.addLayer({
             'id': 'assets-symbol', 
@@ -1501,13 +1501,17 @@ function displayDetails(features) {
         }
         // else when there is only one feature or one unit per project in the popup modal
         else {
+            console.log('This is capacity:')
             console.log(features[0].properties[config.capacityDisplayField])
-            capacityFloat = features[0].properties[config.capacityDisplayField]
+            capacityFloat = Number(features[0].properties[config.capacityDisplayField])
             console.log(typeof capacityFloat)
 
-            if (typeof capacityFloat === 'string'){
-                capacityFloatandLabel = 'Not found or N/A'
+            // if capacity is a string and when you convert with Number it is 0 then we can say it is NA or Not found
+            if (features[0].properties[config.capacityDisplayField].trim() === ''){
+                    capacityFloatandLabel = 'Not found or N/A'
             }
+
+            // if it is not a string then we are good ...  
             else {
                 capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
             }
