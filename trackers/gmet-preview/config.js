@@ -1,5 +1,5 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-11/gmet_map_2025-11-26.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-11/gmet_map_2025-12-02.geojson',
     geometries: ['Point','LineString'],
     colors: {
         'red': '#c74a48',
@@ -14,18 +14,21 @@ var config = {
     },
 
     color: { 
-        field: 'tab-type',
+        field: 'legend-filter',
         label: 'Plume and Infrastructure Projects',
         values: {
-            'Plumes': 'red',
+            // 'Plumes': 'red',
+            'plumes-attrib': 'red',
+            'plumes-unattrib': 'orange',
+
             'Oil and Gas Extraction Areas': 'blue',
             // 'Oil and Gas Reserves': 'blue',
             'Pipelines': 'green',
             'Coal Mines - Non-closed': 'green',
-            'LNG Terminals': 'green'
+            // 'LNG Terminals': 'green'
+            'lng-import': 'green',
+            'lng-export': 'green',
 
-            // 'plumes-attrib': 'red',
-            // 'plumes-unattrib': 'orange',
             // 'oil-and-gas-extraction-areas': 'blue',
             // 'coal-mines': 'green',
             // 'pipelines': 'green',
@@ -35,24 +38,26 @@ var config = {
 
         filters: [
         {
-            field: 'tab-type',
+            field: 'legend-filter',
             label: 'Plume and Infrastructure Projects',
-            values: ['Oil and Gas Extraction Areas', 'Coal Mines - Non-closed', 'LNG Terminals', 'Pipelines','Plumes'],
+            values: ['Oil and Gas Extraction Areas', 'Coal Mines - Non-closed', 'lng-import', 'lng-export', 'Pipelines','plumes-attrib', 'plumes-unattrib'],
             values_labels: [
-            'Oil and Gas<br>Extraction Areas', 
+            'Oil and Gas Extraction Areas', 
             'Coal Mines', 
-            'LNG Terminals', 
+            'LNG Terminals Import', 
+            'LNG Terminals Export',
             'Pipelines', 
-            'GEM Reviewed Plumes<br>(has attribution information)'
+            'GEM Reviewed Plumes (has attribution)',
+            'GEM Reviewed Plumes (no attribution)'
             ],
             primary: true
         },
         {
             field: 'status-legend',
             label: 'Infrastructure Status',
-            values: ['operating', 'proposed-plus','pre-construction-plus','construction-plus','mothballed-plus', 'retired-plus', 'unknown-plus'], // pre-construction-plus
+            values: ['operating', 'proposed-plus','construction-plus', 'mothballed-plus', 'retired-plus', 'not-found'], // pre-construction-plus
             /* value_labels must match order/number in values */
-            values_labels: ['Operating', 'Proposed/Announced/Discovered', 'Pre-construction/Exploration','Construction/In development','Mothballed/Idle/ Shut in/Abandoned','Retired/Closed/Decommissioned/Cancelled','Not applicable/UGS'] // 'Pre-construction / Pre-permit / Permitted / Exploration'
+            values_labels: ['Operating', 'Proposed/Announced/Discovered', 'Construction/In development','Mothballed/Idle/Shut in/Abandoned','Retired/Closed/Decommissioned/Cancelled','Not applicable/UGS'] // 'Pre-construction / Pre-permit / Permitted / Exploration'
         }
     ],
 
@@ -72,6 +77,7 @@ var config = {
 
     /* the column that contains the asset name. this varies between trackers */
     nameField: 'name',
+    countryField: 'areas',
 
     // urlField: 'url', // wikiField
 
@@ -79,24 +85,24 @@ var config = {
         and designated which column has the link */
     tableHeaders: {
 
-        values: ['name', 'status','plume_emissions', 'emission_uncertainty','infra_type', 'date','subnational', 'areas','infra_name', 'infra_url', 'well_id', 'gov_assets'],
-        labels: ['Project', 'Status','Emissions (kg/hr)', 'Emissions Uncertainty (kg/hr)','Type of Infrastructure','Observation Date', 'Subnational', 'Country/Area(s)','Nearby Infrastructure Project Name', 'Infrastructure Wiki', 'Government Well ID', 'Other Government ID Assets'],
+        values: ['name', 'status','plume-emissions', 'emission-uncertainty','typeinfra', 'date','subnat', 'areas','infra-name', 'geminfrawiki'],
+        labels: ['Project', 'Status','Emissions (kg/hr)', 'Emissions Uncertainty (kg/hr)','Type of Infrastructure','Observation Date', 'Subnational', 'Country/Area(s)','Nearby Infrastructure Project Name', 'Infrastructure Wiki'],
         clickColumns: ['name'],
-        rightAlign: ['Government Well ID','plume_emissions','date'],
-        removeLastComma: ['country'],
+        rightAlign: ['plume-emissions','date'],
+        removeLastComma: ['areas'],
         toLocaleString: ['scaling_col'], // not displayed
 
     },
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
-    searchFields: { 'Country/Area(s)': ['country'],
+    searchFields: { 'Country/Area(s)': ['areas'],
 
-        'Project Type': ['tracker'],
-        'Project': ['name'], 
+        'Project Type': ['tracker-acro', 'tab-type', 'legend-filter'],
+        'Project': ['name', 'name-search'], 
         'Companies': ['operator'],
-        'Type of Infrastructure': ['infra_type'],
-        'Government Well ID': ['well_id'],
-        'Other Government ID Assets': ['gov_assets']
+        'Type of Infrastructure': ['typeInfra'],
+        // 'Government Well ID': ['well_id'],
+        // 'Other Government ID Assets': ['gov_assets']
 
     },
 
@@ -130,14 +136,16 @@ var config = {
         'capacitybcm/y': {'label': 'Capacity (bcm/y)'},
         'capacityinmtpa': {'label': 'Capacity (MTPA)'},
         'tonnes-goget-reserves-emissions': {'label': 'Potential Emissions for whole reserves (tonnes)'},
+        'emissionsifop': {'label': 'Annual methane emissions estimate if operational (mt/year)'},
+        'inportexport': {'label': 'Terminal Facility Type'},
         'date': {'label': 'Observation Date'},
-        'status-legend': {'label': 'Status'},
+        'status': {'label': 'Status'},
         'instrument': {'label': 'Instrument'},
         'areas': {'label': 'Country/Area(s)'},
-        'geminfrawiki': {'label': 'Infrastructure Wiki'}, // or display md to just display as text md
+        // 'geminfrawiki': {'label': 'Infrastructure Wiki'}, // or display md to just display as text md
         'areas-subnat-sat-display': {'display': 'location'}, 
-        // 'carbonmapper' : {'display': 'md'} // add in col for liscencing "Plume Data © Carbon Mapper. Subject to terms." just for plume data
-        'carbonmapper' : {'display': 'md'}
+        'infra-wiki-md': {'display': 'simple_markup'},
+        'carbon-mapper-md': {'display': 'simple_markup'} 
 
 
     }, 

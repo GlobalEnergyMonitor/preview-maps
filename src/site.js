@@ -1044,9 +1044,10 @@ function filterGeoJSON() {
         }
         
         if (config.selectedCountries.length > 0) {
-            console.log(config.selectedCountries)
+            // console.log(config.selectedCountries)
             // This checks if any of the selected countries are associated with the project
             try {
+                // console.log(config.countryField)
                 const projectCountries = feature.properties[config.countryField].split(';').map(country => country.trim());
                 if (!config.selectedCountries.some(country => projectCountries.includes(country))) {
                     include = false;
@@ -1298,6 +1299,20 @@ function displayDetails(features) {
 
             if (config.detailView[detail]['display'] == 'heading') {
                 detail_text += '<h4>' + features[0].properties[detail] + '</h4>';
+
+            } else if (config.detailView[detail]['display'] == 'simple_markup') {
+                let value = features[0].properties[detail];
+                if (value && value !== '') {
+                    // Extract URL if present
+                    const urlMatch = value.match(/(https?:\/\/[^\s]+)/);
+                    if (urlMatch) {
+                        const url = urlMatch[1];
+                        const textWithoutUrl = value.replace(url, '').trim();
+                        detail_text += '<br/><div>' + textWithoutUrl + ' <a href="' + url + '" target="_blank">' + url + '</a></div>';
+                    } else {
+                        detail_text += '<br/><div>' + value + '</div><br/>';
+                    }
+                }
 
             } else if (config.detailView[detail]['display'] == 'join') {
 
