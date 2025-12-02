@@ -29,10 +29,7 @@ var config = {
             'lng-import': 'green',
             'lng-export': 'green',
 
-            // 'oil-and-gas-extraction-areas': 'blue',
-            // 'coal-mines': 'green',
-            // 'pipelines': 'green',
-            // 'lng-terminals': 'green'
+
         }
         },
 
@@ -101,6 +98,7 @@ var config = {
         'Project': ['name', 'name-search'], 
         'Companies': ['operator'],
         'Type of Infrastructure': ['typeInfra'],
+        'Coordinates': ['geometry', 'lat', 'lng']
         // 'Government Well ID': ['well_id'],
         // 'Other Government ID Assets': ['gov_assets']
 
