@@ -64,7 +64,7 @@ var config = {
     allCountrySelect: false,
     countryField: 'areas', // country
     // multiCountry: true,
-    capacityDisplayField: 'project-financing',
+    capacityDisplayField: 'fin_by_transac', // need this since it'll sum .. need to make float
     
     tableHeaders: {
         values: ['name','unitname', 'fin', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
