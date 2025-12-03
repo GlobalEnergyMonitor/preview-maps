@@ -9,15 +9,14 @@ var config = {
     img_detail_zoom: 10,
 
     statusField: 'finstatus', // financing status
-    statusDisplayField: 'finstatus',
+    // statusDisplayField: 'finstatus',
     color: {
 
         field: 'finstatus',
         values: {  
             // 'known': 'red',
-            '<NA>': 'red',
-            'unknown': 'blue',
-            'Not available': 'blue'
+            'Known': 'red',
+            'Unknown': 'blue'
         }
     },
 
@@ -26,8 +25,8 @@ var config = {
         {
             field: 'finstatus',
             label: 'Financing Status',
-            values: ['<NA>','unknown', 'Not available'],
-            values_labels: ['Known project financing','No known financing', 'Not Found']
+            values: ['Known', 'Unknown'],
+            values_labels: ['Known project finance','No known project finance']
         },
         {
             field: 'tab-type',
@@ -39,10 +38,10 @@ var config = {
             // primary: true
         },
         {
-            field: 'project-cap-fin-scaling',//'financing', 
+            field: 'finbucket',//'financing', 
             label: ' Total known project finance', // info button explaining what it means
-            values: ['Not available','low', 'mid-low', 'mid', 'mid-high', 'Not availableNot available'],//'high'],
-            values_labels: ['Not available', '$1-500 million', '$501-1000 million', '$1001-1500 million', '$1500-2000 million', '$2001-2500 million'],
+            values: ['na','low', 'mid-low', 'mid', 'mid-high', 'high'],//'high'], # mid-low', 'low', 'mid-high', 'na', 'high'
+            values_labels: ['Not available', '$1-500 million', '$501-1000 million', '$1001-1500 million', '$1501-2000 million', '$2001+ million'], //'$2001-2500 million'
             // values_hover_text: ['hover tesct for fuels', '', '']
             // field_hover_text: 'GEM assesses whether hydrogen projects have met criteria (specific to each infrastructure type) demonstrating progress toward completion, since many hydrogen projects lack core details or commitments from stakeholders. For more information on these criteria, see the <a href="https://globalenergymonitor.org/projects/europe-gas-tracker/methodology/">EGT methodology page</a>'
 
@@ -52,44 +51,47 @@ var config = {
 
     
     /* Labels for describing the assets */
-    assetFullLabel: "Projects",
-    assetLabel: 'projects',
+    assetFullLabel: "Units",
+    assetLabel: 'units',
 
-    capacityField: 'scaling-capacity', // all na 'project_cap_fin_scaling', // this will be financing, and smallest value when its unknown
+    capacityField: 'project-fin-scaling', // all na 'project_cap_fin_scaling', // this will be financing, and smallest value when its unknown
     linkField: 'pid',
-    capacityLabel: '$',
+    capacityLabel: 'million dollars',
     showMaxCapacity: false,
 
     nameField: 'name', // name of projects
     countryFile: 'countries.js',
     allCountrySelect: false,
     countryField: 'areas', // country
-    multiCountry: true,
-    capacityDisplayField: 'project_cap_fin_scaling',
+    // multiCountry: true,
+    capacityDisplayField: 'project-financing',
     
     tableHeaders: {
-        values: ['name','unit-name', 'fin', 'debtequityelse','owner', 'parent', 'importexport','status', 'areas', 'startyear', 'capacitymw', 'capacitymtpa','debtequityelse'],
-        labels: ['Name','Unit','Financier', 'Financing Type','Owner', 'Parent','units','Terminal Facility Type', 'Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)', 'Financing Type'],
+        values: ['name','unitname', 'fin', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
+        labels: ['Name','Unit','Financier', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
         clickColumns: ['name'],
-        rightAlign: ['cleaned_cap','startyear',], 
+        rightAlign: ['startyear',], 
         removeLastComma: ['areas'], 
-        toLocaleString: ['cleaned_cap'],
+        toLocaleString: [''],
 
 
     },
-    searchFields: { 'Project': ['name', 'othername', 'localname', 'name-search', 'owner-search', 'parent-search'], 
-        'Financiers/Ownership': ['owner', 'parent', 'fin'],
-        'Start Year': ['startyear'],
-        'Operational Status': ['opstatus'],
-        // 'Status': ['status'],
-        // 'Province/State': ['subnat']
+    searchFields: { 'Project': ['name', 'othername', 'localname', 'name-search', 'unit-name', 'unitid', 'pid'], 
+        'Project Financier': ['owner', 'parent', 'fin',  'owner-search', 'parent-search'],
+   
+
+        
     },
     detailView: {
         'name': {'display': 'heading'},
-        'prod-gas': {'label': 'Production (Million m³/y)'},
-        'prod-year-gas': {'label': 'Production Year - Gas'},
+        'debt-project-financing': {'label': 'Debt Project Financing ($ million)'},
+        'equity-project-financing': {'label': 'Equity Project Financing ($ million)'},
+        // 'debtequityelse': {'label': 'Financing Type'},
         'startyear': {'label': 'Start Year'},
         'fin': {'label': 'Financier'},
+        'opstatus': {'label': 'Operating Status'},
+        'capacitymtpa': {'label': 'Capacity (mtpa)'},
+        'capacitymw': {'label': 'Capacity (mw)'},
         'owner': {'label': 'Owner'},
         'parent': {'label': 'Parent'},
         'areas': {'display': 'location'}, 
@@ -97,17 +99,17 @@ var config = {
     // showToolTip: true,
 
         /* radius associated with minimum/maximum value on map */
-    // minRadius: 2,
-    // maxRadius: 10,
+    minRadius: 4,
+    maxRadius: 10,
     // minLineWidth: 1,
     // maxLineWidth: 3,
 
     // /* radius to increase min/max to under high zoom */
-    // highZoomMinRadius: 4,
-    // highZoomMaxRadius: 32,
+    highZoomMinRadius: 4,
+    highZoomMaxRadius: 32,
     // highZoomMinLineWidth: 4,
     // highZoomMaxLineWidth: 32,
     
-    // showAllPhases: true
+    showAllPhases: true
 
 };
