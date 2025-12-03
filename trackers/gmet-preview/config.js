@@ -1,4 +1,11 @@
 var config = {
+    // NOTES 
+    // the LNG terminals are missing the emissions data "Annual methane emissions estimate at terminal if operational: (mt/year)" (should be included for all, not just operating terminals
+    //     DONE could the coal mines be a different color than the other layers? (i.e., seems fine to keep the pipelines and terminals the same color since they're both O&G transmission, but coal mines are hard to see)
+    //     Could we change "GEM Reviewed Plumes (has attribution)" to "Reviewed Plumes (has attribution info)". I know it's fiddly, but important to add some plausible deniability 
+    // between what is definitively "attributed" vs what simply "Has attribution information". Removed the GEM prefix for space
+    
+    
     geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-11/gmet_map_2025-12-02.geojson',
     geometries: ['Point','LineString'],
     colors: {
@@ -10,7 +17,7 @@ var config = {
         'grey': '#8f8f8e',
         'dark grey': '#4B4B4B',
         'orange': '#FF8C00',
-        // 'yellow': '#f3ff00'
+        'yellow': '#d4af00'
     },
 
     color: { 
@@ -24,7 +31,7 @@ var config = {
             'Oil and Gas Extraction Areas': 'blue',
             // 'Oil and Gas Reserves': 'blue',
             'Pipelines': 'green',
-            'Coal Mines - Non-closed': 'green',
+            'Coal Mines - Non-closed': 'yellow',
             // 'LNG Terminals': 'green'
             'lng-import': 'green',
             'lng-export': 'green',
@@ -44,8 +51,8 @@ var config = {
             'LNG Terminals Import', 
             'LNG Terminals Export',
             'Pipelines', 
-            'GEM Reviewed Plumes (has attribution)',
-            'GEM Reviewed Plumes (no attribution)'
+            'Reviewed Plumes (has attribution info)', //  info)
+            'Reviewed Plumes (no attribution info)'
             ],
             primary: true
         },
@@ -94,11 +101,11 @@ var config = {
         each label has a value with the list of fields to search. Multiple fields might be searched */
     searchFields: { 'Country/Area(s)': ['areas'],
 
-        'Project Type': ['tracker-acro', 'tab-type', 'legend-filter'],
+        'Project Type': ['legend-filter'],
         'Project': ['name', 'name-search'], 
         'Companies': ['operator'],
         'Type of Infrastructure': ['typeInfra'],
-        'Coordinates': ['geometry', 'lat', 'lng']
+        // 'Coordinates': ['geometry', 'lat', 'lng']
         // 'Government Well ID': ['well_id'],
         // 'Other Government ID Assets': ['gov_assets']
 
@@ -152,5 +159,29 @@ var config = {
 
     multiCountry: true,
 
-    showMaxCapacity: false
+    showMaxCapacity: false,
+    
+    showAllPhases: true,
+
+
+    // POINTS
+    /* radius associated with minimum/maximum value on map */
+    minRadius: 2,
+    maxRadius: 10,
+
+    // LINES
+    minLineWidth: 1,
+    maxLineWidth: 3,
+
+    // POINTS HIGH ZOOM CLOSE IN
+    // /* radius to increase min/max to under high zoom */
+    highZoomMinRadius: 4,
+    highZoomMaxRadius: 32,
+
+    // LINES HIGH ZOOM CLOSE IN
+
+    highZoomMinLineWidth: 4,
+    highZoomMaxLineWidth: 32,
+    
+
 }
