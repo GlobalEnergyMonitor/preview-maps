@@ -1,12 +1,17 @@
 var config = {
     // NOTES 
-    // the LNG terminals are missing the emissions data "Annual methane emissions estimate at terminal if operational: (mt/year)" (should be included for all, not just operating terminals
     //     DONE could the coal mines be a different color than the other layers? (i.e., seems fine to keep the pipelines and terminals the same color since they're both O&G transmission, but coal mines are hard to see)
-    //     Could we change "GEM Reviewed Plumes (has attribution)" to "Reviewed Plumes (has attribution info)". I know it's fiddly, but important to add some plausible deniability 
+    //     DONECould we change "GEM Reviewed Plumes (has attribution)" to "Reviewed Plumes (has attribution info)". I know it's fiddly, but important to add some plausible deniability 
     // between what is definitively "attributed" vs what simply "Has attribution information". Removed the GEM prefix for space
+    // 
     
+    // the LNG terminals are missing the emissions data 
+    // "Annual methane emissions estimate at terminal 
+    // if operational: (mt/year)" 
+    // (should be included for all, not just operating terminals
+
     
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-11/gmet_map_2025-12-02.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-12/gmet_map_2025-12-03.geojson',
     geometries: ['Point','LineString'],
     colors: {
         'red': '#c74a48',
@@ -89,8 +94,8 @@ var config = {
         and designated which column has the link */
     tableHeaders: {
 
-        values: ['name', 'status','plume-emissions', 'emission-uncertainty','typeinfra', 'date','subnat', 'areas','infra-name', 'geminfrawiki'],
-        labels: ['Project', 'Status','Emissions (kg/hr)', 'Emissions Uncertainty (kg/hr)','Type of Infrastructure','Observation Date', 'Subnational', 'Country/Area(s)','Nearby Infrastructure Project Name', 'Infrastructure Wiki'],
+        values: ['name', 'status','plume-emissions', 'emission-uncertainty', 'emissions-terminals', 'tonnesyr-pipes_emissions','tonnes-goget-reserves-emissions', 'mtyr-gcmt-emissions','typeinfra', 'date','subnat', 'areas','infra-name', 'geminfrawiki'],
+        labels: ['Project', 'Status','Emissions (kg/hr)', 'Emissions Uncertainty (kg/hr)', 'Emissions terminals ggit', 'Emissions pipeline','Emissions goget', 'Emissions gcmt','Type of Infrastructure','Observation Date', 'Subnational', 'Country/Area(s)','Nearby Infrastructure Project Name', 'Infrastructure Wiki'],
         clickColumns: ['name'],
         rightAlign: ['plume-emissions','date'],
         removeLastComma: ['areas'],
@@ -129,19 +134,32 @@ var config = {
         'satdataprovider': {'label': 'Satellite Data Provider'},
         'owner': {'label': 'Owner'},
         'operator': {'label': 'Operator'},
+        // EMISSIONS PLUMES WORKING
         'plume-emissions': {'label': 'Emissions (kg/hr)'},
+
         'emission-uncertainty': {'label': 'Emissions Uncertainity (kg/hr)'},
         'typeinfra': {'label': 'Type of Infrastructure'},
         'infra-name': { 'label': 'Nearby Infrastructure Project Name'},
+
+        // EMISSIONS COAL MINE WORKING
         'mtyr-gcmt-emissions': {'label': 'Coal Mine Methane Emissions Estimate (mt/yr)'},
+
         'capacity-output': {'label': 'Coal Output (Annual, Mst)'},
         'capacity-prod': {'label': 'Production (Mtpa)'},
-        'emissionsifop': {'label': 'Emissions if Operational (tonnes/yr)'}, //check correct
+
+        // EMISSIONS PIPELINEtonnesyr-pipes_emissions
+        'tonnesyr-pipes_emissions': {'label': 'Emissions if Operational (tonnes/yr)'}, //check correct
+
         'pipe-length': {'label': 'Length (km)'},
         'capacitybcm/y': {'label': 'Capacity (bcm/y)'},
         'capacityinmtpa': {'label': 'Capacity (MTPA)'},
+
+        // EMISSIONS GOGET WORKING
         'tonnes-goget-reserves-emissions': {'label': 'Potential Emissions for whole reserves (tonnes)'},
-        'emissionsifop': {'label': 'Annual methane emissions estimate if operational (mt/year)'},
+        
+        // EMISSIONS LNG TERM
+        'emissions-terminals': {'label': 'methane emissions (Mt/year)'},//'Annual methane emissions estimate if operational (mt/year)'},
+        
         'inportexport': {'label': 'Terminal Facility Type'},
         'date': {'label': 'Observation Date'},
         'status': {'label': 'Status'},
@@ -160,7 +178,7 @@ var config = {
     multiCountry: true,
 
     showMaxCapacity: false,
-    
+
     showAllPhases: true,
 
 
