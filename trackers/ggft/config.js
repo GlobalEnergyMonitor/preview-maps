@@ -9,7 +9,7 @@ var config = {
     img_detail_zoom: 10,
 
     statusField: 'finstatus', // financing status
-    // statusDisplayField: 'finstatus',
+    statusDisplayField: 'finstatus', // need shorter names? where does ficing come from ... should not be there
     color: {
 
         field: 'finstatus',
@@ -56,7 +56,7 @@ var config = {
 
     capacityField: 'project-fin-scaling', // all na 'project_cap_fin_scaling', // this will be financing, and smallest value when its unknown
     linkField: 'pid',
-    capacityLabel: 'million dollars',
+    capacityLabel: 'million dollars', // bug with solo ones showing weird status and capacity
     showMaxCapacity: false,
 
     nameField: 'name', // name of projects
