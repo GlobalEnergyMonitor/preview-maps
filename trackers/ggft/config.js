@@ -1,5 +1,5 @@
 var config = {
-    geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-03.geojson',
+    geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-04.geojson',
 
     // csv: '../../trialfile.csv',
     geometries: ['Point'],
@@ -10,6 +10,8 @@ var config = {
 
     statusField: 'finstatus', // financing status
     statusDisplayField: 'finstatus', // need shorter names? where does ficing come from ... should not be there
+    
+    
     color: {
 
         field: 'finstatus',
@@ -26,16 +28,17 @@ var config = {
             field: 'finstatus',
             label: 'Financing Status',
             values: ['Known', 'Unknown'],
-            values_labels: ['Known project finance','No known project finance']
+            values_labels: ['Known project finance','No known project finance'],
+            primary: true
+
         },
         {
             field: 'tab-type',
             label: 'Infrastructure Type',
-            values: ['Gas Power Plants', 'LNG Terminals'],
+            values: ['Gas_Power_Plants', 'LNG_Terminals'], // frontend does not like spaces put _ there
             values_labels: ['Gas Plants', 'LNG Terminals'],
             // values_hover_text: ['hover text for fuels', '', '']
             // field_hover_text: 'Hydrogen projects are classified as either planning to blend hydrogen into methane gas or use 100% hydrogen. For the projects that plan to use hydrogen but do not specify a percentage, it is assumed they are blending. Blended projects only appear as hydrogen projects and do not also appear as methane projects, though they will use both fuel types.',
-            // primary: true
         },
         {
             field: 'finbucket',//'financing', 
@@ -54,17 +57,17 @@ var config = {
     assetFullLabel: "Units",
     assetLabel: 'units',
 
-    capacityField: 'project-fin-scaling', // all na 'project_cap_fin_scaling', // this will be financing, and smallest value when its unknown
+    capacityField: 'project-fin-scaling', // used for sizing assets NOT display // all na 'project_cap_fin_scaling', // this will be financing, and smallest value when its unknown
     linkField: 'pid',
     capacityLabel: 'million dollars', // bug with solo ones showing weird status and capacity
     showMaxCapacity: false,
 
     nameField: 'name', // name of projects
-    countryFile: 'countries.js',
+    countryFile: 'countries.json',
     allCountrySelect: false,
     countryField: 'areas', // country
     // multiCountry: true,
-    capacityDisplayField: 'fin_by_transac', // need this since it'll sum .. need to make float
+    capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details 
     
     tableHeaders: {
         values: ['name','unitname', 'fin', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
@@ -96,7 +99,6 @@ var config = {
         'parent': {'label': 'Parent'},
         'areas': {'display': 'location'}, 
     },
-    // showToolTip: true,
 
         /* radius associated with minimum/maximum value on map */
     minRadius: 4,
@@ -111,5 +113,8 @@ var config = {
     // highZoomMaxLineWidth: 32,
     
     showAllPhases: true
+
+
+
 
 };
