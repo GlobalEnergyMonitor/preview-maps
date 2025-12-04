@@ -70,8 +70,8 @@ var config = {
     capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details 
     
     tableHeaders: {
-        values: ['name','unitname', 'fin', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
-        labels: ['Name','Unit','Financier', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
+        values: ['fin', 'name', 'unitname', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
+        labels: ['Financier', 'Project Name','Unit Name', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
         clickColumns: ['name'],
         rightAlign: ['startyear',], 
         removeLastComma: ['areas'], 
