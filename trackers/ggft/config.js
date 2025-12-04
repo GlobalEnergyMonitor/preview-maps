@@ -1,5 +1,5 @@
 var config = {
-    geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-04.geojson',
+    geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-05.geojson',
 
     // csv: '../../trialfile.csv',
     geometries: ['Point'],
@@ -87,6 +87,7 @@ var config = {
     },
     detailView: {
         'name': {'display': 'heading'},
+        'unitname': {'label': 'Unit Name'},
         'debt-project-financing': {'label': 'Debt Project Financing ($ million)'},
         'equity-project-financing': {'label': 'Equity Project Financing ($ million)'},
         // 'debtequityelse': {'label': 'Financing Type'},
