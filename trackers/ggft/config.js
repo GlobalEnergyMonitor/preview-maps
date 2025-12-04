@@ -33,7 +33,7 @@ var config = {
 
         },
         {
-            field: 'tab-type',
+            field: 'infra-filter',
             label: 'Infrastructure Type',
             values: ['Gas_Power_Plants', 'LNG_Terminals'], // frontend does not like spaces put _ there
             values_labels: ['Gas Plants', 'LNG Terminals'],
