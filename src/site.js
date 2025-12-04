@@ -9,6 +9,16 @@ function processConfig() {
         config.color.values[color_key] = config.colors[ config.color.values[color_key] ];
     });
 }
+let userInteracting = false;
+const diacriticMap = {
+    a: ["a", "á", "à", "â", "ã", "ä", "å"],
+    e: ["e", "é", "è", "ê", "ë"],
+    i: ["i", "í", "ì", "î", "ï"],
+    o: ["o", "ó", "ò", "ô", "õ", "ö", "ø"],
+    u: ["u", "ú", "ù", "û", "ü"],
+    c: ["c", "ç"],
+    n: ["n", "ñ"],
+  };
 
 /*
   Set up mapboxgljs instance, and trigger data load
@@ -642,7 +652,7 @@ function addEvents() {
         spinGlobe();
         const bbox = [ [e.point.x - config.hitArea, e.point.y - config.hitArea], [e.point.x + config.hitArea, e.point.y + config.hitArea]];
         const selectedFeatures = getUniqueFeatures(map.queryRenderedFeatures(bbox, {layers: config.layers}), config.linkField).sort((a, b) => a.properties[config.nameField].localeCompare(b.properties[config.nameField]));
-
+        console.log('selected features' + selectedFeatures)
 
         if (selectedFeatures.length == 0) return;
 
@@ -654,7 +664,6 @@ function addEvents() {
 
         if (selectedFeatures.length == 1) {
             config.selectModal = '';
-
             displayDetails(config.linked[selectedFeatures[0].properties[config.linkField]]);
 
         } else {
@@ -779,6 +788,10 @@ function buildFilters() {
         }
         // this creates the section title and adds the select all feature only to the sections after the first one, if there is no tooltip logic so for all non europe maps
         else if (config.color.field != filter.field) {
+
+            console.log('here in else if of build filters')
+            console.log(config.color.field)
+            console.log(filter.field)
             $('#filter-form').append('<hr /><h7 class="card-title">' + (filter.label || filter.field.replaceAll("_"," ")) + 
             '</div></div></h7> <div class="col-12 text-left small" id="all-select-section-level"><a href="" onclick="selectAllFilterSection(\'' + filter.field + '\'); return false;">select all section</a> | <a href="" onclick="clearAllFilterSection(\'' + filter.field + '\'); return false;">clear all section</a></div>');
         }
@@ -879,6 +892,10 @@ function clearAllFilter(fieldRow) {
 
 }
 
+// ISSUE HERE 
+// only for infra type tab-type 
+console.log('fieldRow')
+console.log(fieldRow)
 // for section level select all and clear all
 function clearAllFilterSection(fieldRow) {
     $('.filter-row').each(function() {
@@ -1032,6 +1049,7 @@ function filterGeoJSON() {
         for (let field in filterStatus) {
             if (! filterStatus[field].includes(feature.properties[field])) include = false;
         }
+        // filter by text search bar
         if (config.searchText.length >= 3) {
             if (config.selectedSearchFields.split(',').filter((field) => {
                 // remove diacritics from mapValue
@@ -1042,12 +1060,11 @@ function filterGeoJSON() {
                     return mapValue.toLowerCase().includes(config.searchText);
                 }}).length == 0) include = false;
         }
-        
+        // filter by country select, gets hit when just filtering by legend too
+
         if (config.selectedCountries.length > 0) {
-            // console.log(config.selectedCountries)
             // This checks if any of the selected countries are associated with the project
             try {
-                // console.log(config.countryField)
                 const projectCountries = feature.properties[config.countryField].split(';').map(country => country.trim());
                 if (!config.selectedCountries.some(country => projectCountries.includes(country))) {
                     include = false;
@@ -1467,11 +1484,11 @@ function displayDetails(features) {
 
             if (typeof feature.properties[config.capacityDisplayField] === 'string' ){
                 capacityFloat = Number(capacityFloat);
-                console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+                // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
             } // or typeof === string
             else {
                 capacityFloat = parseFloat(capacityFloat);
-                console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+                // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
 
 
             }
@@ -1516,11 +1533,10 @@ function displayDetails(features) {
         }
         // else when there is only one feature or one unit per project in the popup modal
         else {
-            console.log('This is capacity:')
-            console.log(features[0].properties[config.capacityDisplayField])
+            // console.log('This is capacity:')
+            // console.log(features[0].properties[config.capacityDisplayField])
             capacityFloat = Number(features[0].properties[config.capacityDisplayField])
-            console.log(typeof capacityFloat)
-
+            // console.log(typeof capacityFloat)
             // if capacity is a string and when you convert with Number it is 0 then we can say it is NA or Not found
             if (features[0].properties[config.capacityDisplayField].trim() === ''){
                     capacityFloatandLabel = 'Not found or N/A'
@@ -1737,15 +1753,6 @@ function buildCountrySelect() {
     config.selectedCountryText = '';
 }
 
-const diacriticMap = {
-    a: ["a", "á", "à", "â", "ã", "ä", "å"],
-    e: ["e", "é", "è", "ê", "ë"],
-    i: ["i", "í", "ì", "î", "ï"],
-    o: ["o", "ó", "ò", "ô", "õ", "ö", "ø"],
-    u: ["u", "ú", "ù", "û", "ü"],
-    c: ["c", "ç"],
-    n: ["n", "ñ"],
-  };
   
 // this removes diacritics in the data so that when you search you get all the possible options ignored special diacritics
 // this is applied so that only the non tile maps are impacted
@@ -1923,7 +1930,7 @@ const maxSpinZoom = 5;
 const slowSpinZoom = 3;
 
 
-let userInteracting = false;
+// let userInteracting = false;
 let spinEnabled = true;
 
 // the function in charge of spinning the globe projection of the map
