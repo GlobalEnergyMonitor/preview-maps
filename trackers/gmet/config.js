@@ -1,17 +1,6 @@
 var config = {
-    // NOTES 
-    //     DONE could the coal mines be a different color than the other layers? (i.e., seems fine to keep the pipelines and terminals the same color since they're both O&G transmission, but coal mines are hard to see)
-    //     DONECould we change "GEM Reviewed Plumes (has attribution)" to "Reviewed Plumes (has attribution info)". I know it's fiddly, but important to add some plausible deniability 
-    // between what is definitively "attributed" vs what simply "Has attribution information". Removed the GEM prefix for space
-    // 
     
-    // the LNG terminals are missing the emissions data 
-    // "Annual methane emissions estimate at terminal 
-    // if operational: (mt/year)" 
-    // (should be included for all, not just operating terminals
-
-    
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-12/gmet_map_2025-12-03.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gmet/2025-12/gmet_map_2025-12-05.geojson',
     geometries: ['Point','LineString'],
     colors: {
         'red': '#c74a48',
@@ -28,15 +17,15 @@ var config = {
     color: { 
         field: 'legend-filter',
         label: 'Plume and Infrastructure Projects',
-        values: {
+        values: { // must have hyphen NO space
             // 'Plumes': 'red',
             'plumes-attrib': 'red',
             'plumes-unattrib': 'orange',
 
-            'Oil and Gas Extraction Areas': 'blue',
+            'Oil-and-Gas-Extraction-Areas': 'blue',
             // 'Oil and Gas Reserves': 'blue',
             'Pipelines': 'green',
-            'Coal Mines - Non-closed': 'yellow',
+            'Coal-Mines---Non-closed': 'yellow',
             // 'LNG Terminals': 'green'
             'lng-import': 'green',
             'lng-export': 'green',
@@ -49,7 +38,7 @@ var config = {
         {
             field: 'legend-filter',
             label: 'Plume and Infrastructure Projects',
-            values: ['Oil and Gas Extraction Areas', 'Coal Mines - Non-closed', 'lng-import', 'lng-export', 'Pipelines','plumes-attrib', 'plumes-unattrib'],
+            values: ['Oil-and-Gas-Extraction Areas', 'Coal Mines---Non-closed', 'lng-import', 'lng-export', 'Pipelines','plumes-attrib', 'plumes-unattrib'],
             values_labels: [
             'Oil and Gas Extraction Areas', 
             'Coal Mines', 
@@ -72,10 +61,6 @@ var config = {
 
     statusDisplayField: 'status',
     statusField: 'status-legend',
-
-    // # O&G extraction areas and coal mines by status 
-    // plumes by "has attribution information"
-    // infrastructure emissions estimates
     
     capacityField: 'scaling-capacity',
     capacityLabel: '', // for gmet that has no capacity but only emissions data
@@ -107,10 +92,10 @@ var config = {
     searchFields: { 'Country/Area(s)': ['areas'],
 
         'Project Type': ['legend-filter'],
-        'Project': ['name', 'name-search'], 
+        'Project': ['name', 'name-search', 'infra-name', 'geminfrawiki'], 
         'Companies': ['operator'],
         'Type of Infrastructure': ['typeInfra'],
-        // 'Coordinates': ['geometry', 'lat', 'lng']
+        'Coordinates': ['geometry', 'lat', 'lng']
         // 'Government Well ID': ['well_id'],
         // 'Other Government ID Assets': ['gov_assets']
 
