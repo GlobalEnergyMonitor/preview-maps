@@ -38,7 +38,7 @@ var config = {
         {
             field: 'legend-filter',
             label: 'Plume and Infrastructure Projects',
-            values: ['Oil-and-Gas-Extraction Areas', 'Coal Mines---Non-closed', 'lng-import', 'lng-export', 'Pipelines','plumes-attrib', 'plumes-unattrib'],
+            values: ['Oil-and-Gas-Extraction-Areas', 'Coal-Mines---Non-closed', 'lng-import', 'lng-export', 'Pipelines','plumes-attrib', 'plumes-unattrib'],
             values_labels: [
             'Oil and Gas Extraction Areas', 
             'Coal Mines', 
@@ -79,7 +79,7 @@ var config = {
         and designated which column has the link */
     tableHeaders: {
 
-        values: ['name', 'status','plume-emissions', 'emission-uncertainty', 'emissions-terminals', 'tonnesyr-pipes_emissions','tonnes-goget-reserves-emissions', 'mtyr-gcmt-emissions','typeinfra', 'date','subnat', 'areas','infra-name', 'geminfrawiki'],
+        values: ['name', 'status','plume-emissions', 'emission-uncertainty', 'emissions-terminals', 'tonnesyr-pipes-emissions','tonnes-goget-reserves-emissions', 'mtyr-gcmt-emissions','typeinfra', 'date','subnat', 'areas','infra-name', 'geminfrawiki'],
         labels: ['Project', 'Status','Emissions (kg/hr)', 'Emissions Uncertainty (kg/hr)', 'Methane emissions if fully operational', 'Emissions if Operational (tonnes/yr)','Potential Emissions for whole reserves (tonnes)', 'Coal Mine Methane Emissions Estimate (mt/yr)','Type of Infrastructure','Observation Date', 'Subnational', 'Country/Area(s)','Nearby Infrastructure Project Name', 'Infrastructure Wiki'],
         clickColumns: ['name'],
         rightAlign: ['plume-emissions','date'],
