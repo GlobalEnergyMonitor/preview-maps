@@ -894,8 +894,8 @@ function clearAllFilter(fieldRow) {
 
 // ISSUE HERE 
 // only for infra type tab-type 
-console.log('fieldRow')
-console.log(fieldRow)
+// console.log('fieldRow')
+// console.log(fieldRow)
 // for section level select all and clear all
 function clearAllFilterSection(fieldRow) {
     $('.filter-row').each(function() {
