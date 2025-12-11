@@ -285,6 +285,8 @@ function findLinkedAssets() {
         // Build summary count of filters for legend
         let summary_count = {};
         config.filters.forEach((filter) => {
+            // console.log('filter.field')
+            // console.log(filter.field)
             summary_count[filter.field] = Object.assign(...filter.values.map(f => ({[f]: 0})));
             features.forEach((feature) => {
                 summary_count[filter.field][feature.properties[filter.field]]++;
@@ -652,7 +654,7 @@ function addEvents() {
         spinGlobe();
         const bbox = [ [e.point.x - config.hitArea, e.point.y - config.hitArea], [e.point.x + config.hitArea, e.point.y + config.hitArea]];
         const selectedFeatures = getUniqueFeatures(map.queryRenderedFeatures(bbox, {layers: config.layers}), config.linkField).sort((a, b) => a.properties[config.nameField].localeCompare(b.properties[config.nameField]));
-        console.log('selected features' + selectedFeatures)
+        // console.log('selected features' + selectedFeatures)
 
         if (selectedFeatures.length == 0) return;
 
@@ -789,9 +791,9 @@ function buildFilters() {
         // this creates the section title and adds the select all feature only to the sections after the first one, if there is no tooltip logic so for all non europe maps
         else if (config.color.field != filter.field) {
 
-            console.log('here in else if of build filters')
-            console.log(config.color.field)
-            console.log(filter.field)
+            // console.log('here in else if of build filters')
+            // console.log(config.color.field)
+            // console.log(filter.field)
             $('#filter-form').append('<hr /><h7 class="card-title">' + (filter.label || filter.field.replaceAll("_"," ")) + 
             '</div></div></h7> <div class="col-12 text-left small" id="all-select-section-level"><a href="" onclick="selectAllFilterSection(\'' + filter.field + '\'); return false;">select all section</a> | <a href="" onclick="clearAllFilterSection(\'' + filter.field + '\'); return false;">clear all section</a></div>');
         }
@@ -1170,7 +1172,6 @@ function createTable() {
             $("#site-style").get(0).sheet.insertRule('td:nth-child(' + (config.tableHeaders.values.indexOf(col)+1) + ') { white-space: nowrap }', 0);
         });        
     }
-    // TODO look into why not converting the integers to string for capacity giomt
     config.table = $('#table').DataTable({
         data: geoJSON2Table().map(row => {
             if ('toLocaleString' in config.tableHeaders) {
@@ -1457,10 +1458,18 @@ function displayDetails(features) {
     // Build capacity summary by unit
     // Make sure capacity and parenthese get removed if there is only one feature
     if (capacityLabel != ''){
+        // PICK THIS UP TOMORROW
+        // if (config.scaling_not_by_cap===true){
+        //     //need to use something other than capacityField or capacityDispalyField for the capacity status summary count 
+        //     // for ggft should use capacitymtpa or capacitymw should create anew variable for ggft that is just capacity and only used for this summary thing.
+        //        // but for now since pipelines is never with a unit we can forget that ... eek
+        //     console.log('scaling not by capacity!')
+        // }
         if (features.length > 1) { 
         let filterIndex = 0;
             for (const[index, filter] of config.filters.entries()) {
-                if (filter.field == config.statusField) {
+                if (filter.field == config.statusField) { 
+
                     filterIndex = index;
                 }
             }
@@ -1481,6 +1490,8 @@ function displayDetails(features) {
 
         features.forEach((feature) => {
             let capacityFloat = feature.properties[config.capacityDisplayField]
+            // THIS IS THE ISSUE GGFT
+            // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
 
             if (typeof feature.properties[config.capacityDisplayField] === 'string' ){
                 capacityFloat = Number(capacityFloat);
@@ -1500,6 +1511,8 @@ function displayDetails(features) {
             // so this resets it when it is undefined but, still would be good to get to the bottom of why it is undefined when it should be 0, and why its only some statuses
             if (typeof capacity[feature.properties[config.statusField]] === 'undefined') {
                 capacity[feature.properties[config.statusField]] = 0
+                // console.log('this is feature.properties[config.statusField]')
+                // console.log(feature.properties[config.statusField])
             }
             capacity[feature.properties[config.statusField]] += capacityFloat;
 
@@ -1512,15 +1525,50 @@ function displayDetails(features) {
 
             let detail_capacity = '';
             Object.keys(count).forEach((k) => {
+                
+                // here do the status legend mapping to an appopriate status display 
+                /* 
+                OR TODO make a dictionary look up to not map status to display because there will be a different count.. but just rename any with / 
+
+                Proposed/Announced/Discovered
+                Mothballed/Idle/Shut in
+                Construction/In development
+                Retired/Closed/Decommissioned
+
+                */
+                // console.log(k)
+                if (k === 'proposed-plus'){
+                    display_k = 'proposed/announced/<br>discovered';
+                }
+                else if (k === 'mothballed-plus'){
+                    display_k = 'mothballed/idle/shut in';
+                }
+                else if (k === 'construction-plus'){
+                    display_k = 'construction/in development'
+                }
+                else if (k === 'retired-plus'){
+                    display_k = 'retired/closed/<br>decommissioned';
+                }
+                else {
+                    display_k = k;
+                }
+                // console.log(display_k)
+
+
 
                 if (config.color.field == config.statusField){ 
                     if (count[k] != 0) {
-                        detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        // console.log('this is k when config.color.field == config.statusDisplayField') // TODO I need to have a dictionary to reverse from status-legend to status Display so we can still 
+                        // filter by status legend but show the status display via k 
+                        // console.log(k)
+                        detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
                     }
                 }
                 else {
                     if (count[k] != 0) {
-                        detail_capacity += '<div class="row"><div class="col-5">' + k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        // console.log('this is k when config.color.field DOES NOT EQUAL config.statusDisplayField')
+                        // console.log(k)
+                        detail_capacity += '<div class="row"><div class="col-5">' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
                     }
                 }
             });
@@ -1535,16 +1583,23 @@ function displayDetails(features) {
         else {
             // console.log('This is capacity:')
             // console.log(features[0].properties[config.capacityDisplayField])
+            // console.log(features[0].properties[config.capacityDisplayField]) // Himeji-Okayama Gas Pipeline
+
             capacityFloat = Number(features[0].properties[config.capacityDisplayField])
+            // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+
             // console.log(typeof capacityFloat)
             // if capacity is a string and when you convert with Number it is 0 then we can say it is NA or Not found
-            if (features[0].properties[config.capacityDisplayField].trim() === ''){
+            if (features[0].properties[config.capacityDisplayField] === ''){
                     capacityFloatandLabel = 'Not found or N/A'
             }
 
             // if it is not a string then we are good ...  
-            else {
+            else { 
+                // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+                // try Number() instead of parseFloat()
                 capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
+                // console.log(capacityFloatandLabel)
             }
             // this handles capacity adjustment for solo projects where it looks redundant to have Capacity written out twice
             // Remove 'Capacity' prefix and parentheses from capacityLabel TODO look into a better way to handle, issue if capacity is nan or undefined like intentionally is for GOGET
