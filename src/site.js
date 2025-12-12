@@ -1459,10 +1459,8 @@ function displayDetails(features) {
     // Make sure capacity and parenthese get removed if there is only one feature
     if (capacityLabel != ''){
         // PICK THIS UP TOMORROW
-        // if (config.scaling_not_by_cap===true){
-        //     //need to use something other than capacityField or capacityDispalyField for the capacity status summary count 
-        //     // for ggft should use capacitymtpa or capacitymw should create anew variable for ggft that is just capacity and only used for this summary thing.
-        //        // but for now since pipelines is never with a unit we can forget that ... eek
+        // if (config.scaling_not_by_cap===true && capacityLabel2!=''){
+        //     //want to also show capacity value by status / unit ... so will need to figure out units of measurement shit won't work I think... will need two capacityLabels
         //     console.log('scaling not by capacity!')
         // }
         if (features.length > 1) { 
@@ -1504,11 +1502,7 @@ function displayDetails(features) {
 
             }
 
-            // to fix bug where it is not a clean slate for some reason
-            // now it adds correctly, the data file was fine and shows the value correctly in table view
-            // the values of the capacities were converted carefully so used Number() to avoid NaN so could add to an integer
-            // still the array had been initialized to start with 0 but had NaN in some even right after initialization
-            // so this resets it when it is undefined but, still would be good to get to the bottom of why it is undefined when it should be 0, and why its only some statuses
+            
             if (typeof capacity[feature.properties[config.statusField]] === 'undefined') {
                 capacity[feature.properties[config.statusField]] = 0
                 // console.log('this is feature.properties[config.statusField]')
@@ -1554,24 +1548,49 @@ function displayDetails(features) {
                 }
                 // console.log(display_k)
 
+                // console.log('This is capacity... find out how to make 0 that is really "" be Not found')
+                // console.log(capacity[k]) // it is a dictionary, the key is the status k, so if a value is 0 ... but what if it is truly 0 not Not found
 
 
-                if (config.color.field == config.statusField){ 
-                    if (count[k] != 0) {
-                        // console.log('this is k when config.color.field == config.statusDisplayField') // TODO I need to have a dictionary to reverse from status-legend to status Display so we can still 
-                        // filter by status legend but show the status display via k 
-                        // console.log(k)
-                        detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                if (capacity[k] === 0){
+                    if (config.color.field == config.statusField){ 
+                        if (count[k] != 0) {
+                            // console.log('this is k when config.color.field == config.statusDisplayField') // TODO I need to have a dictionary to reverse from status-legend to status Display so we can still 
+                            // filter by status legend but show the status display via k 
+                            // console.log(k)
+                            detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + display_k + '</div><div class="col-4">' + 'Not found or N/A' + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        }
                     }
+                    else {
+                        if (count[k] != 0) {
+                            // console.log('this is k when config.color.field DOES NOT EQUAL config.statusDisplayField')
+                            // console.log(k)
+                            detail_capacity += '<div class="row"><div class="col-5">' + display_k + '</div><div class="col-4">' + 'Not found or N/A' + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        }
+                    }                    
                 }
                 else {
-                    if (count[k] != 0) {
-                        // console.log('this is k when config.color.field DOES NOT EQUAL config.statusDisplayField')
-                        // console.log(k)
-                        detail_capacity += '<div class="row"><div class="col-5">' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                    if (config.color.field == config.statusField){ 
+                        if (count[k] != 0) {
+                            // console.log('this is k when config.color.field == config.statusDisplayField') // TODO I need to have a dictionary to reverse from status-legend to status Display so we can still 
+                            // filter by status legend but show the status display via k 
+                            // console.log(k)
+                            detail_capacity += '<div class="row"><div class="col-5"><span class="legend-dot" style="background-color:' + config.color.values[k] + '"></span>' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        }
+                    }
+                    else {
+                        if (count[k] != 0) {
+                            // console.log('this is k when config.color.field DOES NOT EQUAL config.statusDisplayField')
+                            // console.log(k)
+                            detail_capacity += '<div class="row"><div class="col-5">' + display_k + '</div><div class="col-4">' + Number(capacity[k]).toLocaleString() + '</div><div class="col-3">' + count[k] + " of " + features.length + "</div></div>";
+                        }
                     }
                 }
             });
+            // special for GGFT ... should change the variable name in the script to be status not finstatus I suppose.
+            if (config.statusDisplayField === 'finstatus'){
+                config.statusDisplayField = 'Status'
+            }
             detail_text += '<div>' + 
                 '<div class="row pt-2 justify-content-md-center">Total ' + assetLabel + ': ' + features.length + '</div>' +
                 '<div class="row" style="height: 2px"><hr/></div>' +

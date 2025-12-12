@@ -67,8 +67,20 @@ var config = {
     allCountrySelect: false,
     countryField: 'areas', // country
     // multiCountry: true,
-    capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details 
+    capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details. 
     
+    scaling_not_by_cap: true,
+    // HOLD TODO not sure if they want this this badly ... will make site.js more complicated.
+    // capacityLabel2:  {       
+    //     field: 'infra-filter',
+    //     values: {
+    //         'LNG_Terminals': 'MTPA',
+    //         'Gas_Power_Plants': 'MW'
+    // },
+
+    // FOR DEBUGGING  
+    // 'project-fin-scaling','fin-by-transac', 
+    // 'debug capacityField project-fin-scaling','debug capacityDisplayField fin-by-transac',
     tableHeaders: {
         values: ['fin', 'name', 'unitname', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
         labels: ['Financier', 'Project Name','Unit Name', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
@@ -94,8 +106,8 @@ var config = {
         'startyear': {'label': 'Start Year'},
         'fin': {'label': 'Financier'},
         'opstatus': {'label': 'Operating Status'},
-        'capacitymtpa': {'label': 'Capacity (mtpa)'},
-        'capacitymw': {'label': 'Capacity (mw)'},
+        // 'capacitymtpa': {'label': 'Capacity (mtpa)'},
+        // 'capacitymw': {'label': 'Capacity (mw)'},
         'owner': {'label': 'Owner'},
         'parent': {'label': 'Parent'},
         'areas': {'display': 'location'}, 
