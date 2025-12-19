@@ -1,7 +1,6 @@
 var config = {
-    geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-05.geojson',
-
-    // csv: '../../trialfile.csv',
+    // geojson:'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-05.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-19.geojson',
     geometries: ['Point'],
     // copied starting coords from Asia map for now
     center: [60, 20],
@@ -69,8 +68,9 @@ var config = {
     // multiCountry: true,
     capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details. 
     
-    scaling_not_by_cap: true,
-    // HOLD TODO not sure if they want this this badly ... will make site.js more complicated.
+    // HOLD TODO not sure if they want this this badly ... will make site.js more complicated
+    // scaling_not_by_cap: true,
+
     // capacityLabel2:  {       
     //     field: 'infra-filter',
     //     values: {
@@ -82,8 +82,8 @@ var config = {
     // 'project-fin-scaling','fin-by-transac', 
     // 'debug capacityField project-fin-scaling','debug capacityDisplayField fin-by-transac',
     tableHeaders: {
-        values: ['fin', 'name', 'unitname', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
-        labels: ['Financier', 'Project Name','Unit Name', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
+        values: ['fin', 'name', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
+        labels: ['Financier', 'Project Name', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
         clickColumns: ['name'],
         rightAlign: ['startyear',], 
         removeLastComma: ['areas'], 
