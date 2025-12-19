@@ -3,9 +3,10 @@ var config = {
     geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggft/2025-12/ggft_map_2025-12-19.geojson',
     geometries: ['Point'],
     // copied starting coords from Asia map for now
-    center: [60, 20],
-    zoomFactor: 1.9,
-    img_detail_zoom: 10,
+    // center: [60, 20], # was for Asia, commenting out now.
+    // zoomFactor: 1.9,
+    // img_detail_zoom: 10,
+    center: [0, 0],
 
     statusField: 'finstatus', // financing status
     statusDisplayField: 'finstatus', // need shorter names? where does ficing come from ... should not be there
