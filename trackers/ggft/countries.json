@@ -12,6 +12,13 @@
         "Thailand",
         "Vietnam"
 
+    ],
+    "Americas": [
+        "Canada",
+        "Mexico"
+    ],
+    "Oceania": [
+        "Australia"
     ]
 
 }
