@@ -81,6 +81,8 @@ var site_config = {
     multiCountry: false,
 
     hitArea: 5, 
-    sqrt: true,
-    geometries: ['Point']
+    sqrt: true, // need this to trigger the square root interpolation circle asset sizing logic
+    geometries: ['Point'],
+
+    scaling_not_by_cap: false, // for gas finance where we used the unit capacity status functionality but 'Capacity' is hardcoded in for single unit projects and the value is not capacity but finance info here. displayDetails() in stie.js is where this is going to be used.
 };
