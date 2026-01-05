@@ -1599,7 +1599,7 @@ function displayDetails(features) {
 
             // if ggft gas finance then we want to override this always since the project level financing info is already printed 
             // and this else only executes if there is just one unit for the project so it'd be redundant and the word 'Capacity' is hardcoded in this feature and makes no sense for ggft
-            if (config.scaling_not_by_cap==true) {
+            if (config.scale_by_capacity==false) {
                 console.log('Skipping single unit project capacity for ggft since it is finance info and is covered already, but displaying status info since it is useful and not redundant.')
                 // we do not want the capacity but we do want status since that is relevant for single unit ggft projects
                 // since we know for ggft the status is a color field we do not need the extra logic seen below with "config.color.field != config.statusDisplayField"
