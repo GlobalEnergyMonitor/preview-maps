@@ -69,9 +69,9 @@ var config = {
     // multiCountry: true,
     capacityDisplayField: 'fin-by-transac', // need this since it'll sum .. need to make float, this is what gets used in site.js for all details. 
     
-    // HOLD TODO not sure if they want this this badly ... will make site.js more complicated
-    // scaling_not_by_cap: true,
+    scale_by_capacity: false, //originally created this to allow for both finance data and capacity data by unit in the popup, but should be useful to fix the issue when there is one unit and we do not want capacity (in this case financing info) to show up because project level financing is already shown when available
 
+    // if they want to include capacity values by unit in the popup would need this, but they don't say it's a priority so comment out
     // capacityLabel2:  {       
     //     field: 'infra-filter',
     //     values: {
@@ -83,8 +83,8 @@ var config = {
     // 'project-fin-scaling','fin-by-transac', 
     // 'debug capacityField project-fin-scaling','debug capacityDisplayField fin-by-transac',
     tableHeaders: {
-        values: ['fin', 'name', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
-        labels: ['Financier', 'Project Name', 'Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
+        values: ['fin', 'name', 'unitname', 'debtequityelse','owner', 'parent', 'importexport','opstatus', 'areas', 'startyear', 'capacitymw', 'capacitymtpa'],
+        labels: ['Financier', 'Project Name', 'Unit Name','Financing Type','Owner', 'Parent','Terminal Facility Type', 'Operational Status','Country/Area(s)','Start year', 'Capacity (MW)', 'Capacity (MTPA)'],
         clickColumns: ['name'],
         rightAlign: ['startyear',], 
         removeLastComma: ['areas'], 
@@ -100,7 +100,7 @@ var config = {
     },
     detailView: {
         'name': {'display': 'heading'},
-        'unitname': {'label': 'Unit Name'},
+        // 'unitname': {'label': 'Unit Name'},
         'debt-project-financing': {'label': 'Debt Project Financing ($ million)'},
         'equity-project-financing': {'label': 'Equity Project Financing ($ million)'},
         // 'debtequityelse': {'label': 'Financing Type'},
