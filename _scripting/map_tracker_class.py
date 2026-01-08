@@ -1,5 +1,5 @@
 from requests import HTTPError
-from all_config import renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
+from all_config import localtestfile, nostopping, renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
 from helper_functions import update_col_formatting_config, check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
@@ -15,6 +15,7 @@ import urllib.parse # quote() and quote_plus() for query params
 import os
 from shapely.geometry import shape, Point, MultiLineString
 import geopandas as gpd
+import json
 
 
 class TrackerObject:
@@ -125,8 +126,7 @@ class TrackerObject:
                 
                 self.data = gdf
 
-
-            elif self.tab_name in ['Gas Pipelines EU']:
+            elif self.tab_name in ['Gas Pipelines EU']: # we are pulling from same gas pipelinesfile in the map source sheet, but keeping this here because there is logic dependent on this source name with EU that will go away when we remove hydrogen suppport 
                 logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
                 
                 # to get the file names in latest
@@ -141,7 +141,6 @@ class TrackerObject:
 
                 self.data = gdf
                 
-
             elif self.tab_name in ['Oil & Gas Extraction']:
                 df_tuple = self.create_df_goget()
 
@@ -149,17 +148,13 @@ class TrackerObject:
                 prod = df_tuple[1]
                 
                 #assign df tuple to data 
-                self.data = df_tuple # not sure how to handle this, concat? 
-                print(len(self.data))
+                self.data = df_tuple 
                 # input('Check lenght of goget data should be two for tuple')
-                # COME BACK IF INTERACTIVE COLUMN THING WORKS ADD TO ALL NON NORMAL CASES!! 
 
-            # NORMAL CASE JUST PULL FROM GSHEETS
+            # NORMAL/COMMON CASE - JUST PULL FROM GSHEETS
             else:
                 #assign df to data 
-                # print(self.tab_name)
                 df = self.create_df(testtracker)
-                
                 # only need to deal with this once (not every time with pkl file)                 
                 # deal with seeing what needs to be changed in all_config
                 print(F'***List of all cols in original tracker df for {self.acro}: \n {df.columns}\n')
@@ -167,30 +162,52 @@ class TrackerObject:
                 exp_cols = renaming_cols_dict[self.acro]
                 print(F'***List of all expected columns and their renaming mappings for {self.acro}: \n {exp_cols}\n')
                 net_new_cols = set(exp_cols) - set(df.columns)
+                print(f'***THIS IS ALL cols for current df:{df.columns}')
                 print(f'***Net new cols for {self.acro}: \n {net_new_cols}\n')
                 # example I paste in ['Plant Age']
-                cols_to_add = input('***Paste in all net new cols you want to add to dictionary as kv pairs and will use keys for final_cols in list of tuple format:\n')
-                
-                cols_to_remove = input(f'Paste in all kv pairs to be removed in list of tuple format:\n')
+                if nostopping:
+                    print('passing this')
+                else:
+                    new_kv_cols = []
+                    inputvalue = ''
+                    while inputvalue != 'q':
+                        # until user presses q, keep asking for input, and adding them to a list of tuples
+                        key_to_add = input('***Press q to quit, Paste in one new key you want to add to dictionary as kv pairs we will use values for final_cols in list of tuple format:\n')
+                        if key_to_add == 'q':
+                            break
+                        value_to_add = input('***Press q to quit, Paste in one corresponding new value you want to add to dictionary as kv pairs we will use values for final_cols in list of tuple format:\n')
+                        if value_to_add == 'q':
+                            break
+                        new_kv_cols.append((key_to_add,value_to_add))
 
-                for tp in cols_to_add:
-                    # add value to final cols
-                    final_cols.append(tp[1])
-                    renaming_cols_dict[self.acro][tp[0]] = tp[1]
-                    
-                for tp in cols_to_remove:
-                    final_cols = final_cols.remove(tp[1])
-                    input(f'DEBUT this is final cols: {final_cols}')
-                    renaming_cols_dict.pop(tp[0])
-                print(f'***Full list of final cols now after net new for {self.acro} added: \n {final_cols}\n')
-                print(f'***Full dict of renaming_cols_dict now after net new for {self.acro} added and other removed: \n {renaming_cols_dict}\n')
+                    # skip removal for now because there are issues
+                    # cols_to_remove = input(f'Paste in all kv pairs to be removed in list of tuple format:\n')
+
+                    for tp in new_kv_cols:
+                        # add value to final cols
+                        print(f'This is type of tp: {type(tp)}')
+                        print(f'This is tp: {tp}')
+                        # adds new value to final cols
+                        final_cols.append(tp[1])
+                        # adds entire tuple pair to renaming dict
+                        renaming_cols_dict[self.acro][tp[0]] = tp[1]
+                        
+                    # skip removal for now
+                    # for tp in cols_to_remove:
+                    #     final_cols = final_cols.remove(tp[1])
+                    #     input(f'DEBUG this is final cols: {final_cols}')
+                    #     renaming_cols_dict.pop(tp[0])
+                    print(f'***Full list of final cols now after net new for {self.acro} added: \n {final_cols}\n')
+                    # print(f'***Full dict of renaming_cols_dict now after net new for {self.acro} added and other removed: \n {renaming_cols_dict[self.acro]}\n')
 
                 # by reading in these variables just updated final_cols, renaming_cols_dict we can make this column mess less tedious
-
-                update_col_formatting_config(final_cols, renaming_cols_dict) # passing in list and dict
-                               
+                    update_col_formatting_config(final_cols, renaming_cols_dict) # passing in list and dict
+                if nostopping:
+                    print('passing this')
+                else:
+                    logger.info(f'Length of df: {len(df)}')     
+                    logger.info(f'Check not 0')         
                 self.data = df
-
 
 # USE LOCAL PKL FILE
         else:
@@ -202,7 +219,7 @@ class TrackerObject:
             print(f'File created/modified: {pkl_date}')
             logger.info(msg=f'Local pkl file found for {self.off_name}\nFile created/modified: {pkl_date}')
             # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
-            # # adjust so can easily press
+            # TODO adjust so can easily press
             # if use_local == 'y' or '':
             try:
                 with open(pkl_path, 'rb') as f:
@@ -222,15 +239,11 @@ class TrackerObject:
         with open(pkl_path, 'wb') as f:
             logger.info(f'saved to {f}')
             pickle.dump(self.data, f)
-            # try:
             if self.acro == 'GOGET':
-            # except AttributeError as e:
-                # logger.info(f'{e} Should be attribute error for tuple')
                 df_tuple = self.data
                 main = df_tuple[0]
                 prod_res = df_tuple[1]
                 # so you just unpack tuple to list out columns in logs ... maybe not necessary.
-
                 [logger.info (col) for col in main.columns]
                 [logger.info (col) for col in prod_res.columns]
                 
@@ -242,21 +255,25 @@ class TrackerObject:
 
     def get_about(self):
         # this gets the about page for this tracker data
-        print(f'Creating about for: {self.off_name}')
-        skipabout = input(f'If you want to skip creating an about page click enter! Otherwise press any other key')
-                    # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
-            # # adjust so can easily press
-            # if use_local == 'y' or '':
-        if skipabout == '':
-            
 
-            # these are the json files like ggit that we need to use its google doc version not geojson version
+        print(f'Creating about for: {self.off_name}')
+        if nostopping:
+            skipabout = False
+        else:
+            
+            skipabout = input(f'If you want to skip creating an about page click enter! Otherwise press any other key and then enter!')
+            # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
+            # TODO adjust so can easily press
+            # if use_local == 'y' or '':
+        if skipabout != '':
+            # TODO get clarity on whether the about page comes from this logic below or that centralized doc. centralized doc makes it easier to keep formatting. I think centralized doc is only used for the trackers involved in a regional map that don't have new data release (?)
+            # these are the json files like ggit that we need to use its google doc version not geojson version - NOTE the about_key is set manually in the map log google sheet. Need to adjust this to include the three tabs used for pipelines and terminals oye
             if self.about_key != '':
                 tracker_key = self.about_key
-            
-            # this case is for the normies where we'll loop through their final data dwld file and find the about page
+            # this case is for the normies where we'll loop through their final data dwld file where we get all the data, and find the about page tab
             else:
                 tracker_key = self.key
+                
             about_df = self.find_about_page(tracker_key)
             
                 
@@ -276,11 +293,9 @@ class TrackerObject:
             
             copyright_full = f"Copyright © Global Energy Monitor. Global {tracker_official_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
             citation_full = f'Recommended Citation: "Global Energy Monitor, Global {tracker_official_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
-            
-            
+        
             # TODO redo this because it is so buggy if there are multiple headers or collapsed cells in about pages (re COAL), create about pages like wiki template
             # currently I manually check the about pages to be sure it all looks ok and fix little things
-            
             # if either are not in there fully then insert into the df after first row
             # elif partially in there, delete row and insert
             # else pass
@@ -324,16 +339,12 @@ class TrackerObject:
         else:
             self.about = 'skipped'
             
-
-
-
-
     def list_all_contents(self, release):
-        # REDO this based on standardized file names in s3
-        # TODO egt change what gets added so it is JUST the file 
+        # TODO REDO this based on standardized file names in s3
+        # TODO egt change what gets added so it is JUST the file -- what? 
         # not both: ['egt-term/2025-02/', 'egt-term/2025-02/GEM-EGT-Terminals-2025-02 DATA TEAM COPY.geojson']
-        acro = self.acro.lower() # eu, ggit
-        name = self.tab_name.lower() # pipelines, terminals, gas        
+        acro = self.acro.lower() # ggit (tracker-acro in map log gsheet | source)
+        name = self.tab_name.lower() # pipelines, terminals, gas (tab name in map log gsheet | source)       
         logger.info(f'DEBUG {acro} {name} {release}')
 
         list_all_contents = [] # should be one file, if not then we need to remove / update
@@ -346,16 +357,20 @@ class TrackerObject:
                     aws_secret_access_key=SECRET_KEY)
 
         bucket_name = 'publicgemdata'
-
         # List all folders (prefixes) for this acro
         paginator = client.get_paginator('list_objects_v2')
+        logger.info(f'This is paginator {paginator}')
         prefix = f'{acro}/'
         folders = set()
         for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix, Delimiter='/'):
+            logger.info(f'This is page {page}')
             for common_prefix in page.get('CommonPrefixes', []):
                 folder = common_prefix['Prefix'].rstrip('/').split('/')[-1]
+                print(f'this is folder: {folder}')
                 folders.add(folder)
+                logger.info(f'this is folder being added to folders: {folder} into {folders}')
 
+        logger.info(f'This is folders right now: {folders}')
         # Try to parse folder names as dates and find the latest
         date_folders = []
         for folder in folders:
@@ -363,12 +378,16 @@ class TrackerObject:
 
             date_obj = datetime.strptime(folder, '%Y-%m')
             logger.info(f'This is date obj for folders {date_obj}')
- 
+            logger.info(f'This tuple gets added to date_folders {(date_obj, folder)}')
             date_folders.append((date_obj, folder))
 
         # if date_folders:
         # Get the folder with the latest date
+
         latest_folder = max(date_folders, key=lambda x: x[0])[1]
+        # input(f'For {self.acro} {self.tab_name} Check what latest_folder is {latest_folder}')
+        logger.info(f'For {self.acro} {self.tab_name} Check what latest_folder is {latest_folder}')
+        
         folder_prefix = f'{acro.lower()}/{latest_folder}/'
 
         # List objects in the latest folder
@@ -377,6 +396,7 @@ class TrackerObject:
         # Check if the 'Contents' key is in the response
         if 'Contents' in response:
             for obj in response['Contents']:
+                logger.info(f'This is obj: {obj}')
 
                 if 'DATA TEAM COPY' in obj['Key']:
                     logger.info(obj['Key']) # this is name of the file in s3
@@ -384,15 +404,13 @@ class TrackerObject:
                     list_all_contents.append(obj['Key'])
                 else:
                     logger.info(f'DATA TEAM COPY not in file name for {acro} so skipped.')
-
                 
         else:
             print("No files found in the specified folder.")
-            input(f'LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
+            logger.info(f'LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
+            input(f'Problem! LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
     
         return list_all_contents
-
-
 
     def get_file_name(self, release):
         
@@ -408,17 +426,17 @@ class TrackerObject:
                     path_name = path_name_all[0]
                     logger.warning(f'There are more than 2 so picked first:\n{path_name}')
                     print(f'{path_name}')
-                    input('There are more than 2 so picked first:\n{path_name} approved? Hit enter')
+                    input(f'There are more than 2 so picked first:\n{path_name} approved? Hit enter')
                 
         # if theres more than two and its not EGT then we need to clean latest folder to remove old
         elif len(set(path_name_all)) == 1:
             path_name = f'{path_name_all[0]}'
-            print(path_name)
+            logger.info(f'only one path found: {path_name}')
         else:
             input('Might be an issue with path name look into get_file_name plz!')
         
         encoded_path_name = urllib.parse.quote(path_name)
-        print(f'Compare path name: {path_name} to encoded path_name: {encoded_path_name}')
+        logger.info(f'Compare path name: {path_name} to encoded path_name: {encoded_path_name}')
         
         return encoded_path_name
     
@@ -426,25 +444,24 @@ class TrackerObject:
     
 
     def create_df(self, testtracker):
-        logger.info('in create_df')
+        logger.info(f'in create_df for self.off_name: {self.off_name}')
         dfs = []
-        if testtracker != '':
-            print(f'testracker var in all_config IS NOT EMPTY so we are using TEST INPUT DATA held in key testfilekey!')
-            print(f'{testfilekey}')
-            print(f'{testtracker}')
-            yesusetestinputdata = input(f'CONFIRM that is OK by pressing enter! Or override by pressing any other key!')
-            logger.info(f'testracker var in all_config IS NOT EMPTY so we are using TEST INPUT DATA held in key testfilekey!\n {testfilekey} {testtracker}')
-            if yesusetestinputdata != '': # if didn't press enter then just use actual map tracker log data from https://docs.google.com/spreadsheets/d/15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8/edit?gid=1875432780#gid=1875432780 source tab
-                testtracker = '' # override testtracker variable
         
-        elif self.off_name == 'Iron and Steel':
+        if self.off_name == 'Iron and Steel':
             
             if testtracker.lower() in ['gist']:
-                gsheets = gspread_creds.open_by_key(testfilekey)
-                spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
-                df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-                logger.info(df.info())
-                logger.info('Check df info plz')                
+                if localtestfile != '':
+                    logger.info('in localtest file')
+                    df = pd.read_excel(localtestfile) # test this
+                    input(f'TEST thing: this is localtestfile df with read_excel\n{df}')
+                
+                
+                else:
+                    gsheets = gspread_creds.open_by_key(testfilekey)
+                    spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    logger.info(df.info())
+                    logger.info('Check df info plz')                
             else: 
 
                 for tab in self.tabs:
@@ -456,10 +473,614 @@ class TrackerObject:
 
                 df = pd.concat(dfs).reset_index(drop=True)
 
+        elif self.off_name == 'Gas Finance':
+            vdfs = [] # not a typo meant to be vdfs... not sure why I named it like that. afraid to change it right now. 
+            if testtracker.lower() in ['ggft']:
+                print('in ggft')
+                if localtestfile != '':
+                    dfdict = pd.read_excel(localtestfile, sheet_name=None)  # Returns dict of all sheets
+                    print(dfdict)
+                    # dfdict.values() is a dataframe
+                    # so add dfdict.keys() as a col in dataframe
+                    for k,v in dfdict.items():
+                        v['tab-type'] = k
+                        # rename here because lazy 
+                        if k=='LNG Terminals':                    
+                        # add in geometry via id adjustment
+                            v = v.rename(columns={'Country/Area': 'areas', 'Train/Unit Name':'unitname','GEM Terminal ID': 'pid', 'GEM Combo ID':'unitid',
+                                                    'Project Name': 'name', 'Alternate Project Name(s)': 'othername', 
+                                                    'Local Language Name(s)':'localname', 'Terminal Type':'importexport', 
+                                                    'Status':'opstatus', 'Capacity (mtpa)': 'capacitymtpa', 'Expected Start Year':'startyear',
+                                                    'Owner': 'owner', 'Parent Company': 'parent', 'Financier':'fin', 
+                                                    "This Financier's Total Share (US$ Million)": 'fin_by_transac',
+                                                    'Finance Type':'debtequityelse', 'GEM Wiki Link': 'url', 'Finance Status':'finstatus'})
+                            
+                            logger.info("renamed LNG Terminals for Gas Finance!")
+                            # pull in geometry for lng TODO ggpt         
+                            # pull in global data so can get lat lng, do it by db readonly or s3
+                            ggitfile = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-25.geojson'
+                            # on pid      
+                            publicggitdf = gpd.read_file(ggitfile)   
+                            # take out pipeliens
+                            publicggitdf = publicggitdf[publicggitdf['pid'].str.contains('T')]
+                            publicggitdf = publicggitdf[['geometry', 'pid']]
+                            # tests passed 
+                            # print(publicggitdf[['pid', 'geometry']].sample())    
+                            # input('check this before matching up on pid')
+                            # example T100000130379
+                            # 10000013 gets added
+                            
+                            # filter out nan
+                            v = v.dropna(subset=['pid'])
+                            # adjust string so can match up - not sure why gas finance did not use lng db data
+                            
+                            v['pid'] = v['pid'].str.split('T').str[1].fillna('').astype(str).apply(lambda x: 'T10000013' + x if x else x)
+                            # tests passed
+                            # for row in v.index:
+                            #     pid = v.iloc[row, 'pid']
+                            #     print(f'this is pid')
+                            #     newpid = 'T10000013' + pid.split('T')[1].astype(str)
+                            #     v.iloc[row, 'pid'] = newpid
+                            # print(v['pid'])
+                            # print(v[['pid']].sample())
+                            # input('check this before matching up on pid after adjustment')
+                            v = pd.merge(left=v, right=publicggitdf, on='pid', how='left')
+                            # tests passed
+                            # print(len(v))
+                            # input('before v after for len of v df merged on pid left')
+                            
+                            # drop unneeded cols
+                            v = v[['areas', 'pid', 'unitid','unitname',  'name', 'othername', 'localname', 'importexport', 'opstatus', 'finstatus','capacitymtpa',
+                                        'startyear', 'owner', 'parent', 'fin', 'fin_by_transac', 'debtequityelse', 'url', 'geometry', 'tab-type']]
+                            
+                            # deduplicate so dont add more unit rows than we have - most relevant for test hopefully, but still.
+                            # NOTE for finance trackers they have duplicate unit rows with unique financing data by transaction, since that is their focus not capacity. So when deduplicating want to make sure it's including that key unique fin col
+                            v.drop_duplicates(subset=['pid', 'unitid', 'geometry', 'fin'], inplace=True)
+
+                            # Clean the column first - strip whitespace and handle common non-numeric values
+                            v['fin_by_transac'] = v['fin_by_transac'].astype(str).str.strip()
+                            v['fin_by_transac'] = v['fin_by_transac'].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-', 'Not available'], pd.NA)
+                            
+                            # Use pandas to_numeric which is more robust than custom function
+                            v['fin_by_transac'] = pd.to_numeric(v['fin_by_transac'], errors='raise') # raise and add to list above ad hoc
+                            v['project-financing'] = v.groupby('pid')['fin_by_transac'].transform('sum')
+                  
+                            v.reset_index(drop=True, inplace=True)
+                            vdfs.append(v)   
+                            
+                        elif k=='Gas Power Plants':
+
+                            v = v.rename(columns={'Country':'areas', 'GEM Project ID': 'pid', 'Unit Name':'unitname', 'GEM Unit ID': 'unitid', 
+                                                        'Project Name': 'name', 'Alternate Project Name(s)':'othername',
+                                                        'Local Language Name(s)': 'localname', 'Status': 'opstatus', 'Capacity (MW)':'capacitymw',
+                                                        'Expected Start Year':'startyear', 'Owner': 'owner', 'Parent Company': 'parent','Financier':'fin', "This Financier's Total Financing Per Transaction (US$ Million)": 'fin_by_transac',
+                                                        'Finance Type':'debtequityelse', 'GEM Wiki Link': 'url', 'Finance Status':'finstatus'})
+                            print("renamed Gas Power Plants for Gas Finance!")
+                            
+                            # pull in geometry for gas plants         
+                            # pull in global data so can get lat lng from db or s3
+                            gogptfile = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGPT/2025-08-05/gogpt_map_2025-08-05.geojson'
+                            # on pid   
+                            publicgogptdf = gpd.read_file(gogptfile)
+                            publicgogptdf = publicgogptdf[['geometry', 'pid']]
+                            # Tests passed
+                            # print(publicgogptdf[['pid', 'geometry']].sample())    
+                            # input('check this before matching up on pid')
+                            # L100000104286
+                            
+                            v = pd.merge(left=v, right=publicgogptdf, on='pid', how='left')
+                            # Tests passed
+                            # print(len(v))
+                            # input('before v after for len of v df merged on pid left')
+
+                            # drop unneeded cols 
+                            v = v[['areas', 'pid', 'unitid', 'unitname', 'name', 'othername', 'localname',
+                                    'opstatus', 'finstatus', 'capacitymw', 'startyear', 'owner', 'unitname',
+                                    'parent', 'fin', 'fin_by_transac', 'debtequityelse', 'url', 'geometry', 'tab-type']] 
+                            # deduplicate so dont add more unit rows than we have - most relevant for test hopefully but still
+                            v.drop_duplicates(subset = ['pid', 'unitid', 'geometry', 'fin'], inplace=True)
+    
+                            # Clean the column first - strip whitespace and handle common non-numeric values
+                            v['fin_by_transac'] = v['fin_by_transac'].astype(str).str.strip()
+                            v['fin_by_transac'] = v['fin_by_transac'].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-', 'Not available'], pd.NA)
+                            
+                            # Use pandas to_numeric which is more robust than custom function
+                            v['fin_by_transac'] = pd.to_numeric(v['fin_by_transac'], errors='raise') # raise
+                          
+                            v['project-financing'] = v.groupby('pid')['fin_by_transac'].transform('sum')
+          
+                            v.reset_index(drop=True, inplace=True)
+                            vdfs.append(v)   
+                                         
+                    
+                    concatenated_df = pd.concat(vdfs, ignore_index=True).reset_index(drop=True)
+                    
+                    gdf = gpd.GeoDataFrame(concatenated_df, crs="EPSG:4326", geometry='geometry')
+                    
+                    totproj = float(len(gdf))
+                    totfin = float(gdf['fin_by_transac'].sum()) # .astype(float).sum() 
+                    scalingavg = float(totfin/totproj)
+                    # Tests passed
+                    # print(f'Check this avg: is totfin / totproj { totfin / totproj} = {scalingavg}? ')
+                    # print(f"this amt is na: {len(pd.isn(gdf['project-financing']))}")
+                    gdf['project-financing'] = gdf['project-financing'].fillna('')
+                    gdf['project-fin-scaling'] = gdf['project-financing'].apply(lambda x: float(x) if x != '' else scalingavg) #sum of all financing / # units
+                    # Tests passed                    
+                    # print(set(gdf['project-fin-scaling'].to_list()))
+                    # input('check no 0.0')
+                    
+                    for col in ['debtequityelse', 'finstatus']:
+                    # make finstatus not na                     
+                    # make debtequityelse not na
+                        gdf[col].fillna('Not available', inplace=True)
+                        gdf[col].replace('<NA>', 'Not available', inplace=True)
+                        gdf[col].replace('nan', 'Not available', inplace=True)
+                    
+                    # this shoudl group the gdf by pid and financing debt/equity type, then sum the transaction line items and assign to the column
+                    # so that we get a new column but that col could be overwritten ...
+                    # first split out then concat to avoid that issue
+                    # gdf['debt-project-financing'] = gdf.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+                    # print(f'len before debt split: {len(gdf)}')
+                    debt_transactions = gdf[gdf['debtequityelse']=='Debt'].copy()
+                    
+                    debt_transactions['debt-project-financing'] = debt_transactions.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+                    
+                    equity_transactions = gdf[gdf['debtequityelse']=='Equity'].copy()
+                    equity_transactions['equity-project-financing'] = equity_transactions.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+
+                    rest = gdf[~gdf['debtequityelse'].isin(['Equity', 'Debt'])].copy()
+                    
+                    concatted = pd.concat([debt_transactions, equity_transactions, rest], ignore_index=True).reset_index(drop=True)
+                    gdf = gpd.GeoDataFrame(concatted, geometry='geometry', crs="EPSG:4326")
+                    gdf['debt-project-financing'].fillna('',inplace=True)
+                    gdf['equity-project-financing'].fillna('',inplace=True)
+                    # Tests passed
+
+                    # print(f"equity sum: {set(gdf['equity-project-financing'].to_list())}")
+                    # print(f"debt sum: {set(gdf['debt-project-financing'].to_list())}")
+                    # Tests passed
+                    # print(gdf)
+                    # input('check gdf with new columns')
+                    # print(f'len after debt split: {len(gdf)}')
+                    # input('inspect if lost any hope no') # passed 
+                    
+                    # print(f"gdf['debt-project-financing']: {gdf['debt-project-financing']}")
+                    
+                    # print(f'finstatus: {set(gdf["finstatus"])}') # known or unknown
+                    # print(f'debtequityelse: {set(gdf["debtequityelse"])}') # debt or equity NO non available 
+                    # print(f'project-fin-scaling: {set(gdf["project-fin-scaling"])}') # if non available avg for scaling otherwise put in that bucket
+                    # print(f'project-financing: {set(gdf["project-financing"])}')
+                    # input(f'Check above')
+        
+                    # print(f'This is df after concat: {gdf}')
+                    # print(f'This is gdf[tab-type]: {set(gdf['tab-type'].to_list())}')
+
+                else:
+                    gsheets = gspread_creds.open_by_key(testfilekey)
+                    spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    logger.info(df.info())
+                    logger.info('Check df info plz')   
+                    
+      
+            else:
+                for tab in self.tabs:
+                    # in Gas Finance has two keys because thats what they have time for
+                    keys = self.key.split(';') # make the two keys into a list, same tab names
+                    # print(f'keys:')
+                    # print(keys)
+                    for key in keys:
+                        # should be able to do the same for each file then concat the two dfs just add all 4 tab dfs to dfs list and then concat them all
+                        # if the cols are not the same then I am sad. 
+                        gsheets = gspread_creds.open_by_key(key)
+                        spreadsheet = gsheets.worksheet(tab)
+                        df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                        df['tab-type'] = tab
+                        if tab == 'LNG Terminals':                    
+                            # add in geometry via id adjustment
+                            df = df.rename(columns={'Country/Area': 'areas',  'Train/Unit Name':'unitname', 'GEM Terminal ID': 'pid', 'GEM Combo ID':'unitid',
+                                                    'Project Name': 'name', 'Alternate Project Name(s)': 'othername', 
+                                                    'Local Language Name(s)':'localname', 'Terminal Type':'importexport', 
+                                                    'Status':'opstatus', 'Capacity (mtpa)': 'capacitymtpa', 'Expected Start Year':'startyear',
+                                                    'Owner': 'owner', 'Parent Company': 'parent', 'Financier':'fin', 
+                                                    "This Financier's Total Share (US$ Million)": 'fin_by_transac',
+                                                    'Finance Type':'debtequityelse', 'GEM Wiki Link': 'url', 'Finance Status':'finstatus'})
+                            
+                            print("renamed LNG Terminals for Gas Finance!")
+                            # pull in geometry for lng TODO ggpt         
+                            # pull in global data so can get lat lng, do it by db readonly or s3
+                            ggitfile = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-25.geojson'
+                            # on pid      
+                            
+                            publicggitdf = gpd.read_file(ggitfile)   
+                            # take out pipeliens
+                            publicggitdf = publicggitdf[publicggitdf['pid'].str.contains('T')]
+                            publicggitdf = publicggitdf[['geometry', 'pid']]
+                
+                            # filter out nan
+                            df = df.dropna(subset=['pid'])
+                            # adjust string so can match up - not sure why gas finance did not use lng db data
+                            
+                            df['pid'] = df['pid'].str.split('T').str[1].fillna('').astype(str).apply(lambda x: 'T10000013' + x if x else x)
+                            
+                            df = pd.merge(left=df, right=publicggitdf, on='pid', how='left')
+
+                            # drop unneeded
+                            df = df[['areas', 'unitname','pid', 'unitid', 'name', 'othername', 'localname', 'importexport', 'opstatus', 'finstatus','capacitymtpa',
+                                        'startyear', 'owner', 'parent', 'fin', 'fin_by_transac', 'debtequityelse', 'url', 'geometry', 'tab-type']]
+                            
+                            # deduplicate so dont add more unit rows than we have - most relevant for test hopefully but still
+                            df.drop_duplicates(subset=['pid', 'unitid', 'geometry', 'fin'], inplace=True)
+
+
+                            # Clean the column first - strip whitespace and handle common non-numeric values
+                            df['fin_by_transac'] = df['fin_by_transac'].astype(str).str.strip()
+                            df['fin_by_transac'] = df['fin_by_transac'].replace(['n/a','', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-', 'Not available'], pd.NA)
+                            
+                            # Use pandas to_numeric which is more robust than custom function
+                            df['fin_by_transac'] = pd.to_numeric(df['fin_by_transac'], errors='raise') # raise
+          
+                            df['project-financing'] = df.groupby('pid')['fin_by_transac'].transform('sum')
+                            
+                            df.reset_index(drop=True, inplace=True)
+                            dfs.append(df)   
+                            
+                        elif tab=='Gas Power Plants':
+
+                            df = df.rename(columns={'Country/Area':'areas', 'GEM Project ID': 'pid', 'Unit Name':'unitname', 'GEM Unit ID': 'unitid', 
+                                                        'Project Name': 'name', 'Alternate Project Name(s)':'othername',
+                                                        'Local Language Name(s)': 'localname', 'Status': 'opstatus', 'Capacity (MW)':'capacitymw',
+                                                        'Expected Start Year':'startyear', 'Owner': 'owner', 'Parent Company': 'parent','Financier':'fin', "This Financier's Total Financing Per Transaction (US$ Million)": 'fin_by_transac',
+                                                        'Finance Type':'debtequityelse', 'GEM Wiki Link': 'url', 'Finance Status':'finstatus'})
+                            print("renamed Gas Power Plants for Gas Finance!")
+                            
+                            # pull in geometry for gas plants         
+                            # pull in global data so can get lat lng from db or s3
+                            gogptfile = 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGPT/2025-08-05/gogpt_map_2025-08-05.geojson'
+                            # on pid   
+                            publicgogptdf = gpd.read_file(gogptfile)
+                            publicgogptdf = publicgogptdf[['geometry', 'pid']]
+                            # Tests passed
+
+                            # print(publicgogptdf[['pid', 'geometry']].sample())    
+                            # input('check this before matching up on pid')
+                            # L100000104286
+                            
+                            # print(len(v))
+                            df = pd.merge(left=df, right=publicgogptdf, on='pid', how='left')
+                            # print(len(v))
+                            # input('before v after for len of v df merged on pid left')
+
+                            # drop unneeded
+                            df = df[['areas', 'pid', 'unitid', 'unitname', 'name', 'othername', 'localname',
+                                    'opstatus', 'finstatus', 'capacitymw', 'startyear', 'owner',
+                                    'parent', 'fin', 'fin_by_transac', 'debtequityelse', 'url', 'geometry', 'tab-type']] 
+                            # deduplicate so dont add more unit rows than we have - most relevant for test hopefully but still
+                            df.drop_duplicates(subset = ['pid', 'unitid', 'geometry', 'fin'], inplace=True)
+
+                            # Clean the column first - strip whitespace and handle common non-numeric values
+                            df['fin_by_transac'] = df['fin_by_transac'].astype(str).str.strip()
+                            df['fin_by_transac'] = df['fin_by_transac'].replace(['', 'nan', 'NaN', 'None', 'unknown', 'Unknown','not found', '--', '*', '<NA>', '-', 'Not available'], pd.NA)
+                            
+                            # Use pandas to_numeric which is more robust than custom function
+                            df['fin_by_transac'] = pd.to_numeric(df['fin_by_transac'], errors='raise') # raise
+                            
+                    
+                            
+                            df['project-financing'] = df.groupby('pid')['fin_by_transac'].transform('sum')
+                            
+        
+                            df.reset_index(drop=True, inplace=True)
+                            dfs.append(df) 
+ 
+                    concatenated_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+                    
+                    gdf = gpd.GeoDataFrame(concatenated_df, crs="EPSG:4326", geometry='geometry')
+                    
+                    print(f"{gdf['unitname']}")
+                    input('check unitname')
+                    
+                    totproj = float(len(gdf))
+                    totfin = float(gdf['fin_by_transac'].sum())
+                    scalingavg = float(totfin/totproj)
+                    gdf['project-financing'] = gdf['project-financing'].fillna('')
+                    gdf['project-fin-scaling'] = gdf['project-financing'].apply(lambda x: float(x) if x != '' else scalingavg) #sum of all financing / # units
+                    
+                    for col in ['debtequityelse', 'finstatus']:
+                    # make finstatus not na                     
+                    # make debtequityelse not na
+                        gdf[col].fillna('Not available', inplace=True)
+                        gdf[col].replace('<NA>', 'Not available', inplace=True)
+                        gdf[col].replace('nan', 'Not available', inplace=True)
+               
+                    # this shoudl group the gdf by pid and financing debt/equity type, then sum the transaction line items and assign to the column
+                    # so that we get a new column but that col could be overwritten ...
+                    # first split out then concat to avoid that issue
+                    # gdf['debt-project-financing'] = gdf.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+                    # print(f'len before debt split: {len(gdf)}')
+                    debt_transactions = gdf[gdf['debtequityelse']=='Debt'].copy()
+                    
+                    debt_transactions['debt-project-financing'] = debt_transactions.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+                    
+                    equity_transactions = gdf[gdf['debtequityelse']=='Equity'].copy()
+                    equity_transactions['equity-project-financing'] = equity_transactions.groupby(['pid', 'debtequityelse'])['fin_by_transac'].transform('sum')
+
+                    rest = gdf[~gdf['debtequityelse'].isin(['Equity', 'Debt'])].copy()
+                    
+                    concatted = pd.concat([debt_transactions, equity_transactions, rest], ignore_index=True).reset_index(drop=True)
+                    gdf = gpd.GeoDataFrame(concatted, geometry='geometry', crs="EPSG:4326")
+                    gdf['debt-project-financing'].fillna('',inplace=True)
+                    gdf['equity-project-financing'].fillna('',inplace=True)
+                    # Tests passed
+
+                    # print(f"equity sum: {set(gdf['equity-project-financing'].to_list())}")
+                    # print(f"debt sum: {set(gdf['debt-project-financing'].to_list())}")
+
+                    # print(gdf)
+                    # input('check gdf with new columns')
+                    # print(f'len after debt split: {len(gdf)}')
+                    # input('inspect if lost any hope no') # passed 
+                    
+                    # print(f"gdf['debt-project-financing']: {gdf['debt-project-financing']}")
+                    
+                    # print(f'finstatus: {set(gdf["finstatus"])}') # known or unknown
+                    # print(f'debtequityelse: {set(gdf["debtequityelse"])}') # debt or equity NO non available 
+                    # print(f'project-fin-scaling: {set(gdf["project-fin-scaling"])}') # if non available avg for scaling otherwise put in that bucket
+                    # print(f'project-financing: {set(gdf["project-financing"])}')
+                    # input(f'Check above')
+        
+                    # print(f'This is df after concat: {gdf}')
+                    # print(f'This is gdf[tab-type]: {set(gdf['tab-type'].to_list())}')
+
+
+            gdf.columns = gdf.columns.str.strip()  
+
+            return gdf                    
+                                     
+        elif self.off_name == 'Methane Emitters':
+            if testtracker.lower() in ['gmet']:
+                if localtestfile != '':
+                    df = pd.read_excel(localtestfile) # test this
+                    input(f'TEST thing: this is localtestfile df with read_excel\n{df}')
+                                
+                else:
+                    gsheets = gspread_creds.open_by_key(testfilekey)
+                    spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    logger.info(df.info())
+                    logger.info('Check df info plz')                
+            else: 
+
+                for tab in self.tabs:
+                    gsheets = gspread_creds.open_by_key(self.key)
+                    spreadsheet = gsheets.worksheet(tab)
+                    df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                    # clean data asap for gmet because special 
+
+                    # clean numerical data since need to before turn into gdf
+                    # from     def clean_num_data(self): in map_tracker_class.py
+                    missing_coordinate_row = {} 
+                    acceptable_range = {
+                        'lat': {'min': -90, 'max': 90},
+                        'lng': {'min': -180, 'max': 180}
+                    }
+                    
+                    df = df.replace('*', pd.NA).replace('Unknown', pd.NA).replace('--', pd.NA) # remove the oddities for missing capacity
+                    
+                    for col in df.columns: # handling for all capacity, production, 
+                        print(col)
+                        if any(keyword in col for keyword in ['emissions', 'Emissions', 'Emissions Uncertainty','CapacityInMtpa','Capacity (MW)', 'Capacity (Mt)','Capacity (Mtpa)', 'CapacityBcm/y', 'CapacityBOEd', 'Capacity (MT)', 'Production - Gas', 'Production - Oil', 'Production (Mt)', 'Production (Mtpa)', 'Capacity (ttpa)']):                    
+                            # Clean the column first - strip whitespace and handle common non-numeric values
+                            df[col] = df[col].astype(str).str.strip()
+                            df[col] = df[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-'], pd.NA)
+                            
+                            # Use pandas to_numeric which is more robust than custom function
+                            df[col] = pd.to_numeric(df[col], errors='raise') # raise and add to above as needed 
+                        
+                            # # Fill NaN values with empty string after conversion
+                            # df[col] = df[col].fillna('')
+                            
+                            if 'emissions' in col.lower():
+                                print('skip rounding')
+                                
+                            else:
+                                # Round all cap/prod columns to 4 decimal places
+                                df[col] = df[col].apply(lambda x: round(x, 4))
+                                
+                            logger.info(f'This is set of numerical cap, prod, emissions value col {col} after cleaning:\n{set(df[col].to_list())}')
+                            logger.info(f'Check emissions not rounded to 0...')
+    
+                        
+                        elif 'year' in col.lower():
+                            try:
+                                df[col] = pd.to_numeric(df[col], errors='coerce')
+                                df[col] = df[col].apply(lambda x: check_and_convert_int(x))
+                                df[col] = df[col].fillna('')
+                                # Round all year columns to 0 decimal places
+                                df[col] = df[col].apply(lambda x: round(x, 0) if x != '' else x)   
+                                df[col] = df[col].apply(lambda x: int(str(x).replace('.0', '')) if x != '' else x)
+                                
+                            except TypeError as e:
+                                logger.warning(f'{e} error for {col} in {self.tab_name}')
+                                logger.warning('Check for QC PM report') # so far problem with StartYearEarliest LNG Terminals geo in there
+                                # CapacityBcm/y in Gas Pipelines CapacityBOEd in Gas Pipelines
+                                # CapacityBOEd in Oil Pipelines
+                        elif 'latitude' in col.lower():  ## or lat lng
+                            
+                            df[col] = pd.to_numeric(df[col], errors='raise')                    
+                            df['float_col_clean_lat'] = df[col].apply(lambda x: check_and_convert_float(x))
+                            # and add to missing_coordinate_row
+                            # drop row if the coordinate 
+
+                            for row in df.index:
+                                if pd.isna(df.loc[row, 'float_col_clean_lat']): 
+                                    missing_coordinate_row[self.acro] = df.loc[row]
+                                    df.drop(index=row, inplace=True)
+                            
+                            # now check if in appropriate range
+                            df['float_col_clean_lat'] = df['float_col_clean_lat'].apply(
+                                lambda x: check_in_range(x, acceptable_range['lat']['min'], acceptable_range['lat']['max'])
+                            )
+                            
+                            # add any coordinates out of range to list to drop
+                            # drop row if the coordinate is NaN
+
+                            for row in df.index:
+                                if pd.isna(df.loc[row, 'float_col_clean_lat']):
+                                    # print(df.loc[row]) 
+                                    missing_coordinate_row[self.acro] = df.loc[row]
+                                    df.drop(index=row, inplace=True)
+                                else:
+                                    df.loc[row, 'Latitude'] = df.loc[row, 'float_col_clean_lat']
+
+                        elif 'longitude' in col.lower():
+                            df[col] = pd.to_numeric(df[col], errors='raise')
+                            df['float_col_clean_lng'] = df[col].apply(lambda x: check_and_convert_float(x))
+                            # and add to missing_coordinate_row
+                            # drop row if the coordinate is NaN
+
+                            for row in df.index:
+                                if pd.isna(df.loc[row, 'float_col_clean_lng']): 
+                                    print(f'Missing coordinate for {self.acro}')
+                                    missing_coordinate_row[self.acro] = df.loc[row]
+                                    df.drop(index=row, inplace=True)
+                                    
+                            # now check if in appropriate range
+                            df['float_col_clean_lng'] = df['float_col_clean_lng'].apply(
+                                lambda x: check_in_range(x, acceptable_range['lng']['min'], acceptable_range['lng']['max'])
+                            )
+                            # add any coordinates out of range to list to drop
+                            # drop row if the coordinate is NaN
+                            for row in df.index:
+                                if pd.isna(df.loc[row, 'float_col_clean_lng']): 
+                                    print(df.loc[row])
+                                    missing_coordinate_row[self.acro] = df.loc[row]
+                                    df.drop(index=row, inplace=True)  
+                                    
+                                else:
+                                    df.loc[row, 'Longitude'] = df.loc[row, 'float_col_clean_lng']           
+                            if len(missing_coordinate_row) > 0:
+                                logger.info(f"Missing coordinates for {self.acro}:")
+                                for key, value in missing_coordinate_row.items():
+                                    logger.info(f"{key}: {value}")
+                                logger.info("\n")
+                                logger.warning(f"Missing coordinates logged for {self.acro}.")
+                        
+                    df['tab-type'] = tab
+                    # rename now because gmet is special and easier this way.
+                            
+                    if df.loc[0,'tab-type']=='Plumes':
+                        df = df.rename(columns={'Emissions (kg/hr)': 'plume_emissions', 'GEM Infrastructure Name (Nearby)': 'infra_name', 'Subnational Unit': 'subnational',
+                                            'Country/Area': 'areas', 'Plume Origin Latitude': 'lat', 'Plume Origin Longitude': 'lng', 'Satellite Data Provider': 'satDataProvider',
+                                            'Observation Date': 'date', 'GEM Wiki': 'url', 'Name': 'name', 'For map only (has attribution information)': 'infra-filter', 'GEM Methane Plume ID': 'pid',
+                                            'Instrument': 'instrument', 'Emissions Uncertainty (kg/hr)': 'emission_uncertainty', 'Type of Infrastructure': 'typeInfra', 'GEM Infrastructure Wiki': 'geminfrawiki'})
+                        print("renamed Plumes!")
+                        
+                        # make scaling col - fake capacity
+                        # turn into a gdf
+                        gdf = convert_coords_to_point(df) 
+                        
+                        dfs.append(gdf) # 'California VISTA and other Government ID Assets (Nearby)': 'cal_gov_assets', 'Government Well ID (Nearby)': 'gov_well','GEM Infrastructure Wiki': 'infra_wiki',
+
+                    elif df.loc[0,'tab-type'] == 'Coal Mines - Non-closed':
+                        
+                        df = df.rename(columns = {'GEM Coal Mine Methane Emissions Estimate (Mt/yr)': 'mtyr-gcmt_emissions','Mine Name': 'name', 'GEM Wiki URLs': 'url', 'Status': 'status', 'Production (Mtpa)': 'capacity_prod', 
+                                                'Coal Output (Annual, Mst)': 'capacity_output', 'Owners': 'owner', 'Latitude' : 'lat', 'Longitude': 'lng', 'GEM Mine ID': 'pid', 'Country/Area': 'areas'})
+                        
+                        print("renamed Coal Mines!")
+                        # turn into a gdf
+                        gdf = convert_coords_to_point(df) 
+                        
+                        dfs.append(gdf)
+
+                    elif df.loc[0,'tab-type'] == 'Pipelines':
+                        df = df.rename(columns = {'Owners':'owner','Emissions if Operational (tonnes/yr)':'tonnesyr-pipes_emissions','Pipeline Name': 'name', 'GEM Wiki': 'url', 'Status': 'status', 'Length Merged Km': 'pipe_length', 
+                                                'Capacity (cubic meters/day)': 'capacity', 'Countries/Areas': 'areas', 'GEM Project ID':'pid'})
+                        print("renamed Pipelines!")
+                        
+                        # pull in from s3 latest gas pipeline
+                        # link on pid, and pull in geometry and owner
+                        ggitpipedf = gpd.read_file('https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-20.geojson')
+                        print(f'This is ggitpipe df from s3 DEBUG: {ggitpipedf.columns}')
+                        ggitpipedf = ggitpipedf[['pid', 'geometry', 'owner']]
+
+                        dfmerge = df.merge(ggitpipedf, on='pid', how='left')
+                        # Tests passed
+
+                        # input('Check above new cols after merge, geo should be in there')
+                        # print('Check out any possible missing matches')
+                        # print(dfmerge[dfmerge['geometry'].isna()])
+                        # input('check - hoping above is empty')
+                        dfmerge = dfmerge[dfmerge['geometry'].notna()]
+                        # input(f'check leng of pipelines {len(dfmerge)}')
+                        
+                        dfs.append(dfmerge)
+
+                    elif df.loc[0,'tab-type'] == 'Oil and Gas Extraction Areas':
+                        df = df.rename(columns = {'GEM GOGET ID': 'pid','Unit name':'name', 'GEM Wiki': 'url', 'Status': 'status', 'Status year': 'status_year', 'Operator': 'operator',
+                                                'Country/Area': 'areas', 'Latitude':'lat', 'Longitude': 'lng'})
+                        print("renamed Oil and Gas Extraction Areas!")
+                        
+                        # turn into a gdf 
+                        gdf = convert_coords_to_point(df) 
+                        logger.info(f"TEST goget geo: {gdf['geometry']}")
+                        # input('check above')
+                        
+                        dfs.append(gdf)
+
+                    elif df.loc[0,'tab-type'] == 'Oil and Gas Reserves':
+                        df = df.rename(columns = {'Unit ID': 'pid', 'Emissions for whole reserves with latest emissions factors (tonnes)': 'tonnes-goget-reserves_emissions', 'Country/Area': 'areas'})
+                        # print(df.columns)
+                        print("renamed Oil and Gas Reserves!")
+                        
+                        # turn into a gdf
+                        gdf = convert_coords_to_point(df) 
+
+                        dfs.append(gdf)
+                    
+                    elif df.loc[0,'tab-type'] == 'LNG Terminals':
+                        df = df.rename(columns = {'TerminalID': 'pid', 'Wiki':'url', 'UnitName':'unit-name','methane emissions (Mt/year)': 'emissions-terminals', 'Country/Area': 'areas', 'TerminalName': 'name', 'FacilityType': 'inportExport',
+                                                    'Status': 'status', 'Owner':'owner', 'State/Province': 'subnat', 'Latitude': 'lat', 'Longitude':'lng'})
+                        # print(df.columns)
+                        print("renamed LNG Terminals!")
+                        
+                        # turn into a gdf 
+                        gdf = convert_coords_to_point(df) 
+                        
+                        dfs.append(gdf)                            
+
+                # to retain geometric 
+                gdf = gpd.GeoDataFrame(pd.concat(dfs, ignore_index=True), crs='EPSG: 4326', geometry='geometry')
+                print(f'DEBUG length of df after concatting {len(gdf)}')
+                
+                with open('../trackers/gmet/config_required_fields.json') as finalcol:
+
+                    list_final_gmet = json.load(finalcol)
+                #     print(type(list_final_gmet))
+                # print(len(gdf.columns))
+
+                # input(f'test load of final cols gmet:\n{list_final_gmet}')
+                # gdf = gdf[list_final_gmet] # TODO this is not working fix it later.
+                
+                # print(len(gdf.columns))
+                # # input(f'check before after len of gdf cols)')
+
+                # for col in gdf.columns:
+                #     print(col)
+                # input(f'DEBUG check all cols at this point and length of df:\n{len(gdf)}') # 22887
+                
+                gdf.columns = gdf.columns.str.strip() # TODO MOVE THIS TO DATA CLEANING FUNCTION? 
+
+                return gdf
         else:
             # FOR TESTING QUICKLY 
             if testtracker != '':
-                if testtracker.lower() in self.acro.lower():
+                if localtestfile != '':
+                    df = pd.read_excel(localtestfile) # test this
+                    input(f'TEST thing: this is localtestfile df with read_excel\n{df}')
+                
+                
+                elif testtracker.lower() in self.acro.lower():
                     gsheets = gspread_creds.open_by_key(testfilekey)
                     spreadsheet = gsheets.worksheet('Sheet1') # always use this when making test input files
                     df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
@@ -543,10 +1164,11 @@ class TrackerObject:
             df['fuel-filter'] = 'methane'
             df['maturity'] = 'none'
 
+
             # TODO move this when do gas pipelines update 
             df.columns = df.columns.str.lower()
-            df.columns = df.columns.str.replace(' ', '-')
-            df['h2%'].fillna('', inplace=True)
+            # df.columns = df.columns.str.replace(' ', '-')
+            # df['h2%'].fillna('', inplace=True) # skip because no hydrogen
             
             for row in df.index:
                 if df.loc[row, 'fuel'].lower().strip() == 'hydrogen':
@@ -858,10 +1480,266 @@ class TrackerObject:
         self.data = df        
 
 
+    def ggft_changes(self):
+        df = self.data
+        
+        # make tab-type separated by _ or -
+        # df['tab-type'].replace(' ', '_', inplace=True)
+        # print(df['tab-type'])
+        # input('check that _ got replaced in tab-type...') didn't work.. 
+        
+        df['infra-filter'] = df['tab-type'].apply(lambda x: x.replace(' ', '_'))
+        print(df['infra-filter'])
+        input('check that _ got replaced in tab-type...')
+        
+        # in here we need to: 
+        # make all finstatus known unknown not available, if not known say it is unknown DONE
+        # make all type debt equity exclude not available DONE
+        
+        #         Not available
+        # 0
+        # $1-500 million
+        # 0
+        # $501-1000 million
+        # 0
+        # $1001-1500 million
+        # 0
+        # $1500-2000 million
+        # 0
+        # $2001-2500 million
+        # na','low', 'mid-low', 'mid', 'mid-high', 'Not availableNot available
+        df['finbucket'] = 'na'
+        for row in df.index:
+            if df.loc[row, 'project-financing'] < 1:
+                df.loc[row, 'finbucket'] = 'na'
+            elif df.loc[row, 'project-financing'] < 500:
+                df.loc[row, 'finbucket'] = 'low'
+            elif df.loc[row, 'project-financing'] < 1000:
+                df.loc[row, 'finbucket'] = 'mid-low'        
+            elif df.loc[row, 'project-financing'] < 1500:
+                df.loc[row, 'finbucket'] = 'mid'
+            elif df.loc[row, 'project-financing'] < 2000:
+                df.loc[row, 'finbucket'] = 'mid-high'     
+            else:
+                df.loc[row, 'finbucket'] = 'high'
+            # else:     
+            #     print(f'this did not fit into a finbucket:{df.loc[row, 'project-financing']}')      
+            #     input('investigate the above print out')             
+        
+        input(f'test this new finbucket out: \n {df['finbucket']}')
+        
+        # 'Unknown ', 'Closed', 'Financing', 'Not available', 'Financing ', <NA>}
+        df['finstatus'] = df['finstatus'].replace('Financing ', 'Known')
+        df['finstatus'] = df['finstatus'].replace('Financing', 'Known')  
+        
+        df['finstatus'] = df['finstatus'].replace('Pre-FID', 'Known')  
+        df['finstatus'] = df['finstatus'].replace('FID', 'Known')    
+        
+        df['finstatus'] = df['finstatus'].replace('Closed', 'Known')
+        df['finstatus'] = df['finstatus'].replace('Not available', 'Unknown')     
+        df['finstatus'] = df['finstatus'].replace('Unknown ', 'Unknown')  
+        df['finstatus'] = df['finstatus'].replace('', 'Unknown')    
+        df['finstatus'] = df['finstatus'].replace(' ', 'Unknown')    
+  
+        df['finstatus'] = df['finstatus'].fillna('Unknown') 
+        print(set(df['finstatus'].to_list()))
+        input(f'Check above cannot have blank string, if we want to remove black circles')
+        # df['finstatus'] = df['finstatus'].replace(<NA>, 'Unknown')   
+        
+        
+        # debtequityelse: {'Equity', '', 'Unknown ', 'Debt', 'Not available', 'Equity ', <NA>}  
+
+        # df['debtequityelse'] = df['debtequityelse'].replace(<NA>, '')   
+        df['debtequityelse'] = df['debtequityelse'].replace('Unknown ', '')   
+        df['debtequityelse'] = df['debtequityelse'].replace('Not available', '')   
+        
+        df['debtequityelse'] = df['debtequityelse'].replace('Equity ', 'Equity')         
+        
+        df.dropna(subset=['debtequityelse', 'finstatus'], inplace=True) # how to get rid of <NA> from R oye.
+
+        # remove all undefined.
+        # project-fin-scaling
+        # fin_by_transac
+        
+        cols_that_cannot_have_null = ['fin_by_transac','project-fin-scaling', ]
+        for col in cols_that_cannot_have_null:
+            print(f'Set of {col} before fillna(): \n {set(df[col].to_list())}')
+            df[col].fillna('',inplace=True)   
+            print(f'Set of {col} after fillna(): \n {set(df[col].to_list())}')
+
+        input('Check above... capacity cannot have null!!! and scaling should be average!')
+            
+        
+
+
+        print(f'finbucket: {set(df['finbucket'])}')
+        # bucket project level scaling /fin into the gradations    
+        print(f'finstatus: {set(df["finstatus"])}') # known or unknown
+        print(f'debtequityelse: {set(df["debtequityelse"])}') # debt or equity NO non available 
+        print(f'project-fin-scaling: {set(df["project-fin-scaling"])}') # if non available avg for scaling otherwise put in that bucket
+        print(f'project-financing: {set(df["project-financing"])}')
+        input(f'Check above')
+        
+        
+                
+        #         All that is not equity is debt
+        # Exclude non available DONE? <NA> weird excel thing 
+        # Sum financing by transaction within unit for debt v equity DONE 
+
+
+        # create a new capacity col just for the summary display
+
+        
+        self.data = df        
+        
+
     def gmet_changes(self):
         
         df = self.data
         
+        # debug the 0 roudning thing for emissions if op for lng terminals 
+        # print(set(df['emissions-terminals'].to_list()))
+        # input('double check emissions temrinal data not rounding in file')
+ 
+        df['legend-filter'] = df['tab-type']
+        df['legend-filter'] = df['legend-filter'].apply(lambda x: x.replace(' ', '-'))
+        # print(len(df))
+        # print(set(df['legend-filter'].to_list()))
+        
+        # print(df['legend-filter'])
+        # input('check legend filter')
+      
+        # rename
+        # ALSO seperate out lng import and export 
+        # inportExport
+        # filter by import export and set tracker-custom to it
+        lenbef = len(df)
+        # print(f'all unique of inportexport col: {set(df["inportExport"])}')
+        importdf = df[df['inportExport']=='Import'].copy()
+        importdf['legend-filter'] = 'lng-import'
+        exportdf = df[df['inportExport']=='Export'].copy()
+        exportdf['legend-filter'] = 'lng-export'
+        na_imex = df[~df['inportExport'].isin(['Import', 'Export'])].copy()
+
+        
+        df = pd.concat([importdf, exportdf, na_imex], ignore_index=True)
+        lenaf = len(df)
+        input(f'Check that length is same before and after: \n before {lenbef}\n after{lenaf}')
+        # goget consolidation
+        # if tab-type in ['extraction','reserves']:
+        # create dfs for each tab
+        # on goget id merge
+        # deduplicate on goget id
+        lenbef = len(df)
+        goget_main = df[df['tab-type'] == 'Oil and Gas Extraction Areas'].copy()
+        goget_res = df[df['tab-type'] == 'Oil and Gas Reserves'].copy()
+        rest = df[df['tab-type'].isin(['Plumes', 'Coal Mines - Non-closed', 'Pipelines', 'LNG Terminals'])].copy()
+        print(f'Len goget_main {len(goget_main)} and goget_res {len(goget_res)} is {len(goget_main) + len(goget_res)}')
+
+        # remove columns not needed
+        goget_main = goget_main[['legend-filter','tab-type','operator', 'areas', 'status', 'geometry', 'pid','name', 'status_year', 'url']]
+        # operator, status, country, lat lng, id  from main
+        goget_res = goget_res[['tonnes-goget-reserves_emissions', 'pid']]
+        # Emissions for whole reserves with latest emissions factors (tonnes) from reserves from reserves
+        
+        # on goget id merge - keep only first occurrence of each pid since all are duplicates
+        goget_res = goget_res.drop_duplicates(subset=['pid'], keep='first')
+        
+        # merge reserves data into main on pid
+        goget = goget_main.merge(goget_res, on='pid', how='left')
+        print(f'Len goget after merge left, should be just same as goget_main {len(goget_main)} above: {len(goget)}')
+        # deduplicate on goget id (no need because merged...)       
+        # input(f'Check length of goget ok after merging')
+        
+        df = pd.concat([rest, goget])
+        lenaf = len(df)
+        # input(f'Check that length is same before and after goget: \n before {lenbef}\n after{lenaf}')
+    
+        # consolidate statuses
+                
+        # check corresponding infra to show hyperlinked wiki 
+        # for plume data only, if infra wiki is not '', then add this line of markup
+        # for all plume data, add the carbon mapper liscense
+        # just in js make it so it shows up if notempty nah
+        # make a new column, string with infra map link and sentence around it markdown
+        # add col for all plumes, col called, carbon mapper string   
+        df['carbon-mapper-md'] = df.apply(
+            lambda row: 'Plume Data © Carbon Mapper. Subject to terms. https://carbonmapper.org/terms' 
+            if row['tab-type'] == 'Plumes' 
+            else '', 
+            axis=1
+        )
+        
+        # THIS IS INCORRECT LOGIC BELOW - TODO FIX
+        
+        df['infra-wiki-md'] = df.apply(
+            lambda row: f'This asset has a methane plume associated with it: see the infrastructure wiki for more details {row["geminfrawiki"]}'
+            if row['tab-type'] == 'Plumes' and row['geminfrawiki'] != ''
+            else '',
+            axis=1        
+        )
+        
+        # round emissions and capcaity 
+        # replace empty start year with ''
+        
+        lenbef = len(df)
+        # split attribution out for Plumes  For map only (has attribution information)
+        attrib = df[df['infra-filter']=='has attribution data'].copy()
+        attrib['legend-filter'] = 'plumes-attrib'
+        no_attrib = df[df['infra-filter']=='no atttribution data'].copy()
+        no_attrib['legend-filter'] = 'plumes-unattrib'
+        na_attrib = df[~df['tab-type'].isin(['Plumes'])]
+
+        
+        df = pd.concat([attrib, no_attrib, na_attrib])
+        lenaf = len(df)
+        input(f'Check that length is same before and after: \n before {lenbef}\n after{lenaf}')
+        # make id for link field - maybe just with index, just use PID DONE I think
+        # handle multiple countries DONE
+        # create scaling col for Plume emissions all other same DONE  
+        # Deal with scaling / creating fake capacity! DONE
+        print(f'this is length of df bf {len(df)}')
+        plume_df = df[df['tab-type'] == 'Plumes'].copy()
+        print(f'this is length of df af {len(df)}')
+        plume_df.fillna('', inplace=True) 
+        # print(plume_df.columns)
+        # print(plume_df['plume_emissions'])
+        # print(set(plume_df['plume_emissions'].to_list()))
+
+        # to get scaling size for plume circles when there is no emissions data getting average of emissions for plume projects 
+        tempplume_emissions = plume_df[plume_df['plume_emissions']!= ''].copy()
+        tempplume_emissions['plume_emissions'] = tempplume_emissions['plume_emissions'].apply(lambda x: round(x, 2))
+        
+        plume_tot_emissions = tempplume_emissions['plume_emissions'].astype(float).sum()  
+        plume_projects = len(plume_df)
+        plume_emissions_avg = plume_tot_emissions / plume_projects
+        # print(f"Sum of plume emissions: {plume_tot_emissions}")
+        # print(f"Number of plume projects: {plume_projects}")
+        # print(f"Average plume emissions: {plume_emissions_avg}")
+        
+        # if there is no plume emissions then use average otherwise use plume emissions ... 
+        non_plume_df = df[df['tab-type'] != 'Plumes'].copy()
+
+        non_plume_df['capacity'] = plume_emissions_avg
+        # if no emissions for plume fill in avg for scaling capacity purposes
+        plume_df['capacity'] = plume_df['plume_emissions'].fillna('').replace('', plume_emissions_avg)
+
+        # make it round to 2
+        plume_df['plume_emissions'] = plume_df['plume_emissions'].apply(lambda x: round(float(x), 2) if x != '' and x != 'nan' else x)
+        # make it round to 2
+        plume_df['emission_uncertainty'] = plume_df['emission_uncertainty'].apply(lambda x: round(float(x), 2) if x != '' and x != 'nan' else x)
+        
+        # concat them back 
+
+        df = pd.concat([non_plume_df, plume_df], sort=False).reset_index(drop=True)
+        df['capacity'] = df['capacity'].fillna('')
+        
+        for row in df.index:
+            if df.loc[row, 'capacity'] == '':
+                df.loc[row, 'capacity'] = plume_emissions_avg      
+        
+        print(df['legend-filter'])
+        input('check legend filter')
         
         self.data = df
     
@@ -987,7 +1865,8 @@ class TrackerObject:
 
     def create_filtered_geo_fuel_df(self, geo, fuel):
         needed_geo = geo_mapping[geo]
-        logger.info(f'length of self.data: {len(self.data)}')
+        logger.info(f'length of self.data for {self.acro}: {len(self.data)}')
+        # input(f'DEBUG length of self.data for {self.acro}: {len(self.data)}')
         if self.acro != 'GOGET':
             geocollist = self.geocol.split(';')
             logger.info(f'Getting geo: {geo} from col list: {geocollist} for {self.acro}')
@@ -1012,6 +1891,41 @@ class TrackerObject:
                 else:
                     if self.geocol in self.data.columns:
                         self.data['country_to_check'] = self.data[self.geocol].apply(lambda x: split_countries(x) if isinstance(x, str) else [])
+                    
+                    elif self.off_name == 'Methane Emitters':
+                        # handle GOGET within Methane Emitters
+                        print(f'In methan emitters of filter geo')
+                        self.data.columns = self.data.columns.str.strip()
+                        print(f'Len of all data before split country:\n{len(self.data)}')
+                        goget_ones = self.data[self.data['tab-type'].isin(['Oil and Gas Extraction Areas', 'Oil and Gas Reserves'])]
+                        print(f'Len of goget data before split country:\n{len(goget_ones)}')
+
+                        goget_ones['country_to_check'] = self.data['areas'].apply(lambda x: split_countries(x) if isinstance(x, str) else [])
+                        print(f'Len of goget data aftter split country:\n{len(goget_ones)}')
+
+                        not_goget_ones = self.data[~self.data['tab-type'].isin(['Oil and Gas Extraction Areas', 'Oil and Gas Reserves'])]
+                        print(f'Len of nogoget data before split country:\n{len(not_goget_ones)}')
+
+                        not_goget_ones['country_to_check'] = self.data['areas'].apply(lambda x: split_countries(x) if isinstance(x, str) else [])
+                        print(f'Len of nogoget data after split country:\n{len(not_goget_ones)}')
+                        
+                        self.data = pd.concat([goget_ones,not_goget_ones],sort=False).reset_index(drop=True)
+                        print(f'This is len of self.data {len(self.data)} and this is country to check col:\n{self.data['country_to_check']}')
+                    
+                    elif self.off_name == 'Gas Finance':
+                        
+                        # do not need to handle multiple countries for lng and gogpt
+                        if self.geocol not in self.data.columns:
+                            print('already renamed upon retrieval of df for this odd one')
+                            geocol = 'areas'
+                            self.data['country_to_check'] = self.data[geocol].apply(lambda x: split_countries(x) if isinstance(x, str) else [])
+                        else:
+                            print(f"Column '{self.geocol}' not found in data for {self.tab_name}.")
+                            [print(col) for col in self.data.columns]
+                            input(f"Column '{self.geocol}' not found in data for {self.tab_name}. Update map tracker log gsheet please.")
+                                
+
+                    
                     else:
                         print(f"Column '{self.geocol}' not found in data for {self.tab_name}.")
                         [print(col) for col in self.data.columns]
@@ -1102,9 +2016,10 @@ class TrackerObject:
             if col in ['geometry', 'country_to_check'] or any(keyword in col for keyword in numeric_keywords):
                 continue
 
-            # Skip if column is not object/string type
-            if self.data[col].dtype not in ['object', 'string']:
-                continue
+            # TODO rework this
+            # # Skip if column is not object/string type
+            # if self.data[col].dtypes not in ['object', 'string']:
+            #     continue
 
             logger.info(f"Cleaning categorical column: {col}")
             original_unique_count = self.data[col].nunique() # unhashable type list uniques = table.unique(values)
@@ -1222,7 +2137,7 @@ class TrackerObject:
                     try:
                         # Clean the column first - strip whitespace and handle common non-numeric values
                         self.data[col] = self.data[col].astype(str).str.strip()
-                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>'], pd.NA)
+                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-'], pd.NA)
                         
                         # Use pandas to_numeric which is more robust than custom function
                         self.data[col] = pd.to_numeric(self.data[col], errors='raise') # raise
@@ -1579,6 +2494,10 @@ class TrackerObject:
         if isinstance(self.data, tuple):
             logger.info(self.tab_name)
             logger.info('Why is that a tuple up there? GOGET and GOGPT eu should be consolidated by now...')
+        
+        elif self.acro in ['GMET']:
+            gdf = self.data
+            print(f'Skipping since we made it all a gdf upon concatting initially')
         else:
             
             if 'latitude' in self.data.columns.str.lower():
@@ -1674,6 +2593,7 @@ class TrackerObject:
         #     gdf = gdf.reset_index(drop=True)
         
         elif self.acro == 'GMET':
+
             gdf['tracker_custom'] = 'GMET'
             gdf['original_units'] = 'n/a'
             gdf['conversion_factor'] = 'n/a'
