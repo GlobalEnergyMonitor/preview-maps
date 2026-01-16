@@ -341,7 +341,7 @@ class TrackerObject:
             
     def list_all_contents(self, release):
         # TODO REDO this based on standardized file names in s3
-        # TODO egt change what gets added so it is JUST the file -- what? 
+        # TODO egt change what gets added so it is JUST the file -- LOOK INTO THIS BEFORE GOGPT RELEASE mid Jan
         # not both: ['egt-term/2025-02/', 'egt-term/2025-02/GEM-EGT-Terminals-2025-02 DATA TEAM COPY.geojson']
         acro = self.acro.lower() # ggit (tracker-acro in map log gsheet | source)
         name = self.tab_name.lower() # pipelines, terminals, gas (tab name in map log gsheet | source)       
