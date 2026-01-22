@@ -17,18 +17,21 @@ def make_map(list_of_map_objs, tracker):
     list_of_map_objs_mapversion = []
     conversion_df = create_conversion_df(conversion_key, conversion_tab)
     for map_obj in tqdm(list_of_map_objs, desc='Running'):
-        
-        with open(f"{logpath}tracker_data_log.txt", "a") as log_file:
-            log_file.write(f"Stopping on Map name: {map_obj.mapname}\n")
-            log_file.write("Trackers in map:\n")
-            [log_file.write(f"{tracker_obj.off_name}\n") for tracker_obj in map_obj.trackers]
-            log_file.write("Confirm all trackers in map\n")
+        print(map_obj.mapname)
 
         for tracker_obj in map_obj.trackers:
             # do all data cleaning changes then go into tracker specific changes
             if isinstance(tracker_obj.data, pd.DataFrame): 
-                tracker_obj.clean_num_data()
-                tracker_obj.clean_cat_data() 
+                print(f'Length of df right now IN make_map: {len(tracker_obj.data)} for {tracker_obj.acro}')
+                if nostopping:
+                    print('pass nostopping')
+                else:
+                    input('DEBUG above length problem')
+                if tracker_obj.acro == 'GMET':
+                    pass # pass because handles cleaning data values in gmet specific function
+                else:
+                    tracker_obj.clean_num_data()
+                    # tracker_obj.clean_cat_data() 
             else:
                 if tracker_obj.acro in ['GOGET']:
                     # main, prod = tracker_obj.data
@@ -37,7 +40,7 @@ def make_map(list_of_map_objs, tracker):
                 else:
                     logger.info("Error: 'self.data' is not a DataFrame.")
                     
-                    logger.info(msg=f"Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
+                    logger.info(msg=f"Error:'self.data' is {type(tracker_obj.data).__name__}: {repr(self.data)}")
                     input('self.data is not in a dataframe')
                     return
                 
@@ -82,6 +85,12 @@ def make_map(list_of_map_objs, tracker):
                 tracker_obj.giomt_changes() 
             elif tracker_obj.acro in ['GChI']:
                 tracker_obj.gchi_changes()
+            elif tracker_obj.acro in ['GMET']:
+                tracker_obj.gmet_changes()
+            elif tracker_obj.acro in ['GGFT']:
+                logger.info('in GGFT for make map file.py')
+                tracker_obj.ggft_changes()
+                # in here we need to create capacity value and pull in geometry
         
             # GIST checks
             # [print(tracker_obj.data[col]) for col in tracker_obj.data.columns if col == 'Clinker Capacity (millions metric tonnes per annum)']
@@ -92,31 +101,64 @@ def make_map(list_of_map_objs, tracker):
             # Fill NaN values with a default  df[col] = df[col].fillna(-100)
             # TODO should lower case all cols at ONE point ... chaotic for split_goget because europe has lowercase and all else is unchanged unitl rename_and_concat
             tracker_obj.transform_to_gdf()
-        
+   
+            if tracker_obj.acro in ['GMET']:
+                
+                print(set(tracker_obj.data['legend-filter'].to_list()))
+                input('check legend filter')
             tracker_obj.split_goget_ggit()
-  
+            if tracker_obj.acro in ['GMET']:
+                
+                print(set(tracker_obj.data['legend-filter'].to_list()))
+
+                input('check legend filter')
             tracker_obj.assign_conversion_factors(conversion_df)
+            if tracker_obj.acro in ['GMET']:
+                
+                print(set(tracker_obj.data['legend-filter'].to_list()))
+
+                input('check legend filter')
         # we account for GOGPT eu that already aritficially set tracker-acro according to differences in columns of hy and plants in gogpt eu
         map_obj.rename_and_concat_gdfs() 
+        # NOTE AFTER THIS FUNCTION IS CALLED trackers holds ONE dataframe for the entire map, before it is a list of dfs per tracker
+
 
         map_obj.set_capacity_conversions()
 
+
         map_obj.map_ready_statuses_and_countries()
+
 
         map_obj.create_search_column()
 
+
         map_obj.capacity_hide_goget_gcmt()
 
+
         map_obj.set_fuel_goit()
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['capacity']) 
+            input(f'CHECK capacity DEBUG for testval: {testval}')
 
         map_obj.last_min_fixes()
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['capacity']) 
+            input(f'CHECK capacity DEBUG for testval: {testval}')
+        if map_obj.mapname.upper() in ['GMET']:
+            
+            print(set(tracker_obj.data['legend-filter'].to_list()))
+            input('check legend filter')
+        map_obj.remove_excess_cols() # affects ALL trackers rn so if new column must add to list in this function
 
         map_obj.save_file(tracker)
+
         
         if simplified == True:
             print('Simplified is true so reducing cols and saving a smaller map file!')
             map_obj.simplified()
-
+        
     # this will be the map obj with the filtered cleaned concatted one gdf
     list_of_map_objs_mapversion.append(map_obj) 
             
