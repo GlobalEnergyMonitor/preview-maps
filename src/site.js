@@ -1458,11 +1458,7 @@ function displayDetails(features) {
     // Build capacity summary by unit
     // Make sure capacity and parenthese get removed if there is only one feature
     if (capacityLabel != ''){
-        // PICK THIS UP TOMORROW
-        // if (config.scaling_not_by_cap===true && capacityLabel2!=''){
-        //     //want to also show capacity value by status / unit ... so will need to figure out units of measurement shit won't work I think... will need two capacityLabels
-        //     console.log('scaling not by capacity!')
-        // }
+
         if (features.length > 1) { 
         let filterIndex = 0;
             for (const[index, filter] of config.filters.entries()) {
@@ -1600,43 +1596,51 @@ function displayDetails(features) {
         }
         // else when there is only one feature or one unit per project in the popup modal
         else {
-            // console.log('This is capacity:')
-            // console.log(features[0].properties[config.capacityDisplayField])
-            // console.log(features[0].properties[config.capacityDisplayField]) // Himeji-Okayama Gas Pipeline
 
-            capacityFloat = Number(features[0].properties[config.capacityDisplayField])
-            // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
-
-            // console.log(typeof capacityFloat)
-            // if capacity is a string and when you convert with Number it is 0 then we can say it is NA or Not found
-            if (features[0].properties[config.capacityDisplayField] === ''){
-                    capacityFloatandLabel = 'Not found or N/A'
-            }
-
-            // if it is not a string then we are good ...  
-            else { 
-                // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
-                // try Number() instead of parseFloat()
-                capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
-                // console.log(capacityFloatandLabel)
-            }
-            // this handles capacity adjustment for solo projects where it looks redundant to have Capacity written out twice
-            // Remove 'Capacity' prefix and parentheses from capacityLabel TODO look into a better way to handle, issue if capacity is nan or undefined like intentionally is for GOGET
-            // capacityLabel = capacityLabel.replace(/^Capacity\s*/i, '').replace(/[()]/g, '');
-
-            // and it allows status outside of the summary table to have the colored dot when status is the highest filter section
-            if (config.color.field != config.statusDisplayField){
-                // for filter field in filter, if primary = True then take field name "type" in intg and use it to find the color dictionary in the colors dict above
-                // and then display the projects type field with the appropriate color based on the value and the dictionary
+            // if ggft gas finance then we want to override this always since the project level financing info is already printed 
+            // and this else only executes if there is just one unit for the project so it'd be redundant and the word 'Capacity' is hardcoded in this feature and makes no sense for ggft
+            if (config.scale_by_capacity==false) {
+                console.log('Skipping single unit project capacity for ggft since it is finance info and is covered already, but displaying status info since it is useful and not redundant.')
+                // we do not want the capacity but we do want status since that is relevant for single unit ggft projects
+                // since we know for ggft the status is a color field we do not need the extra logic seen below with "config.color.field != config.statusDisplayField"
                 detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
-                '<span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
-                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
+                '<span class="legend-dot" style="background-color:' + config.color.values[ features[0].properties[config.statusDisplayField] ] + '"></span><span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
+
             }
             else {
-                detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
-                    '<span class="legend-dot" style="background-color:' + config.color.values[ features[0].properties[config.statusDisplayField] ] + '"></span><span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
-                detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
-            }
+
+                capacityFloat = Number(features[0].properties[config.capacityDisplayField])
+
+                // if capacity is a string and when you convert with Number it is 0 then we can say it is NA or Not found
+                if (features[0].properties[config.capacityDisplayField] === ''){
+                        capacityFloatandLabel = 'Not found or N/A'
+                }
+
+                // if it is not a string then we are good ...  
+                else { 
+                    // console.log(capacityFloat) // Himeji-Okayama Gas Pipeline
+                    // try Number() instead of parseFloat()
+                    capacityFloatandLabel = parseFloat(capacityFloat).toFixed(2).replace(/\.?0+$/, '') + ' ' + capacityLabel
+                    // console.log(capacityFloatandLabel)
+                }
+                // this handles capacity adjustment for solo projects where it looks redundant to have Capacity written out twice
+                // Remove 'Capacity' prefix and parentheses from capacityLabel TODO look into a better way to handle, issue if capacity is nan or undefined like intentionally is for GOGET
+                // capacityLabel = capacityLabel.replace(/^Capacity\s*/i, '').replace(/[()]/g, '');
+
+                // and it allows status outside of the summary table to have the colored dot when status is the highest filter section
+                if (config.color.field != config.statusDisplayField){
+                    // for filter field in filter, if primary = True then take field name "type" in intg and use it to find the color dictionary in the colors dict above
+                    // and then display the projects type field with the appropriate color based on the value and the dictionary
+                    detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
+                    '<span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
+                    detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
+                }
+                else {
+                    detail_text += '<span class="fw-bold text-capitalize">Status</span>: ' +
+                        '<span class="legend-dot" style="background-color:' + config.color.values[ features[0].properties[config.statusDisplayField] ] + '"></span><span class="text-capitalize">' + features[0].properties[config.statusDisplayField] + '</span><br/>';
+                    detail_text += '<span class="fw-bold text-capitalize">Capacity</span>: ' + capacityFloatandLabel;
+                }
+                }
             }
     }
     // This is where you remove the colored circle primary = true
