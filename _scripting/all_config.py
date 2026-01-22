@@ -34,30 +34,34 @@ list_of_all_official = [
     "Plumes",
     "Chemicals",
     "Cement and Concrete",
+    'Gas Finance',
+    'Coal Project Finance'
 
 ]
 
 # TODO maybe have the script make the folder based on the acro in map tarcker log
 
 pm_preview_mode = False # For Baird's testing work
-trackers_to_update = ["Gas Pipelines"]  # tab name in map tracker log sheet
-new_release_date = 'November_2025' # for within about page NEEDS TO BE FULL MONTH
-releaseiso = '2025-11'
+trackers_to_update = ["Gas Finance"]  # tab name in map tracker log sheet # Gas Finance
+new_release_date = 'December_2025' # for within about page NEEDS TO BE FULL MONTH
+releaseiso = '2025-12'
 new_release_dateinput = input(f'In {new_release_date} format, with no spaces, tell me the public release date. Or press enter if {new_release_date} is the right month.')
 if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
 
-testval = '' #'Toscana FSRU' #optional for debugging
+nostopping = True
+# add test local
+localtestfile = '' #'../testinputfile.xlsx'
+testval = '' #'Toscana FSRU' #optional for debugging Canatxx LNG Terminal
 testfilekey = '' # '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' #optional for debugging
 testtracker = ''  #'ggit-lng'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ["ggit"]  # tracker_mapnames
-force_refresh_flag = True
-tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt"]
+priority = [""]   # tracker_mapnames "europe", "asia", "latam", "africa", "ggit"
+force_refresh_flag = True 
+tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt", "ggft"]
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
-
 final_cols = []
 # st_path = Path(__file__).parent / '_steel_cols.json'
 fcl_path = Path(__file__).parent / '_final_cols.json'
@@ -84,7 +88,7 @@ def ensure_compilation_folders():
             compilation_dir = tracker_dir / 'compilation_output'
             compilation_dir.mkdir(exist_ok=True)
 
-ensure_compilation_folders()
+ensure_compilation_folders() # should add to make folder for brand new tracker
 
 
 # make necessary directories if they don't exist
@@ -205,6 +209,8 @@ official_tracker_name_to_mapname = {
     "Integrated": "integrated",
     "Cement and Concrete": "gcct",
     "Chemicals": "GChI",
+    "Gas Finance": 'ggft',
+    "Coal Project Finance": 'gcpft'
 }
 
 
@@ -245,7 +251,7 @@ gspread_creds = gspread.oauth(
 # helpful to pass over specialty logic
 gas_only_maps = ['asia', 'europe', 'ggit'] 
 non_gsheet_data = ['Gas Pipelines', 'Oil Pipelines', 'Gas Pipelines EU']
-non_regional_maps = ['gist', 'gmet', 'giomt', 'gcct', 'gchi']
+non_regional_maps = ['gist', 'gmet', 'giomt', 'gcct', 'gchi', 'ggft']
 
 conversion_key = '1fOPwhKsFVU5TnmkbEyPOylHl3XKZzDCVJ29dtTngkew'
 conversion_tab = ['data']
@@ -290,7 +296,9 @@ tracker_to_fullname = {
                     "GCTT": "coal terminal",
                     "GIST": 'Iron & Steel',
                     "GIOMT": 'Iron Ore Mines',
-                    "GCCT": 'Cement and Concrete'
+                    "GCCT": 'Cement and Concrete',
+                    "GMET": 'Methane Emitters',
+                    'GGFT': 'Gas Finance'
                 }
 
 
@@ -313,7 +321,9 @@ tracker_to_legendname = {
                     "GCTT": "coal-terminal",
                     "GIST": "iron-steel",
                     "GIOMT": "iron-mine",
-                    "GChI": "chem-inventory"
+                    "GMET": 'methane-emit',
+                    "GChI": "chem-inventory",
+                    'GGFT': 'Gas Finance'
 }
 
 multi_tracker_log_sheet_key = '15l2fcUBADkNVHw-Gld_kk7EaMiFFi8ysWt6aXVW26n8'

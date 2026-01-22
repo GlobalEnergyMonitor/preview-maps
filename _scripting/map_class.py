@@ -70,7 +70,12 @@ class MapObject:
                     gdf.loc[row, 'capacity-details'] = ''
                     prod_coal = gdf.loc[row, 'prod-coal']
                     
-                                        
+                elif tracker.upper() == 'GGFT':
+                    logger.info('in GGFT')
+                    # just going to keep them separate because not sizing on capacity for ggft, mw and mtpa not bothering to convert but keep separate with their own labels
+                    gdf.loc[row, 'capacity-table'] = np.nan
+                    gdf.loc[row, 'capacity-details'] = ''
+                                                           
                 else:
                     gdf.loc[row, 'capacity-table'] = gdf.loc[row, 'capacity']
                     gdf.loc[row, 'capacity-details'] = gdf.loc[row, 'capacity']
@@ -101,7 +106,90 @@ class MapObject:
         self.trackers = one_gdf           
 
 
-    
+    def remove_excess_cols(self):
+        # NOTE affects all trackers so if there is a new column needs to be added to list below
+        gdf = self.trackers
+        # before saving to file, remove excess cols not needed in the map's config.js or site-config.js
+        # so that it goes as quickly as it can
+        # always keep geometry column
+        
+        # for now manual
+        if self.mapname.lower() == 'gmet':
+            print(gdf['legend-filter'])
+            input('check legend filter')
+            
+            cols = ["Government Well ID",
+                    "areas",
+                    "areas-subnat-sat-display",
+                    "capacity-output",
+                    "capacity-prod",
+                    "capacitybcm/y",
+                    "capacityinmtpa",
+                    "carbonmapper",
+                    "country",
+                    "date",
+                    "emission-uncertainty",
+                    "emission_uncertainty",
+                    # "emissionsIfOp",
+                    "emissions-terminals",
+                    "geminfrawiki",
+                    "gov_assets",
+                    "infra-name",
+                    "infra_name",
+                    "infra_type",
+                    "infra_url",
+                    "infra-filter",
+                    "infra_filter",
+                    "instrument",
+                    "mtyr-gcmt-emissions",
+                    "name",
+                    "operator",
+                    "owner",
+                    "pid",
+                    "pipe-length",
+                    "plume-emissions",
+                    "plume_emissions",
+                    "satdataprovider",
+                    "scaling-capacity",
+                    "scaling_col",
+                    "status",
+                    "status-legend",
+                    "subnational",
+                    "tab-type",
+                    "tonnes-goget-reserves-emissions",
+                    "tonnesyr-pipes-emissions",
+                    "tracker",
+                    "typeinfra",
+                    "well_id",
+                    "unit-name",
+                    "geometry",
+                    "lat",
+                    "lng",
+                    "carbon-mapper-md",
+                    "infra-wiki-md",
+                    "tracker-custom",
+                    "capacity",
+                    "areas",
+                    "subnat",
+                    "legend-filter",
+                    "url", 
+                    "release-date-infra"]
+            
+            logger.info(f'before excess cols function len: {len(gdf.columns)}')
+
+            finalcols = []
+            for col in cols:
+                if col in gdf.columns:
+                    finalcols.append(col)
+                    
+                    
+            gdf = gdf[finalcols]
+            logger.info(f'after excess cols function len: {len(gdf.columns)}')
+        
+        
+        
+        self.trackers = gdf
+        
     
     def last_min_fixes(self):
         gdf = self.trackers
@@ -147,13 +235,15 @@ class MapObject:
         gdf.dropna(subset=['geometry'],inplace=True)
 
         # make sure all of the units of m are removed for goget and gcmt that has no capacity
-        for row in gdf.index:
-            if gdf.loc[row, 'capacity'] == '':
-                gdf.loc[row, 'units-of-m'] = ''
-            elif gdf.loc[row, 'capacity-details'] == '':
-                gdf.loc[row, 'units-of-m'] = ''
-            elif gdf.loc[row, 'capacity-table'] == np.nan:
-                gdf.loc[row, 'units-of-m'] = ''
+        # just allowing for the rare trackers like ggft where capacity is not the main focus
+        if 'capacity' in gdf.columns:
+            for row in gdf.index:
+                if gdf.loc[row, 'capacity'] == '':
+                    gdf.loc[row, 'units-of-m'] = ''
+                elif gdf.loc[row, 'capacity-details'] == '':
+                    gdf.loc[row, 'units-of-m'] = ''
+                elif gdf.loc[row, 'capacity-table'] == np.nan:
+                    gdf.loc[row, 'units-of-m'] = ''
 
         # remove the decimal in years, and lingering -1 for goget
         year_cols = ['start-year', 'prod-year-gas', 'prod-year-oil']
@@ -171,13 +261,16 @@ class MapObject:
                     
         # Check for invalid geometries in the 'geometry' column
         invalid_geoms = []
+        fixed_count = 0
         for idx, geom in gdf['geometry'].items():
             # Check if geometry is a shapely object and is valid
             if hasattr(geom, 'is_valid') and not geom.is_valid:
+                logger.info(f"Invalid geometry found at index {idx}: {gdf.loc[idx,'name']}")
                 # Try to fix geometry
                 fixed_geom = geom.buffer(0)
                 if fixed_geom.is_valid:
                     gdf.at[idx, 'geometry'] = fixed_geom
+                    fixed_count += 1
                 else:
                     invalid_geoms.append((idx, geom))
             # If geometry is not a shapely object, try to parse it
@@ -186,29 +279,30 @@ class MapObject:
                     parsed_geom = wkt.loads(str(geom))
                     if parsed_geom.is_valid:
                         gdf.at[idx, 'geometry'] = parsed_geom
+                        fixed_count += 1
                     else:
                         fixed_geom = parsed_geom.buffer(0)
                         if fixed_geom.is_valid:
                             gdf.at[idx, 'geometry'] = fixed_geom
+                            fixed_count += 1
                         else:
                             invalid_geoms.append((idx, geom))
                 except Exception as e:
+                    logger.warning(f"Failed to parse geometry at index {idx}: {e}")
                     invalid_geoms.append((idx, geom))
             
+        # Log summary before removing rows
+        logger.info(f"Fixed {fixed_count} geometries, found {len(invalid_geoms)} unfixable geometries")
+        
         # Remove rows with invalid geometry and log them
         if invalid_geoms:
-            logger.warning(f"Found invalid geometries, removing: {invalid_geoms}")
+            logger.warning(f"Found {len(invalid_geoms)} invalid geometries, removing rows")
             pd.DataFrame(invalid_geoms, columns=['index', 'geometry']).to_csv(f'{logpath}{self.mapname}-invalid-geometries-{iso_today_date}.csv', index=False)
             # Extract indices of invalid geometries for removal
             invalid_geom_indices = [idx for idx, _ in invalid_geoms]
             gdf.drop(invalid_geom_indices, inplace=True)
+            logger.info(f"Dropped {len(invalid_geom_indices)} rows with invalid geometries")
 
-        
-        # Drop columns where all values are empty strings or null
-        cols_to_drop = [col for col in gdf.columns if gdf[col].replace('', np.nan).isna().all()]
-        print(f'These are cols to drop because all empty: {cols_to_drop}')
-        input('Check those cols above that are empty!')
-        gdf = gdf.drop(columns=cols_to_drop)
         gdf.columns = [col.lower() for col in gdf.columns]
         
         
@@ -228,7 +322,8 @@ class MapObject:
         
         # make sure everything is a number than can be
         # so js functions as expected and no NaNs
-        gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(x, errors='raise'))
+        if 'capacity' in gdf.columns:
+            gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(x, errors='raise'))
         
         self.trackers = gdf
     
@@ -249,16 +344,6 @@ class MapObject:
             if tracker in mapname_gitpages.keys():
                 tracker = mapname_gitpages[tracker]
                 
-            
-        
-        if self.mapname in gas_only_maps or self.geo == 'global': # will probably end up making all regional maps all energy I would think
-            logger.info(f"Yes {self.mapname} is in gas only maps so skip 'area2', 'subnat2', 'capacity2'")
-            gdf = self.trackers.drop(['count-of-semi', 'multi-country', 'original-units', 'conversion-factor', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) # 'multi-country', 'original-units', 'conversion-factor', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
-        
-        else:
-            logger.info(f"No {self.mapname} is not in gas only maps")
-            gdf = self.trackers.drop(['count-of-semi','multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend'], axis=1) #  'multi-country', 'original-units', 'conversion-factor', 'area2', 'region2', 'subnat2', 'capacity1', 'capacity2', 'cleaned-cap', 'wiki-from-name', 'tracker-legend']
-             
 
         logger.info(f'Final cols:\n')
         cols = [(col) for col in gdf.columns]
@@ -343,6 +428,9 @@ class MapObject:
     # to the same units that are stated in this sheet (column B, "original units").
 
         gdf = self.trackers
+        print(gdf)
+        if len(gdf) < 1:
+            input('DEBUG check above is not empty')
 
         if self.mapname in gas_only_maps:
             logger.info('no need to handle for hydro having two capacities')
@@ -362,9 +450,15 @@ class MapObject:
                 gdf = pd.concat([gdf_minus_ghpt, ghpt_only],sort=False).reset_index(drop=True)
         
         
-        # create cleaned cap for logic below 
-        gdf['cleaned_cap'] = pd.to_numeric(gdf['capacity'], errors='coerce')
+        if self.mapname in ['ggft']: 
+            # TODO GGFT # project-financing
+            gdf['cleaned_cap'] = pd.to_numeric(gdf['project-financing'], errors='coerce')
 
+        else:
+            # create cleaned cap for logic below 
+            gdf['cleaned_cap'] = pd.to_numeric(gdf['capacity'], errors='coerce')
+
+        # works to fill in average capacity for missing ones so dot still shows up
         total_counts_trackers = []
         avg_trackers = []
 
@@ -407,9 +501,13 @@ class MapObject:
             logger.info('check name and why it is not in non_regional_maps')
             logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
-        gdf['capacity-table'] = gdf.apply(lambda row: pd.Series(workaround_table_float_cap(row, 'capacity')), axis=1)
-        gdf['units-of-m'] = gdf.apply(lambda row: pd.Series(workaround_table_units(row)), axis=1)
- 
+            
+        
+        if self.mapname in ['ggft']: 
+            print('passing cap-table now')
+        else:
+            gdf['capacity-table'] = gdf.apply(lambda row: pd.Series(workaround_table_float_cap(row, 'capacity')), axis=1)
+            gdf['units-of-m'] = gdf.apply(lambda row: pd.Series(workaround_table_units(row)), axis=1)    
         self.trackers = gdf        
         
     def map_ready_statuses_and_countries(self):
@@ -427,13 +525,14 @@ class MapObject:
             mask_goget = gdf_map_ready['tracker-acro'] == 'GOGET'
         
             # Update 'status' to 'Retired' where both masks are True
-            gdf_map_ready['status'].fillna('', inplace=True)
+            gdf_map_ready['status'] = gdf_map_ready['status'].fillna('')
             mask_status_empty = gdf_map_ready['status'] == ''
             
             # Update 'status' to 'Not Found' where both masks are True
             gdf_map_ready.loc[mask_status_empty & mask_gcmt, 'status'] = 'retired'
             gdf_map_ready.loc[mask_status_empty & mask_goget, 'status'] = 'not found'
             gdf_map_ready['status_legend'] = gdf_map_ready.copy()['status'].str.lower().replace({
+                        # TODO get clarity on when this should be applied, for global or regional or both?
                         # proposed_plus
                         'proposed': 'proposed_plus',
                         'announced': 'proposed_plus',
@@ -445,18 +544,26 @@ class MapObject:
                         # construction_plus
                         'construction': 'construction_plus',
                         'in development': 'construction_plus',
+                        'exploration': 'construction_plus',
                         # mothballed
                         'mothballed': 'mothballed_plus',
                         'idle': 'mothballed_plus',
                         'idled': 'mothballed-plus',
                         'shut in': 'mothballed_plus',
+                        # 'shelved': 'mothballed_plus',
                         # retired
                         'retired': 'retired_plus',
                         'closed': 'retired_plus',
                         'decommissioned': 'retired_plus',
-                        'not found': 'not-found'})
+                        'not found': 'not-found',
+                        # 'abandoned': 'retired_plus',
+                        # 'cancelled': 'retired_plus',
+                        'mixed status': 'not-found',
+                        # 'ugs': 'not-found'
+                        })
             
-
+            print(set(gdf_map_ready['status_legend'].to_list()))
+            input(f'Check all statuses in legends ugs and cancelled and abandoned and shelved should be there')
             # Create a mask for rows where 'status' is empty
 
             gdf_map_ready_no_status = gdf_map_ready.loc[mask_status_empty]
@@ -514,21 +621,23 @@ class MapObject:
         # if t then make areas-display 
         for col in gdf_map_ready.columns:
             print(col)
-        gdf_map_ready['subnat'].fillna('', inplace=True)
+            
+        if 'subnat' in gdf_map_ready.columns:
+            gdf_map_ready['subnat'].fillna('', inplace=True)
         
-        # if only one country and subnat not empty create the string, otherwise it should just be the country 
-        # (which means what for multi country?) we use a mask below to fix it for multi countries
-        gdf_map_ready['areas-subnat-sat-display'] = gdf_map_ready.apply(lambda row: f"{row['subnat'].strip().strip('')}, {row['areas'].strip().strip('')}" if row['multi-country'] == 'f' and row['subnat'] != '' else row['areas'].strip(), axis=1) # row['areas'].strip()
-        # if more than one country replace the '' with mult countries
-        maskt = gdf_map_ready['multi-country']=='t'
+            # if only one country and subnat not empty create the string, otherwise it should just be the country 
+            # (which means what for multi country?) we use a mask below to fix it for multi countries
+            gdf_map_ready['areas-subnat-sat-display'] = gdf_map_ready.apply(lambda row: f"{row['subnat'].strip().strip('')}, {row['areas'].strip().strip('')}" if row['multi-country'] == 'f' and row['subnat'] != '' else row['areas'].strip(), axis=1) # row['areas'].strip()
+            # if more than one country replace the '' with mult countries
+            maskt = gdf_map_ready['multi-country']=='t'
 
-        gdf_map_ready.loc[maskt, 'areas-subnat-sat-display'] = 'multiple areas/countries'
+            gdf_map_ready.loc[maskt, 'areas-subnat-sat-display'] = 'multiple areas/countries'
 
-        # for map js to work need to make sure all countries are separated by a comma and have a comma after last country as well
-        # GOGET has a hyphen in countries
-        # GOIT has comma separated in countries
-        # hydropower has two columns country1 and country2
-        # GGIT has comma separated in countries
+            # for map js to work need to make sure all countries are separated by a comma and have a comma after last country as well
+            # GOGET has a hyphen in countries
+            # GOIT has comma separated in countries
+            # hydropower has two columns country1 and country2
+            # GGIT has comma separated in countries
 
             
         if self.mapname in gas_only_maps:
@@ -559,10 +668,26 @@ class MapObject:
         
         renamed_gdfs = []     
         for tracker_obj in self.trackers:
-            
+            if tracker_obj.acro in ['GMET', 'GGFT']:
+                logger.info(F'Skipping rename for gmet and ggft because already renamed and concatted upon pull because it functions like a mini multi tracker map already')
+                gdf = tracker_obj.data
+                tracker_sel = tracker_obj.acro
+                gdf['tracker-acro'] = tracker_sel
+                # gdf = drop_cols_df_a_rename_value_avoid_dup(tracker_sel, gdf)
+                gdf.columns = gdf.columns.str.strip()
+                # gdf.reset_index(drop=True, inplace=True)
+                if 'subnat' in gdf.columns:
+                    logger.info(f'subnat here for {tracker_obj.acro}')
+                    
+                else:
+                    logger.info(f'subnat not here for {tracker_obj.acro}') # TODO investigate for egt
+                    logger.info('check which tracker is missing subnat')                
+                self.trackers = gdf
+                # print(self.trackers)
+                return
             gdf = tracker_obj.data
-            print(f'This is data for {tracker_obj.acro}:{tracker_obj.data}')
-            print(f'This is: {tracker_obj.acro}')
+            logger.info(f'This is data for {tracker_obj.acro}:{tracker_obj.data}')
+            loggerinfo(f'This is: {tracker_obj.acro}')
 
             tracker_sel = tracker_obj.acro # GOGPT, GGIT, GGIT-lng, GOGET
             logger.info(f'tracker_sel is {tracker_sel} equal to tracker-acro...')
@@ -587,6 +712,7 @@ class MapObject:
             if tracker_sel == 'GCMT':
                 logger.info(f'cols after rename in GCMT:\n{gdf.info()}')
                 logger.info(gdf['start_year'])
+                gdf['url'] = gdf['url'].fillna('')
                 # Handle for non-English Chinese wiki pages                    
                 # Using np.where 
                 gdf['wiki-from-name'] = np.where(

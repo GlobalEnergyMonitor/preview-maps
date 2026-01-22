@@ -50,7 +50,11 @@ def make_data_dwnlds(tracker):
                 # create a map object from that row if tracker is in the source col
                 
                 map_obj = make_map_tracker_objs(map_tab_df, row, prep_dict=prep_dict)
-
+                # print(f'DEBUG: map_obj.trackers is:')
+                # for tracker_obj in map_obj.trackers:
+                #     print(f'len: {len(tracker_obj.data)}')
+                #     print(f'tracker:\n {tracker_obj.data}')
+           
                 pkl_path = os.path.join(local_pkl_dir, f'map_obj_for_{map_obj.mapname}_on_{iso_today_date}.pkl')
                 with open(pkl_path, 'wb') as f:
                     logger.info(f'saved to {f}')
@@ -142,7 +146,9 @@ def make_data_dwnlds(tracker):
                         logger.info(f'Wrote {tracker_name} to file {filename} successfully!')
                         
         # save the excel files to s3
+
         for filename in [xlsfile, xlsfile_testing]:
+            logger.info(f'This is filename {filename} releaseiso {releaseiso} and tracker{tracker} in make_data_dwnlds.py')
             # do for tracker too so no spaces and correct thing for s3 folder
             if tracker in official_tracker_name_to_mapname.keys():
                 tracker = official_tracker_name_to_mapname[tracker]
@@ -157,9 +163,11 @@ def make_data_dwnlds(tracker):
             )                        
             runresults = subprocess.run(save_xls_s3, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print(runresults.stdout) 
-            
+            logger.info(runresults.stdout) 
+              
         print(f'Successfully saved data download for {tracker} to s3 folder {tracker}/{releaseiso}/')
-        # input('Check then press enter.')
+        logger.info(f'Successfully saved data download for {tracker} to s3 folder {tracker}/{releaseiso}/')
+
     test_make_data_dwnlds(maplen, tracker)
     return map_obj_list
 
