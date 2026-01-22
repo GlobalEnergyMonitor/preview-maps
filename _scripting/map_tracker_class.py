@@ -260,14 +260,15 @@ class TrackerObject:
         if nostopping:
             skipabout = False
         else:
-            
             skipabout = input(f'If you want to skip creating an about page click enter! Otherwise press any other key and then enter!')
             # use_local = input(f'Use local pkl file? (y/n, default=y): ').strip().lower()
             # TODO adjust so can easily press
             # if use_local == 'y' or '':
-        if skipabout != '':
+        if skipabout == False:
             # TODO get clarity on whether the about page comes from this logic below or that centralized doc. centralized doc makes it easier to keep formatting. I think centralized doc is only used for the trackers involved in a regional map that don't have new data release (?)
             # these are the json files like ggit that we need to use its google doc version not geojson version - NOTE the about_key is set manually in the map log google sheet. Need to adjust this to include the three tabs used for pipelines and terminals oye
+            
+            # I think this logic below is ONLY for map wide about not tracker specific about, or the other way around
             if self.about_key != '':
                 tracker_key = self.about_key
             # this case is for the normies where we'll loop through their final data dwld file where we get all the data, and find the about page tab
@@ -275,8 +276,6 @@ class TrackerObject:
                 tracker_key = self.key
                 
             about_df = self.find_about_page(tracker_key)
-            
-                
         
             tracker_official_name = f"{self.off_name}"
             if self.tab_name in trackers_to_update:
@@ -1603,6 +1602,7 @@ class TrackerObject:
  
         df['legend-filter'] = df['tab-type']
         df['legend-filter'] = df['legend-filter'].apply(lambda x: x.replace(' ', '-'))
+        
         # print(len(df))
         # print(set(df['legend-filter'].to_list()))
         
@@ -1650,9 +1650,31 @@ class TrackerObject:
         print(f'Len goget after merge left, should be just same as goget_main {len(goget_main)} above: {len(goget)}')
         # deduplicate on goget id (no need because merged...)       
         # input(f'Check length of goget ok after merging')
-        
+        # while goget tabs are separate we add in the infra release date col 
+
+        # hardcode in dates of release direct ask from Sarah due to user confusion with ggit release dates
+        # this should not be hardcoded in the future :/  
+        goget_date_hardcode = "Data drawn from GEM Global Oil and Gas Extraction Tracker February 2025 release"
+        coalmine_date_hardcode = "Data drawn from GEM Global Coal Mine Tracker May 2025 release"
+        pipelines_date_hardcode = "Data drawn from GEM Global Gas Infrastructure Tracker December 2024 release"
+        lng_date_hardcode = "Data drawn from GEM Global Gas Infrastructure Tracker September 2024 release"
+       
+        goget['release_date_infra'] = goget_date_hardcode
+        # then handle rest
+        for row in rest.index:
+            if rest.loc[row, 'tab-type'] == 'Coal Mines - Non-closed':
+                rest.loc[row, 'release_date_infra'] = coalmine_date_hardcode
+            elif rest.loc[row, 'tab-type'] == 'Pipelines':
+                rest.loc[row, 'release_date_infra'] = pipelines_date_hardcode
+            elif rest.loc[row, 'tab-type'] == 'LNG Terminals':
+                rest.loc[row,'release_date_infra'] = lng_date_hardcode
+
         df = pd.concat([rest, goget])
+        
+
+        
         lenaf = len(df)
+        
         # input(f'Check that length is same before and after goget: \n before {lenbef}\n after{lenaf}')
     
         # consolidate statuses
@@ -1664,17 +1686,60 @@ class TrackerObject:
         # make a new column, string with infra map link and sentence around it markdown
         # add col for all plumes, col called, carbon mapper string   
         df['carbon-mapper-md'] = df.apply(
-            lambda row: 'Plume Data © Carbon Mapper. Subject to terms. https://carbonmapper.org/terms' 
-            if row['tab-type'] == 'Plumes' 
+            lambda row: 'Plume Data © Carbon Mapper. Subject to terms https://carbonmapper.org/terms'
+q            if row['tab-type'] == 'Plumes'
             else '', 
             axis=1
         )
+ 
+        # change this so that tab-type is not plumes and plume data exists and infrawiki not empty but wouldn't be
+        # So for "Kern Front - California Resources Productionoration" goget asset, we'd have the text and link to the infra wiki 
+        # https://www.gem.wiki/Kern_Front_-_California_Resources_Productionoration_Oil_and_Gas_Asset_(California,_United_States)
         
-        # THIS IS INCORRECT LOGIC BELOW - TODO FIX
+        # Only coal mines have the "has associated plume data column" so for the rest 
+        # we'd have to use the "GEM Infrastructure Wiki" column (and inverse it) to see which GEM assets have plumes associated with them.
+
+        # I think we should create a new column that is like "plume-associated"
+        # if geminfrawiki is not blank 
+            # then look up name associated with geminfrawiki value match on gemwiki
+            # that is the name that needs this infra-wiki-md data
+        lendfbefore = len(df)
+        plumesdf = df[df['tab-type']=='Plumes'].copy().reset_index(drop=True)
+        coalminesdf = df[df['tab-type']=='Coal Mines - Non-closed'].copy().reset_index(drop=True)
+        restdf = df[~df['tab-type'].isin(['Coal Mines - Non-closed', 'Plumes'])].copy().reset_index(drop=True)
+        # list of wikis from plumes tab
+        infrawithplumeswiki = set(plumesdf[plumesdf['geminfrawiki'].notna() & (plumesdf['geminfrawiki'] != '')]['geminfrawiki'].to_list())
+        # print(infrawithplumeswiki) # this is from plumnes column, unfortunately the coal mine wikis are inconsistently in there as mandarin and english. 
+        # print(f'len of infrawithplumeswiki: {len(infrawithplumeswiki)}') # 267
+        # input('log # of infrawithplumeswiki from plumesdf') 
+        # first go through coalmine because special because China coal mines in mandarin
+        for row in coalminesdf.index:
+            if coalminesdf.loc[row, 'Has associated plume data'] == 'Yes':
+                coalminesdf.loc[row, 'plume-associated'] = True
+            else:
+                coalminesdf.loc[row, 'plume-associated'] = False
+        # so now loop through that set in restdf and see if there is a match on the normal wiki col, if so then assign plumeassociated = true
+        for row in restdf.index:
+            if restdf.loc[row, 'url'] in infrawithplumeswiki:
+                restdf.loc[row, 'plume-associated'] = True
+            else:
+                restdf.loc[row, 'plume-associated'] = False
+                
+        coalminesdf['plume-associated'] = coalminesdf['plume-associated'].fillna(False)
+        restdf['plume-associated'] = restdf['plume-associated'].fillna(False)
+        plumesdf['plume-associated'] = False
+        df = pd.concat([plumesdf, restdf, coalminesdf], ignore_index=True)
+        # then concat back together    
+        # print(f'This is length of df: {len(df)}')
+        # input(f'check number of df after concat, should be same as {lendfbefore}') # pass 20261
         
+        # testplumassociated = df[df['plume-associated']==True]
+        # print(f'length of plume associated for test should be 267 {len(testplumassociated)}') # 258 not 267 ok for now
+        # input('log # for plume associated')
+
         df['infra-wiki-md'] = df.apply(
-            lambda row: f'This asset has a methane plume associated with it: see the infrastructure wiki for more details {row["geminfrawiki"]}'
-            if row['tab-type'] == 'Plumes' and row['geminfrawiki'] != ''
+            lambda row: f'This asset has a methane plume associated with it: see the infrastructure wiki for more details\n{row["url"]}'
+            if row['plume-associated'] == True
             else '',
             axis=1        
         )
@@ -1738,8 +1803,17 @@ class TrackerObject:
             if df.loc[row, 'capacity'] == '':
                 df.loc[row, 'capacity'] = plume_emissions_avg      
         
-        print(df['legend-filter'])
-        input('check legend filter')
+        # print(df['legend-filter'])
+        # input('check legend filter')
+        
+        # carbonmapper asked for the coordinates look up feature, we'll make a new column called coordsearch 
+        # this will be just the lat, long in the format Sarah said most users would be pasting them in
+        # so example -24.15411438, 149.8027197
+        # remove space? 
+        # concat lat, lng
+        # df['coordssearch'] = df.apply(lambda row: (row['Longitude'], row['Latitude']), axis=1)
+        # print(df['coordssearch'])
+        # input(f'Check coordssearch temporary solution based on carbonmapper request, should do handling of search input terms.')
         
         self.data = df
     
