@@ -150,7 +150,7 @@ def make_map(list_of_map_objs, tracker):
             
             print(set(tracker_obj.data['legend-filter'].to_list()))
             input('check legend filter')
-        map_obj.remove_excess_cols()
+        map_obj.remove_excess_cols() # affects ALL trackers rn so if new column must add to list in this function
 
         map_obj.save_file(tracker)
 
