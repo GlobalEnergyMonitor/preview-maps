@@ -27,9 +27,7 @@ def run_maps():
         if tracker in list_of_all_official:
             
             map_obj_list = make_data_dwnlds(tracker)  
-            print(f'This is map_obj_list and length:')
-            print(map_obj_list)
-            print(len(map_obj_list))
+            
             list_of_map_objs_mapversion = make_map(map_obj_list, tracker) # this returns map obj list map version that can be run thru tests
             
             print(f'done making dd and maps for {tracker}')

@@ -1115,10 +1115,22 @@ def convert_coords_to_point(df):
         # do qc on values
         # remove white space
         # convert to numerical coerce
+        for col in ['Latitude', 'Longitude']:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Remove rows for now, but should save to file or raise... TODO
+        df = df.dropna(subset=['Latitude', 'Longitude'])    
         
         df['geometry'] = df.apply(lambda row: Point(row['Longitude'], row['Latitude']), axis=1)
     elif 'longitude' in df.columns and 'latitude' in df.columns:
         df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
+    
+    elif 'lng' in df.columns and 'lat' in df.columns:
+        for col in ['lat', 'lng']:
+            df[col] = pd.to_numeric(df[col], errors='raise')
+        # Remove rows for now, but should save to file or raise... TODO
+        df = df.dropna(subset=['lat', 'lng'])
+        df['geometry'] = df.apply(lambda row: Point(row['lng'], row['lat']), axis=1)
+    
     else:
         print('issues with finding lat lng to convert to gdf!!')
         print(f'{df.columns} \n check columns above')
@@ -1508,10 +1520,11 @@ def drop_cols_df_a_rename_value_avoid_dup(renaming_dict_sel, gdf):
     # gdf cols
     cols_to_drop = []
     gdf_cols = gdf.columns.to_list()
+    
     for col in gdf_cols:
         # if column lower is in values but not column regular is not in key then drop it
         # example: Capacity for ggit-lng. where we use Capacity MTPA instead but rename to capacity
-        if col.lower() in renaming_dict_sel.values():
+        if col in renaming_dict_sel.values():
             if col not in renaming_dict_sel.keys():
                 print(f'Duplicate df col {col} in renaming dict value so df one will be dropped!')
                 input('Check duplicate col')
@@ -1524,7 +1537,6 @@ def drop_cols_df_a_rename_value_avoid_dup(renaming_dict_sel, gdf):
     gdf.drop(columns=cols_to_drop, inplace=True)
     logger.info(f'This is all #{len(gdf.columns)} cols in df after drop: \n {gdf_cols} \n')
     print(f'This is all cols in df after drop: \n {gdf_cols} \n')
-    input('Check that this drop is dropping capacity!')
     return gdf
 
   

@@ -2,7 +2,7 @@ import pandas as pd
 from numpy import absolute
 from map_class import MapObject
 from map_tracker_class import TrackerObject
-from all_config import logger, trackers_to_update, final_cols, renaming_cols_dict
+from all_config import nostopping, logger, trackers_to_update, final_cols, renaming_cols_dict
 
 
 def make_map_tracker_objs(map_tab_df,row, prep_dict):
@@ -21,8 +21,13 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
     
      
     # call all object methods here
-    map_obj.get_about()
-    # create tracker objs
+    print(f'map_obj.mapname is: {map_obj.mapname} if odd check what priority flag is in all_config')
+    
+    if map_obj.mapname in ['ggft', 'gmet', 'internal']: # gas finance workaround
+        print('skip making about...we did not receive it from program')
+    else:
+        map_obj.get_about() # for entire map data download file
+        # create tracker objs
     # create a tracker obj for each item in map source
     for item in map_obj.source:
         logger.info(f'Creating source object for: {map_obj.mapname} {item}')
@@ -51,22 +56,28 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
         else:
             logger.info(f'Is this release date correct for {tracker_source_obj.off_name}? {tracker_source_obj.release}\nEdit the map tracker log sheet in GEM maps if not.')
             
-        # We SET UP DF AND ABOUT HERE
+        # SET UP DF AND ABOUT HERE
         tracker_source_obj.set_df(final_cols, renaming_cols_dict) # need to set this up at the map level so sharing data pull, or add to a dictionary
-        tracker_source_obj.get_about()
-            
+
+        print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
+        if nostopping:
+            print('pass')
+        else:
+            input('DEBUG CHECK THIS LENGTH') 
+        
+        if map_obj.mapname in ['ggft']:
+            print('skipping get about again for gas finance')
+        else:
+            tracker_source_obj.get_about() # for tracker specific tab in a data download file
+        print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
+        if nostopping:
+            print('pass')
+        else:
+            input('DEBUG CHECK THIS LENGTH') # GOOD            
         # set data and about attributes for each tracker
         # append tracker obj to map obj attribute trackers 
         map_obj.trackers.append(tracker_source_obj)
         
-        if tracker_source_obj.tab_name in ['LNG Terminals', 'Gas Pipelines', 'Oil Pipelines', 'Gas Pipelines EU', 'LNG Terminals EU']:
-            logger.info(tracker_source_obj.data)
-            logger.info(f'check tracker name and data df: {tracker_source_obj.acro}')
-        else:
-            # TODO look over s3 functions with Hannah's code
-            # save_raw_s3(map_obj, tracker_source_obj, TrackerObject)
-            logger.info('WIP Done with save_raw_s3, check s3')
-
     # filter by geo and fuel AND test if data got added
     for i, tracker in enumerate(map_obj.trackers):  # Iterate through tracker objects        
         if tracker.acro in ['GOGET']:
@@ -87,7 +98,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
             
             # Filter by geo and fuel and check result
             tracker.create_filtered_geo_fuel_df(map_obj.geo, map_obj.fuel)
-            
+            print(f'Check data leng {tracker.off_name} {len(tracker.data)}')
             logger.info(f'This is tracker.name {tracker.tab_name}')
 
             # Log the results after filtering
