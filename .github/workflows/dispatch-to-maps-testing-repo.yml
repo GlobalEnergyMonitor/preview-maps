@@ -2,8 +2,11 @@ name: Notify maps-testing Repo of Branch Update
 
 on:
   push:
-    branches:
-      - "refactor"
+    branches-ignore:
+      - "main"
+      - "master"
+      - "gitpages-production"
+      - "production"
 
 jobs:
   dispatch:
