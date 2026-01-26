@@ -1,10 +1,10 @@
 from requests import HTTPError
-from all_config import renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
+from all_config import nostopping, renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
 from helper_functions import update_col_formatting_config, check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
 import geopandas as gpd
-import boto3
+# import boto3
 from creds import *
 import time
 import numpy as np
@@ -955,7 +955,7 @@ class TrackerObject:
         # add col for all plumes, col called, carbon mapper string   
         df['carbon-mapper-md'] = df.apply(
             lambda row: 'Plume Data © Carbon Mapper. Subject to terms https://carbonmapper.org/terms'
-q            if row['tab-type'] == 'Plumes'
+            if row['tab-type'] == 'Plumes'
             else '', 
             axis=1
         )
