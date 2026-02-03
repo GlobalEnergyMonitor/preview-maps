@@ -4,7 +4,7 @@ from helper_functions import update_col_formatting_config, check_list, split_cou
 import pandas as pd
 from numpy import absolute
 import geopandas as gpd
-# import boto3
+import boto3
 from creds import *
 import time
 import numpy as np
@@ -160,35 +160,40 @@ class TrackerObject:
                 # print(self.tab_name)
                 df = self.create_df(testtracker)
                 
-                # only need to deal with this once (not every time with pkl file)                 
-                # deal with seeing what needs to be changed in all_config
-                print(F'***List of all cols in original tracker df for {self.acro}: \n {df.columns}\n')
-                # existing expected columns
-                exp_cols = renaming_cols_dict[self.acro]
-                print(F'***List of all expected columns and their renaming mappings for {self.acro}: \n {exp_cols}\n')
-                net_new_cols = set(exp_cols) - set(df.columns)
-                print(f'***Net new cols for {self.acro}: \n {net_new_cols}\n')
-                # example I paste in ['Plant Age']
-                cols_to_add = input('***Paste in all net new cols you want to add to dictionary as kv pairs and will use keys for final_cols in list of tuple format:\n')
-                
-                cols_to_remove = input(f'Paste in all kv pairs to be removed in list of tuple format:\n')
-
-                for tp in cols_to_add:
-                    # add value to final cols
-                    final_cols.append(tp[1])
-                    renaming_cols_dict[self.acro][tp[0]] = tp[1]
+                # add in logic to skip this manual input
+                if nostopping == True:
+                    print('not going into new column add, proceed with assigning the df to the object data attribute self.data')
+                else:
                     
-                for tp in cols_to_remove:
-                    final_cols = final_cols.remove(tp[1])
-                    input(f'DEBUT this is final cols: {final_cols}')
-                    renaming_cols_dict.pop(tp[0])
-                print(f'***Full list of final cols now after net new for {self.acro} added: \n {final_cols}\n')
-                print(f'***Full dict of renaming_cols_dict now after net new for {self.acro} added and other removed: \n {renaming_cols_dict}\n')
+                    # only need to deal with this once (not every time with pkl file)                 
+                    # deal with seeing what needs to be changed in all_config
+                    print(F'***List of all cols in original tracker df for {self.acro}: \n {df.columns}\n')
+                    # existing expected columns
+                    exp_cols = renaming_cols_dict[self.acro]
+                    print(F'***List of all expected columns and their renaming mappings for {self.acro}: \n {exp_cols}\n')
+                    net_new_cols = set(exp_cols) - set(df.columns)
+                    print(f'***Net new cols for {self.acro}: \n {net_new_cols}\n')
+                    # example I paste in ['Plant Age']
+                    cols_to_add = input('***Paste in all net new cols you want to add to dictionary as kv pairs and will use keys for final_cols in list of tuple format:\n')
+                    
+                    cols_to_remove = input(f'Paste in all kv pairs to be removed in list of tuple format:\n')
 
-                # by reading in these variables just updated final_cols, renaming_cols_dict we can make this column mess less tedious
+                    for tp in cols_to_add:
+                        # add value to final cols
+                        final_cols.append(tp[1])
+                        renaming_cols_dict[self.acro][tp[0]] = tp[1]
+                        
+                    for tp in cols_to_remove:
+                        final_cols = final_cols.remove(tp[1])
+                        input(f'DEBUG this is final cols: {final_cols}')
+                        renaming_cols_dict.pop(tp[0])
+                    print(f'***Full list of final cols now after net new for {self.acro} added: \n {final_cols}\n')
+                    print(f'***Full dict of renaming_cols_dict now after net new for {self.acro} added and other removed: \n {renaming_cols_dict}\n')
 
-                update_col_formatting_config(final_cols, renaming_cols_dict) # passing in list and dict
-                               
+                    # by reading in these variables just updated final_cols, renaming_cols_dict we can make this column mess less tedious
+
+                    update_col_formatting_config(final_cols, renaming_cols_dict) # passing in list and dict
+                              
                 self.data = df
 
 
@@ -243,7 +248,7 @@ class TrackerObject:
     def get_about(self):
         # this gets the about page for this tracker data
         print(f'Creating about for: {self.off_name}')
-        if nostopping:
+        if nostopping == True:
             skipabout = False
         else:
             skipabout = input(f'If you want to skip creating an about page click enter! Otherwise press any other key and then enter!')
@@ -331,13 +336,14 @@ class TrackerObject:
 
 
     def list_all_contents(self, release):
+        
         # TODO REDO this based on standardized file names in s3
         # TODO egt change what gets added so it is JUST the file -- LOOK INTO THIS BEFORE GOGPT RELEASE mid Jan
         # not both: ['egt-term/2025-02/', 'egt-term/2025-02/GEM-EGT-Terminals-2025-02 DATA TEAM COPY.geojson']
         acro = self.acro.lower() # eu, ggit
         name = self.tab_name.lower() # pipelines, terminals, gas        
         logger.info(f'DEBUG {acro} {name} {release}')
-
+        found_data_team_copy_file = False
         list_all_contents = [] # should be one file, if not then we need to remove / update
         # Initialize a session using DigitalOcean Spaces
         session = boto3.session.Session()
@@ -368,29 +374,39 @@ class TrackerObject:
  
             date_folders.append((date_obj, folder))
 
-        # if date_folders:
-        # Get the folder with the latest date
-        latest_folder = max(date_folders, key=lambda x: x[0])[1]
-        folder_prefix = f'{acro.lower()}/{latest_folder}/'
+        sorted_dates = sorted(date_folders, key=lambda x: x[0], reverse=True)
+        for date_obj, folder in sorted_dates:
+            # Try to find the file in this folder
+            # If found, break; if not, continue to 
+            # if date_folders:
+            # Get the folder with the latest date
+            # latest_folder = max(date_folders, key=lambda x: x[0])[1]
+            folder_prefix = f'{acro.lower()}/{folder}/'
 
-        # List objects in the latest folder
-        response = client.list_objects_v2(Bucket=bucket_name, Prefix=folder_prefix)
+            # List objects in the latest folder
+            response = client.list_objects_v2(Bucket=bucket_name, Prefix=folder_prefix)
 
-        # Check if the 'Contents' key is in the response
-        if 'Contents' in response:
-            for obj in response['Contents']:
-
-                if 'DATA TEAM COPY' in obj['Key']:
-                    logger.info(obj['Key']) # this is name of the file in s3
-                    logger.info(f"Using this {acro} and this {name} to look")                   
-                    list_all_contents.append(obj['Key'])
-                else:
-                    logger.info(f'DATA TEAM COPY not in file name for {acro} so skipped.')
-
-                
-        else:
-            print("No files found in the specified folder.")
-            input(f'LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
+            # Check if the 'Contents' key is in the response
+            if 'Contents' in response:
+                for obj in response['Contents']:
+                    if 'DATA TEAM COPY' in obj['Key']:
+                        logger.info(obj['Key']) # this is name of the file in s3
+                        logger.info(f"Using this {acro} and this {name} to look")                   
+                        list_all_contents.append(obj['Key'])
+                        found_data_team_copy_file = True
+                        break # break out of inner loop .. so we end the for loop and don't add more than we need to 
+                    else:
+                        logger.info(f'DATA TEAM COPY not in file name for {acro} so skipped.')
+                if found_data_team_copy_file:
+                    # break out of outer loop
+                    break
+            else:
+                print("No files found in the specified folder.")
+                # doesn't help when there is a file in there just not the right file
+                input(f'LOOK INTO THIS list_all_contents for acro: {acro.lower()} and folder_prefix: {folder_prefix}')
+            
+        if found_data_team_copy_file == False:
+            input(f'We looked in all folders starting from most recent and in none of these folders is there a file that can be used here. Look at the digital ocean folder for {acro} {name}')
     
         return list_all_contents
 
@@ -415,12 +431,12 @@ class TrackerObject:
         # if theres more than two and its not EGT then we need to clean latest folder to remove old
         elif len(set(path_name_all)) == 1:
             path_name = f'{path_name_all[0]}'
-            print(path_name)
+            logger.info(f'This is path name: {path_name}')
         else:
             input('Might be an issue with path name look into get_file_name plz!')
         
         encoded_path_name = urllib.parse.quote(path_name)
-        print(f'Compare path name: {path_name} to encoded path_name: {encoded_path_name}')
+        logger.info(f'Compare path name: {path_name} to encoded path_name: {encoded_path_name}')
         
         return encoded_path_name
     
@@ -513,7 +529,7 @@ class TrackerObject:
 
     
     def set_fuel_filter_eu_and_maturity(self):
-        
+    # NOT NEEDED ANYMORE   
         if self.acro in ['GOGET', 'GOGPT']:
             df = self.data
             df['fuel-filter'] = 'methane'
@@ -535,37 +551,37 @@ class TrackerObject:
                 if df.loc[row, 'fuel-filter'] in ['hy']:
                     df.loc[row, 'maturity'] = np.where((df.loc[row, 'Status'] == 'Construction') | (df.loc[row, 'FIDStatus'] == 'FID') | (df.loc[row, 'AltFuelPrelimAgreement'] == 'yes') | (df.loc[row, 'AltFuelCallMarketInterest'] == 'yes'), 'y','n')
 
-            
-            
             self.data = df
             
         elif self.acro == 'EGT-gas':
             df = self.data
             # set up default
-            df['fuel-filter'] = 'methane'
-            df['maturity'] = 'none'
+           ## NONE OF THIS IS NEEDED ANYMORE BECUASE NO HYDROGEN RESEARCH, keep lower and replace in case it's used down the line
+            
+            # df['fuel-filter'] = 'methane'
+            # df['maturity'] = 'none'
 
-            # TODO move this when do gas pipelines update 
             df.columns = df.columns.str.lower()
             df.columns = df.columns.str.replace(' ', '-')
-            df['h2%'].fillna('', inplace=True)
             
-            for row in df.index:
-                if df.loc[row, 'fuel'].lower().strip() == 'hydrogen':
-                    # convert the column to a string after filling na
-                    df.loc[row, 'h2%'] = str(df.loc[row, 'h2%'])
-                    if df.loc[row, 'h2%'] == '100.00%':
-                        df.loc[row, 'fuel-filter'] = 'hy'
-                        df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
+            # df['h2%'].fillna('', inplace=True)
+            
+            # for row in df.index:
+            #     if df.loc[row, 'fuel'].lower().strip() == 'hydrogen':
+            #         # convert the column to a string after filling na
+            #         df.loc[row, 'h2%'] = str(df.loc[row, 'h2%'])
+            #         if df.loc[row, 'h2%'] == '100.00%':
+            #             df.loc[row, 'fuel-filter'] = 'hy'
+            #             df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
 
-                    elif df.loc[row, 'h2%'] == '':
-                        df.loc[row, 'fuel-filter'] = 'hy'
-                        df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
+            #         elif df.loc[row, 'h2%'] == '':
+            #             df.loc[row, 'fuel-filter'] = 'hy'
+            #             df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
 
-                    else:
-                        df.loc[row, 'fuel-filter'] = 'blend'
-                        # TODO for gas pipelines update cahnge this so the cols don't lower by this point, so its' in line with rest of projects
-                        df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
+            #         else:
+            #             df.loc[row, 'fuel-filter'] = 'blend'
+            #             # TODO for gas pipelines update cahnge this so the cols don't lower by this point, so its' in line with rest of projects
+            #             df.loc[row, 'maturity'] = np.where((df.loc[row,'status'] == 'Construction') | (df.loc[row,'pci5'] == 'yes') | (df.loc[row,'pci6'] == 'yes'), 'y','n')
 
             
             
@@ -1442,7 +1458,7 @@ class TrackerObject:
                     try:
                         # Clean the column first - strip whitespace and handle common non-numeric values
                         self.data[col] = self.data[col].astype(str).str.strip()
-                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>'], pd.NA)
+                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-'], pd.NA)
                         
                         # Use pandas to_numeric which is more robust than custom function
                         self.data[col] = pd.to_numeric(self.data[col], errors='raise') # raise
@@ -1958,18 +1974,31 @@ def create_filtered_fuel_df(df, self):
         df.drop(drop_row, inplace=True)        
         logger.info(f'Length of goget after oil drop: {len(df)}')
     
-    elif self.acro in ['GGIT-eu', 'GGIT', 'EGT-gas']:
+    # all infrastructure ones 
+    elif self.acro in ['GGIT-eu', 'GGIT', 'EGT-gas', 'EGT-term', 'GGIT-lng']:
         drop_row = []
         logger.info(f'Length of ggit before oil drop: {len(df)}')
+        fuels = set(df['Fuel'].to_list())
+        # print(fuels)
+        # input(f'TEMP: len before drop {len(df)}') # passed 9 removed
         for row in df.index:
             if df.loc[row, 'Fuel'] == 'Oil':
+                drop_row.append(row)
+            elif df.loc[row, 'Fuel'] == 'NH3':
+                # input('caught lng')
+                drop_row.append(row)
+            elif df.loc[row, 'Fuel'] == 'LH2': 
+                # input('caught lng')
+                drop_row.append(row)
+            elif df.loc[row, 'Fuel'] == 'eLNG': 
+                # input('caught lng')
                 drop_row.append(row)
             elif df.loc[row, 'Fuel'] == '':
                 drop_row.append(row)
         
         df.drop(drop_row, inplace=True)
         logger.info(f'len after gas only filter {self.acro} {len(df)}')
-
+        # input(f'TEMP: len after drop {len(df)}') # passed 9 removed 
     
     elif self.acro in ['GOGPT']: # removed GOGPT-eu form map form # if GOGPT-eu does not need to be run on hydrogen tab, also does not need to be run on 'GOGPT-eu' because it was pre filtered for us
         drop_row = []
