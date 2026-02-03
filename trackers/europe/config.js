@@ -1,5 +1,5 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-12/europe_map_2025-12-11.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gas-plant/2026-01/europe_map_2026-01-29.geojson',
     geometries: ['Point','LineString'],
     center: [8, 50],
     zoomFactor: 1.9,
@@ -20,15 +20,15 @@ var config = {
     },
 
     filters: [
-        {
-            field: 'fuel-filter',
-            label: 'Hydrogen',
-            values: ['hy', 'blend', 'methane'],
-            values_labels: ['100%', 'Blended', 'Methane Only'],
-            // values_hover_text: ['hover text for fuels', '', '']
-            field_hover_text: 'Hydrogen projects are classified as either planning to blend hydrogen into methane gas or use 100% hydrogen. For the projects that plan to use hydrogen but do not specify a percentage, it is assumed they are blending. Blended projects only appear as hydrogen projects and do not also appear as methane projects, though they will use both fuel types.',
-            primary: true
-        },
+        // {
+        //     field: 'fuel-filter',
+        //     label: 'Hydrogen',
+        //     values: ['hy', 'blend', 'methane'],
+        //     values_labels: ['100%', 'Blended', 'Methane Only'],
+        //     // values_hover_text: ['hover text for fuels', '', '']
+        //     field_hover_text: 'Hydrogen projects are classified as either planning to blend hydrogen into methane gas or use 100% hydrogen. For the projects that plan to use hydrogen but do not specify a percentage, it is assumed they are blending. Blended projects only appear as hydrogen projects and do not also appear as methane projects, though they will use both fuel types.',
+        //     primary: true
+        // },
         {
             field: 'tracker-custom',
             label: 'Type',
@@ -41,23 +41,23 @@ var config = {
             values: ['operating','proposed-plus','pre-construction-plus','construction-plus','retired-plus','cancelled','mothballed-plus', 'abandoned','shelved', 'ugs', 'not-found'],
             values_labels: ['Operating','Proposed/Announced/Discovered','Pre-construction', 'Construction/In development','Retired/Closed/Decommissioned','Cancelled','Mothballed/Idle/Shut in','Abandoned','Shelved', 'UGS', 'Not Found']
         },
-        {
-            field: 'maturity', 
-            label: 'Progress Demonstrated (Hydrogen Only)', // info button explaining what it means
-            values: ['y', 'n', 'none'],
-            values_labels: ['yes', 'no', 'N/A (Methane)'],
-            // values_hover_text: ['hover tesct for fuels', '', '']
-            field_hover_text: 'GEM assesses whether hydrogen projects have met criteria (specific to each infrastructure type) demonstrating progress toward completion, since many hydrogen projects lack core details or commitments from stakeholders. For more information on these criteria, see the <a href="https://globalenergymonitor.org/projects/europe-gas-tracker/methodology/">EGT methodology page</a>'
+        // {
+        //     field: 'maturity', 
+        //     label: 'Progress Demonstrated (Hydrogen Only)', // info button explaining what it means
+        //     values: ['y', 'n', 'none'],
+        //     values_labels: ['yes', 'no', 'N/A (Methane)'],
+        //     // values_hover_text: ['hover tesct for fuels', '', '']
+        //     field_hover_text: 'GEM assesses whether hydrogen projects have met criteria (specific to each infrastructure type) demonstrating progress toward completion, since many hydrogen projects lack core details or commitments from stakeholders. For more information on these criteria, see the <a href="https://globalenergymonitor.org/projects/europe-gas-tracker/methodology/">EGT methodology page</a>'
 
-        },
-        {
-            // change this to be a filter
-            field: 'pci-list',
-            label: 'EU Projects of Common Interest (PCI)',
-            values: ['5', '6', 'both', 'none',], // can we join both into 5 and 6??? can we merge? both should show up in pci 5 and pci 6 separately
-            values_labels: ['PCI-5 only', 'PCI-6 only', 'PCI 5 & PCI 6 Overlap', 'Non-PCI'] 
+        // },
+        // {
+        //     // change this to be a filter
+        //     field: 'pci-list',
+        //     label: 'EU Projects of Common Interest (PCI)',
+        //     values: ['5', '6', 'both', 'none',], // can we join both into 5 and 6??? can we merge? both should show up in pci 5 and pci 6 separately
+        //     values_labels: ['PCI-5 only', 'PCI-6 only', 'PCI 5 & PCI 6 Overlap', 'Non-PCI'] 
 
-        },
+        // },
 
     ],
     capacityField: 'scaling-capacity',
