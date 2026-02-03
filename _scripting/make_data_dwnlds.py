@@ -100,7 +100,7 @@ def make_data_dwnlds(tracker):
 
                 for tracker_obj in map_obj.trackers:
 
-                    logger.info(f"Writing source to filename for tracke: {tracker_obj.off_name}")
+                    logger.info(f"Writing source to filename for tracker: {tracker_obj.off_name}")
                     logger.info(f'Length of tracker df is: {len(tracker_obj.data)}')
                     about = tracker_obj.about
                     tracker_name = tracker_obj.tab_name # TODO change to off name or swap out in all places for acro 
