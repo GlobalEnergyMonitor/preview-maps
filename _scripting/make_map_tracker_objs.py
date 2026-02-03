@@ -60,7 +60,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
         tracker_source_obj.set_df(final_cols, renaming_cols_dict) # need to set this up at the map level so sharing data pull, or add to a dictionary
 
         print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
-        if nostopping:
+        if nostopping == True:
             print('pass')
         else:
             input('DEBUG CHECK THIS LENGTH') 
@@ -70,7 +70,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
         else:
             tracker_source_obj.get_about() # for tracker specific tab in a data download file
         print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
-        if nostopping:
+        if nostopping == True:
             print('pass')
         else:
             input('DEBUG CHECK THIS LENGTH') # GOOD            

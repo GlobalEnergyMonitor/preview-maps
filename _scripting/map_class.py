@@ -323,11 +323,14 @@ class MapObject:
         # make sure everything is a number than can be
         # so js functions as expected and no NaNs
         if 'capacity' in gdf.columns:
-            gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(x, errors='raise'))
+            gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(str(x).split('.')[0].replace(',', ''), errors='coerce')) # 20,000.00
         
         self.trackers = gdf
     
     def save_file(self, tracker):
+
+        gdf = self.trackers
+
         logger.info(f'Saving file for map {self.mapname}')
         logger.info(f'This is len of gdf {len(self.trackers)}')
         # helps map to the right folder name
@@ -346,11 +349,10 @@ class MapObject:
                 
 
         logger.info(f'Final cols:\n')
-        cols = [(col) for col in gdf.columns]
+        cols = [(col) for col in self.trackers.columns] # cannot access local variable 'gdf' where it is not associated with a value
         logger.info(cols)
     
         
- 
         # Check if the dataframe is a GeoDataFrame
         if isinstance(gdf, gpd.GeoDataFrame):
             logger.info('Already a GeoDataFrame!')
@@ -562,8 +564,8 @@ class MapObject:
                         # 'ugs': 'not-found'
                         })
             
-            print(set(gdf_map_ready['status_legend'].to_list()))
-            input(f'Check all statuses in legends ugs and cancelled and abandoned and shelved should be there')
+            logger.info(set(gdf_map_ready['status_legend'].to_list()))
+            logger.info(f'Check all statuses in legends ugs and cancelled and abandoned and shelved should be there')
             # Create a mask for rows where 'status' is empty
 
             gdf_map_ready_no_status = gdf_map_ready.loc[mask_status_empty]
@@ -685,9 +687,10 @@ class MapObject:
                 self.trackers = gdf
                 # print(self.trackers)
                 return
+            
             gdf = tracker_obj.data
             logger.info(f'This is data for {tracker_obj.acro}:{tracker_obj.data}')
-            loggerinfo(f'This is: {tracker_obj.acro}')
+            logger.info(f'This is: {tracker_obj.acro}')
 
             tracker_sel = tracker_obj.acro # GOGPT, GGIT, GGIT-lng, GOGET
             logger.info(f'tracker_sel is {tracker_sel} equal to tracker-acro...')

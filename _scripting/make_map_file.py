@@ -23,7 +23,7 @@ def make_map(list_of_map_objs, tracker):
             # do all data cleaning changes then go into tracker specific changes
             if isinstance(tracker_obj.data, pd.DataFrame): 
                 print(f'Length of df right now IN make_map: {len(tracker_obj.data)} for {tracker_obj.acro}')
-                if nostopping:
+                if nostopping == True:
                     print('pass nostopping')
                 else:
                     input('DEBUG above length problem')
