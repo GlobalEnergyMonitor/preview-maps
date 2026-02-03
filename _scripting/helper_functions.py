@@ -873,7 +873,8 @@ def get_key_tabs_prep_file(tracker):
     prep_df = create_prep_file(multi_tracker_log_sheet_key, source_data_tab)
 
     prep_dict = prep_df.to_dict(orient='index')
-
+    print(prep_dict)
+    print(tracker)
     if tracker in non_gsheet_data:
         print('Needs to be local')
 
@@ -884,55 +885,56 @@ def get_key_tabs_prep_file(tracker):
 
 
 # COMMENTING OUT FOR NOW CAN SHOULD BE ABLE TO REMOVE TESTING THAT THE MAP CLASS ONE IS USED FOR ALL
+# Needed for gipt integrated script - keep in for now
 # # TODO instances to remove from run_maps.py after tested, then in specifci_temp for asia, and in assign_hy_pci for europe
-# def create_df(key, tabs=['']):
-#     # print(tabs)
-#     dfs = []
-#     # other logic for goget 
-#     if trackers_to_update[0] == 'Oil & Gas Extraction':
-#         for tab in tabs:
-#             # print(tab)
-#             if tab == 'Main data':
-#                 gsheets = gspread_creds.open_by_key(key)
-#                 spreadsheet = gsheets.worksheet(tab)
-#                 main_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-#                 print(main_df.info())
-#             elif tab == 'Production & reserves':
-#                 gsheets = gspread_creds.open_by_key(key)
-#                 spreadsheet = gsheets.worksheet(tab)
-#                 prod_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-#                 print(prod_df.info())
-#         return main_df, prod_df
+def create_df(key, tabs=['']):
+    # print(tabs)
+    dfs = []
+    # other logic for goget 
+    if trackers_to_update[0] == 'Oil & Gas Extraction':
+        for tab in tabs:
+            # print(tab)
+            if tab == 'Main data':
+                gsheets = gspread_creds.open_by_key(key)
+                spreadsheet = gsheets.worksheet(tab)
+                main_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                print(main_df.info())
+            elif tab == 'Production & reserves':
+                gsheets = gspread_creds.open_by_key(key)
+                spreadsheet = gsheets.worksheet(tab)
+                prod_df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+                print(prod_df.info())
+        return main_df, prod_df
     
-#     elif trackers_to_update[0] == 'Iron & Steel':
-#         # keytab = key
-#         # print(keytab)
-#         # for k,v in keytab.items(): # dict of tuples the tuple being key and tabs 
-#         #     # print(f'this is key: {k}')
-#         #     # print(f'this is v: {v}')
-#         #     tabtype = k
-#         #     key = v[0]
-#         #     tabs = v[1]
-#         #     # Iron & Steel: plant (unit-level not needed anymore)
-#         for tab in tabs:
-#             gsheets = gspread_creds.open_by_key(key)
-#             spreadsheet = gsheets.worksheet(tab)
-#             df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-#             df['tab-type'] = tab
-#             dfs += [df]
+    elif trackers_to_update[0] == 'Iron & Steel':
+        # keytab = key
+        # print(keytab)
+        # for k,v in keytab.items(): # dict of tuples the tuple being key and tabs 
+        #     # print(f'this is key: {k}')
+        #     # print(f'this is v: {v}')
+        #     tabtype = k
+        #     key = v[0]
+        #     tabs = v[1]
+        #     # Iron & Steel: plant (unit-level not needed anymore)
+        for tab in tabs:
+            gsheets = gspread_creds.open_by_key(key)
+            spreadsheet = gsheets.worksheet(tab)
+            df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+            df['tab-type'] = tab
+            dfs += [df]
 
-#         df = pd.concat(dfs).reset_index(drop=True)
-#         print(df.info())
+        df = pd.concat(dfs).reset_index(drop=True)
+        print(df.info())
 
-#     else:
-#         for tab in tabs:
-#             gsheets = gspread_creds.open_by_key(key)
-#             spreadsheet = gsheets.worksheet(tab)
-#             df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-#             dfs += [df]
-#         df = pd.concat(dfs).reset_index(drop=True)
+    else:
+        for tab in tabs:
+            gsheets = gspread_creds.open_by_key(key)
+            spreadsheet = gsheets.worksheet(tab)
+            df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
+            dfs += [df]
+        df = pd.concat(dfs).reset_index(drop=True)
 
-#     return df
+    return df
 
 
 # TODO can probably remove this once figure out waht specifci_temp.py in asia is used for
@@ -1247,27 +1249,28 @@ def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or dele
                         
     return df
 
-# def rename_cols(df):
-#     print(f'Cols before: {df.columns}')
+def rename_cols(df):
+    # NEEDED for GIPT
+    print(f'Cols before: {df.columns}')
 
-#     df = df.copy()
-#     df = df.rename(columns=str.lower)
-#     [print(col) for col in df.columns]
-#     df.columns = df.columns.str.replace(' ', '-')
-#     df.columns = df.columns.str.replace('.', '')
-#     if 'gem-wiki-url' in df.columns:
-#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gem-wiki-url': 'url'})
-#     elif 'wiki-url' in df.columns:
-#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'wiki-url': 'url'})
+    df = df.copy()
+    df = df.rename(columns=str.lower)
+    [print(col) for col in df.columns]
+    df.columns = df.columns.str.replace(' ', '-')
+    df.columns = df.columns.str.replace('.', '')
+    if 'gem-wiki-url' in df.columns:
+        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gem-wiki-url': 'url'})
+    elif 'wiki-url' in df.columns:
+        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'wiki-url': 'url'})
     
-#     elif 'gemwiki-url' in df.columns:
-#         df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gemwiki-url': 'url'})
+    elif 'gemwiki-url' in df.columns:
+        df = df.rename(columns={'latitude': 'lat', 'longitude':'lng', 'gemwiki-url': 'url'})
 
-#     else:
-#         print(f'Not sure about wiki url column name.')
-#         input('check above to adjust rename_cols')
-#     print(f'Cols after: {df.columns}')
-#     return df
+    else:
+        print(f'Not sure about wiki url column name.')
+        input('check above to adjust rename_cols')
+    print(f'Cols after: {df.columns}')
+    return df
 
 # TODO explore whether we want this or just a flag in launcher?
 def reduce_cols(df):
@@ -1277,7 +1280,7 @@ def reduce_cols(df):
     
     return df     
 
-def remove_missing_coord_rows(df):
+def remove_missing_coord_rows(df, tracker):
     df['lng'] = df['lng'].fillna('')
     df['lat'] = df['lat'].fillna('')
     print(len(df))
@@ -1285,9 +1288,9 @@ def remove_missing_coord_rows(df):
     df = df[df['lng']!= '']
     df = df[df['lat']!= '']
     print(len(df))
-    print('This is issues missing coord so removed:')
+    print('This is issues missing coord so removed - good if empty!:')
     print(issue_df)
-    issue_df.to_csv(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/issues/missing_coords_{iso_today_date}.csv')
+    issue_df.to_csv(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/_scripting/issues/missing_coords_{iso_today_date}_{tracker}.csv')
 
     return df
 
