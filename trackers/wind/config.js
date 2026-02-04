@@ -1,7 +1,7 @@
 var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'data.csv',
-    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gwpt/Wind-map-file-2025-02-04.csv',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/wind/2026-02/wind_map_2026-02-03.geojson',
     colors: {
         'red greeninfo': '#c00',
         'light blue greeninfo': '#1e90ff',
@@ -44,7 +44,7 @@ var config = {
         {
             field: 'installation-type',
             label: 'Installation Type',
-            values: ['Onshore', 'Offshore hard mount', 'Unknown', 'Offshore mount unknown', 'Offshore floating'],
+            values: ['onshore', 'offshore_hard_mount', '<na>', 'offshore_mount_unknown', 'offshore_floating'],
             values_labels: ['Onshore', 'Offshore hard mount', 'Unknown', 'Offshore mount unknown', 'Offshore floating']
 
         },
@@ -52,8 +52,8 @@ var config = {
 
     /* define the field for calculating and showing capacity along with label.
        this is defined per tracker since it varies widely */
-    capacityField: 'capacity-(mw)',
-    capacityDisplayField: 'capacity-(mw)',
+    capacityField: 'capacity',
+    capacityDisplayField: 'capacity',
     capacityLabel: '(MW)',
 
     /* Labels for describing the assets */
@@ -61,24 +61,25 @@ var config = {
     assetLabel: 'phase',
 
     /* the column that contains the asset name. this varies between trackers */
-    nameField: 'project-name',
-    linkField: 'gem-location-id',
+    nameField: 'name',
+    linkField: 'pid',
     urlField: 'url',
-    countryField: 'country/area',
+    countryField: 'areas',
 
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['project-name','phase-name', 'capacity-(mw)', 'installation-type', 'status', 'start-year', 'owner', 'operator',  'state/province', 'country/area'],
+        values: ['name','phase-name', 'capacity', 'installation-type', 'status', 'start-year', 'owner', 'operator',  'subnat', 'areas'],
         labels: ['Project', 'Phase','Capacity (MW)','Installation Type','Status','Start year', 'Owner', 'Operator', 'State/Province', 'Country/Area'],
-        clickColumns: ['project-name'],
-        rightAlign: ['capacity-(mw)','start-year'],
-        toLocaleString: ['capacity-(mw)'],
+        clickColumns: ['name'],
+        rightAlign: ['capacity','start-year'],
+        toLocaleString: ['capacity'],
+        removeLastComma: ['areas'],
     },
 
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
-    searchFields: { 'Project': ['project-name', 'project-name-in-local-language-/-script', 'other-name(s)'], 
+    searchFields: { 'Project': ['name', 'name-in-local-language-/-script', 'other-name(s)'], 
         'Companies': ['owner', 'operator', 'owner-name-in-local-language-/-script', 'operator-name-in-local-language-/-script'],
         'Start Year': ['start-year']
     },
@@ -91,15 +92,17 @@ var config = {
       `'label': '...'` prepends a label. If a range, two values for singular and plural.
     */
     detailView: {
-        'project-name': {'display': 'heading'},
-        'project-name-in-local-language-/-script': {'label': 'Project in Local Language / Script'},
+        'name': {'display': 'heading'},
+        'name-in-local-language-/-script': {'label': 'Project in Local Language / Script'},
         'owner': {'label': 'Owner'},
         'operator': {'label': 'Operator'},
         'start-year': {'label': 'Start Year'},
-        'installation-type': {'label': 'Technology Type'},
+        'installation-type': {'label': 'Installation Type'},
         'location-accuracy': {'label': 'Location Accuracy'},
-        'state/province': {'display': 'location'},
-        'country/area': {'display': 'location'},
+        // 'state/province': {'display': 'location'},
+        // 'country/area': {'display': 'location'},
+        'areas-subnat-sat-display': {'display': 'location'}
+
 
     },
 
