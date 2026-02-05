@@ -70,7 +70,7 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['name', 'phase-name', 'capacity', 'technology-type', 'status', 'start-year', 'owner', 'operator', 'location-accuracy', 'subnat', 'areas'],
+        values: ['name', 'unit-name', 'capacity', 'technology-type', 'status', 'start-year', 'owner', 'operator', 'location-accuracy', 'subnat', 'areas'],
         labels: ['Project', 'Phase','Capacity (MW)', 'Technology Type', 'Status', 'Start year', 'Owner', 'Operator','Location Accuracy', 'State/Province', 'Country/Area'],
         clickColumns: ['name'],
         toLocaleString: ['capacity'],
