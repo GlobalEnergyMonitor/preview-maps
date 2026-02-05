@@ -1,7 +1,7 @@
 var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'data.csv',
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/solar/2026-02/solar_map_2026-02-03.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/solar/2026-02/solar_map_2026-02-05.geojson',
 
     colors: {
         'red greeninfo': '#c00',
@@ -70,7 +70,7 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['name', 'unit-name', 'capacity', 'technology-type', 'status', 'start-year', 'owner', 'operator', 'location-accuracy', 'subnat', 'areas'],
+        values: ['name', 'unit-name', 'capacity', 'technology-type-table', 'status', 'start-year', 'owner', 'operator', 'location-accuracy', 'subnat', 'areas'],
         labels: ['Project', 'Phase','Capacity (MW)', 'Technology Type', 'Status', 'Start year', 'Owner', 'Operator','Location Accuracy', 'State/Province', 'Country/Area'],
         clickColumns: ['name'],
         toLocaleString: ['capacity'],
@@ -98,7 +98,7 @@ var config = {
         'owner': {'label': 'Owner'},
         'operator': {'label': 'Operator'},
         'start-year': {'label': 'Start Year'},
-        'technology-type': {'label': 'Technology Type'},
+        'technology-type-table': {'label': 'Technology Type'},
         'location-accuracy': {'label': 'Location Accuracy'},
         // 'state/province': {'display': 'location'},
         // 'country/area': {'display': 'location'},
