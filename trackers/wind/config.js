@@ -69,7 +69,7 @@ var config = {
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     tableHeaders: {
-        values: ['name','phase-name', 'capacity', 'installation-type', 'status', 'start-year', 'owner', 'operator',  'subnat', 'areas'],
+        values: ['name','unit-name', 'capacity', 'installation-type', 'status', 'start-year', 'owner', 'operator',  'subnat', 'areas'],
         labels: ['Project', 'Phase','Capacity (MW)','Installation Type','Status','Start year', 'Owner', 'Operator', 'State/Province', 'Country/Area'],
         clickColumns: ['name'],
         rightAlign: ['capacity','start-year'],
