@@ -45,7 +45,7 @@ var config = {
             field: 'installation-type',
             label: 'Installation Type',
             values: ['onshore', 'offshore_hard_mount', 'unknown', 'offshore_mount_unknown', 'offshore_floating'],
-            values_labels: ['Onshore', 'Offshore hard mount', 'Not found', 'Offshore mount unknown', 'Offshore floating']
+            values_labels: ['Onshore', 'Offshore hard mount', 'Unknown', 'Offshore mount unknown', 'Offshore floating']
 
         },
     ],
