@@ -67,7 +67,7 @@ var config = {
     urlField: 'url',
     countryField: 'country/area',
     searchFields: { 'Project': ['plant-/-project-name', 'plant-/-project-name_search'], 
-        'Companies': ['owner', 'parent', 'owner_search', 'parent_search'],
+        'Companies': ['owner(s)', 'parent(s)', 'owner_search', 'parent_search'],
         'Start Year': ['start-year'],
         'Country/Area': ['country/area'],
         'Type': ['type'],
@@ -77,7 +77,7 @@ var config = {
     assetLabel: "Units",
     img_detail_zoom: 10,
     tableHeaders: {
-        values: ['plant-/-project-name','unit-/-phase-name', 'owner', 'parent', 'capacity-(mw)', 'status', 'subnational-unit-(state,-province)', 'country/area', 'start-year', 'retired-year', 'type'],
+        values: ['plant-/-project-name','unit-/-phase-name', 'owner(s)', 'parent(s)', 'capacity-(mw)', 'status', 'subnational-unit-(state,-province)', 'country/area', 'start-year', 'retired-year', 'type'],
         labels: ['Plant/project name','Unit/phase name','Owner','Parent','Capacity (MW)','Status','Subnational unit (province/state)','Country/Area','Start year','Retired year','Type'],
         clickColumns: 'plant-/-project-name',
         removeLastComma: ['country/area'],
@@ -88,8 +88,8 @@ var config = {
     detailView: {
         'plant-/-project-name': {'display': 'heading'},
         'type': {'display': 'colorcoded'}, // handled with color field primary
-        'owner': {'label': 'Owner'},
-        'parent': {'label': 'Parent'},
+        'owner(s)': {'label': 'Owner'},
+        'parent(s)': {'label': 'Parent'},
         'technology': {'display': 'join', 'label': ['Technology', 'Technologies']},
         'fuel': {'display': 'join', 'label': ['Fuel Type', 'Fuel Types']},
         'start-year': {'display': 'range', 'label': ['Start Year', 'Start Year Range']},
