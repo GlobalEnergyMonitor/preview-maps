@@ -1,5 +1,5 @@
 var config = {
-    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/Integrated/2026-02/gipt-data-2026-02-03.csv',
+    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/Integrated/2026-02/gipt-data-2026-02-11.csv',
 
     tiles: [
         // 'https://gem.dev.c10e.org/2024-03-12/{z}/{x}/{y}.pbf'
