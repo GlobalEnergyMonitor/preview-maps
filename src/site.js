@@ -348,7 +348,7 @@ function setMinMax() {
     let maxCapacityKey;
     let minCapacityKey;
     config.processedGeoJSON.features.forEach((feature) => {
-        if (feature.geometry.type == "LineString") {      
+        if (feature.geometry.type == "LineString") {
             minCapacityKey = 'minLineCapacity';
             maxCapacityKey = 'maxLineCapacity';
         } else {
@@ -623,23 +623,23 @@ function addLineLayer() {
     ];
 
     map.addLayer({
-        'id': 'assets-lines',
+        'id': 'assets-lines', 
         'type': 'line',
         'source': 'assets-source',
-        'filter': ["==",["geometry-type"],'LineString'],      
+        'filter': ["==",["geometry-type"],'LineString'],
         ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
         'layout': config.lineLayout,
         'paint': paint
-    });
+    }); 
     config.layers.push('assets-lines');
 
     paint["line-color"] = '#FFEA00';
     map.addLayer(
         {
-            'id': 'assets-lines-highlighted',
+            'id': 'assets-lines-highlighted', 
             'type': 'line',
             'source': 'assets-source',
-            'filter': ["==",["geometry-type"],'LineString'],   
+            'filter': ["==",["geometry-type"],'LineString'],
             ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
             'layout': config.lineLayout,
             'paint': paint,
@@ -1266,7 +1266,6 @@ function setHighlightFilter(links) {
             map.getLayer(layer).type == "line" ? "LineString" : "Point"
         ]);
         map.setFilter(layer + '-highlighted',filter);
-        filter.pop();
     });
 }
 
