@@ -348,7 +348,7 @@ function setMinMax() {
     let maxCapacityKey;
     let minCapacityKey;
     config.processedGeoJSON.features.forEach((feature) => {
-        if (feature.geometry.type == "LineString") {            
+        if (feature.geometry.type == "LineString") {      
             minCapacityKey = 'minLineCapacity';
             maxCapacityKey = 'maxLineCapacity';
         } else {
@@ -626,7 +626,7 @@ function addLineLayer() {
         'id': 'assets-lines',
         'type': 'line',
         'source': 'assets-source',
-        'filter': ["==",["geometry-type"],'LineString'],        
+        'filter': ["==",["geometry-type"],'LineString'],      
         ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
         'layout': config.lineLayout,
         'paint': paint
@@ -639,7 +639,7 @@ function addLineLayer() {
             'id': 'assets-lines-highlighted',
             'type': 'line',
             'source': 'assets-source',
-            'filter': ["==",["geometry-type"],'LineString'],          
+            'filter': ["==",["geometry-type"],'LineString'],   
             ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
             'layout': config.lineLayout,
             'paint': paint,
