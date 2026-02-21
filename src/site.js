@@ -348,7 +348,7 @@ function setMinMax() {
     let maxCapacityKey;
     let minCapacityKey;
     config.processedGeoJSON.features.forEach((feature) => {
-        if (feature.geometry.type == "LineString" || feature.geometry.type == "MultiLineString") {
+        if (feature.geometry.type == "LineString") {            
             minCapacityKey = 'minLineCapacity';
             maxCapacityKey = 'maxLineCapacity';
         } else {
@@ -626,7 +626,7 @@ function addLineLayer() {
         'id': 'assets-lines',
         'type': 'line',
         'source': 'assets-source',
-        'filter': ["any", ["==",["geometry-type"],'LineString'], ["==",["geometry-type"],'MultiLineString']],
+        'filter': ["==",["geometry-type"],'LineString'],        
         ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
         'layout': config.lineLayout,
         'paint': paint
@@ -639,7 +639,7 @@ function addLineLayer() {
             'id': 'assets-lines-highlighted',
             'type': 'line',
             'source': 'assets-source',
-            'filter': ["any", ["==",["geometry-type"],'LineString'], ["==",["geometry-type"],'MultiLineString']],
+            'filter': ["==",["geometry-type"],'LineString'],          
             ...('tileSourceLayer' in config && {'source-layer': config.tileSourceLayer}),
             'layout': config.lineLayout,
             'paint': paint,
@@ -1011,11 +1011,9 @@ function filterTiles() {
         config.filterExpression.unshift("all");
     }
     config.layers.forEach(layer => {
-        if (map.getLayer(layer).type == "line") {
-            config.filterExpression.push(["any", ["==",["geometry-type"],"LineString"], ["==",["geometry-type"],"MultiLineString"]]);
-        } else {
-            config.filterExpression.push(["==",["geometry-type"],"Point"]);
-        }
+        config.filterExpression.push(["==",["geometry-type"],
+            map.getLayer(layer).type == "line" ? "LineString" : "Point"
+        ]);
         map.setFilter(layer, config.filterExpression);
         config.filterExpression.pop();
     });
@@ -1264,11 +1262,9 @@ function setHighlightFilter(links) {
         filter = ['all', highlightExpression];
     }
     config.layers.forEach(layer => {
-        if (map.getLayer(layer).type == "line") {
-            filter.push(["any", ["==",["geometry-type"],"LineString"], ["==",["geometry-type"],"MultiLineString"]]);
-        } else {
-            filter.push(["==",["geometry-type"],"Point"]);
-        }
+        filter.push(["==",["geometry-type"],
+            map.getLayer(layer).type == "line" ? "LineString" : "Point"
+        ]);
         map.setFilter(layer + '-highlighted',filter);
         filter.pop();
     });

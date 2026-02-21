@@ -78,9 +78,10 @@ showMaxCapacity: false,
 multiCountry: true,
 
 minLineWidth: 1,
-maxLineWidth: 4,
-highZoomMinLineWidth: 2,
-highZoomMaxLineWidth: 5,
+maxLineWidth: 3,
+
+highZoomMinLineWidth: 1,
+highZoomMaxLineWidth: 3,
 
 minRadius: 3,
 maxRadius: 10,
