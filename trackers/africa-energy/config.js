@@ -151,8 +151,8 @@ var config = {
         // appendValue: {'capacity-gas': "prodItemLabel"},
 
     },
-    searchFields: { 'Project': ['name'], 
-        'Companies': ['owner', 'parent'],
+    searchFields: { 'Project': ['name', 'name-search', 'pid'], 
+        'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year'],
         'Infrastructure Type': ['tracker-display'],
         'Status': ['status'],
@@ -190,16 +190,21 @@ var config = {
     // highZoomMaxLineWidth: 32,
 
     /* radius associated with minimum/maximum value on map */
-    minRadius: .8,
-    maxRadius: 10,
-    // /* radius to increase min/max to under high zoom */
-    highZoomMinRadius: 4,
-    highZoomMaxRadius: 32,
+    minLineWidth: 1,
+    maxLineWidth: 3,
+    
+    highZoomMinLineWidth: 1,
+    highZoomMaxLineWidth: 3,
+    // minRadius: .8,
+    // maxRadius: 10,
+    // // /* radius to increase min/max to under high zoom */
+    // highZoomMinRadius: 4,
+    // highZoomMaxRadius: 32,
 
-    minLineWidth: .4,
-    maxLineWidth: 7,
-    highZoomMinLineWidth: .4,
-    highZoomMaxLineWidth: 7,
+    // minLineWidth: .4,
+    // maxLineWidth: 7,
+    // highZoomMinLineWidth: .4,
+    // highZoomMaxLineWidth: 7,
     // showAllPhases: true
     
     // interpolate: ["cubic-bezier", 0, 0, 0, 1],

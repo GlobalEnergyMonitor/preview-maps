@@ -1,7 +1,7 @@
 var config = {
     geometries: ['Point','LineString'],
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-25.geojson', //'data/ggit_2024-12-20.geojson',//'../../_scripting/trackers/ggit/compilation_output/ggit_map_2025-11-20.geojson',//'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-20.geojson', //'data/ggit_2024-12-20.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2026-03/ggit_map_2026-02-20.geojson', //'data/ggit_2024-12-20.geojson',//'../../_scripting/trackers/ggit/compilation_output/ggit_map_2025-11-20.geojson',//'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2025-11/ggit_map_2025-11-20.geojson', //'data/ggit_2024-12-20.geojson',
     color: {
         field: 'status-legend',
         values: {
@@ -44,23 +44,6 @@ var config = {
     },
     assetFullLabel: 'Gas Infrastructure projects',
     assetLabel: 'projects',
-    // assetFullLabel: {
-    //     field: 'tracker-custom',
-    //     values: {
-    //         'GGIT': 'Pipelines',
-    //         'GGIT-import': 'Terminals',
-    //         'GGIT-export': 'Terminals',            
-    //     }
-    // },
-    
-    // assetLabel: {
-    //     field: 'tracker-custom',
-    //     values: {
-    //         'GGIT': 'segments',
-    //         'GGIT-import': 'trains',
-    //         'GGIT-export': 'trains',            
-    //     }
-    // },
     linkField: 'pid',
     countryField: 'areas',
     nameField: 'name', 
@@ -75,8 +58,8 @@ var config = {
     
     },
     searchFields: { 'Infrastructure Type': ['tracker-custom'],
-        'Project': ['name'], 
-        'Companies': ['owner', 'parent'],
+        'Project': ['name', 'pid', 'name-search'], 
+        'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year']
     },
     detailView: {
@@ -95,9 +78,10 @@ showMaxCapacity: false,
 multiCountry: true,
 
 minLineWidth: 1,
-maxLineWidth: 4,
-highZoomMinLineWidth: 2,
-highZoomMaxLineWidth: 5,
+maxLineWidth: 3,
+
+highZoomMinLineWidth: 1,
+highZoomMaxLineWidth: 3,
 
 minRadius: 3,
 maxRadius: 10,

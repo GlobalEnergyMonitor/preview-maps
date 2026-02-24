@@ -1217,9 +1217,7 @@ def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or dele
     
     # find month in about_df string
     # multi_tracker_data is df of main about page for regional dd
-    # print(f'INFO: {df.info()}')
-    # print(f'COLS: {df.columns}')
-    # input('Check out what this about page df is')
+
     # bold the first row
     # find replace the month and year
     # convert df column to string
@@ -1228,11 +1226,9 @@ def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or dele
             sub = str(month + ' 20')
             year_chars = len(month) + 5
             if sub in df.iloc[row,0]:
-                print(f'Row is: {df.iloc[row,0]}')
                 # replace the substring in the value (row string)
                 index = df.iloc[row,0].find(sub)
-                print(index)
-                print(df.iloc[row,0][index-1])
+
                 check = df.iloc[row,0][index-1]
                 # input('Check if it has ( before')
                 if check == '(':
@@ -1244,7 +1240,6 @@ def replace_old_date_about_page_reg(df): # TODO augu 28 make this better or dele
                     endbit = df.iloc[row,0][end:]
                     df.iloc[row,0] = startbit + new_release_dateinput.replace('_', ' ') + endbit
                     # df.iloc[row,0] = df.iloc[row,0].replace(sub, new_release_date)
-                    print(df.iloc[row,0])
                     # input('Check find replace did the right thing') # works on main and dependents
                         
     return df
@@ -1290,7 +1285,8 @@ def remove_missing_coord_rows(df, tracker):
     print(len(df))
     print('This is issues missing coord so removed - good if empty!:')
     print(issue_df)
-    issue_df.to_csv(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/_scripting/issues/missing_coords_{iso_today_date}_{tracker}.csv')
+    if len(issue_df) > 1:
+        issue_df.to_csv(f'/Users/gem-tah/GEM_INFO/GEM_WORK/earthrise-maps/gem_tracker_maps/_scripting/issues/missing_coords_{iso_today_date}_{tracker}.csv')
 
     return df
 
