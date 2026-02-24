@@ -90,6 +90,12 @@ def make_map(list_of_map_objs, tracker):
             elif tracker_obj.acro in ['GGFT']:
                 logger.info('in GGFT for make map file.py')
                 tracker_obj.ggft_changes()
+            elif tracker_obj.acro in ['GSPT']:
+                logger.info('in GSPT for make map file.py')
+                tracker_obj.gspt_changes()
+            elif tracker_obj.acro in ['GWPT']:
+                logger.info('in GWPT for make map file.py')
+                tracker_obj.gwpt_changes()
                 # in here we need to create capacity value and pull in geometry
         
             # GIST checks
@@ -100,8 +106,32 @@ def make_map(list_of_map_objs, tracker):
             # clean_capacity and coordinate qc 
             # Fill NaN values with a default  df[col] = df[col].fillna(-100)
             # TODO should lower case all cols at ONE point ... chaotic for split_goget because europe has lowercase and all else is unchanged unitl rename_and_concat
+        
+            # if testval != '':
+            #     # TEMP FOR GGIT PIPELINES DEBUGGING ISSUE
+            #     # if len(map_obj.trackers) > 1:
+            #     #     for tracker in map_obj.trackers:
+            #     if "PipelineName" in tracker_obj.data.columns:
+            #         print(f'this is a tracker_obj: {tracker_obj.data}')
+            #         print(f'this is tracker_obj.data["PipelineName"]: {tracker_obj.data["PipelineName"]}')
+            #         testdf = tracker_obj.data[tracker_obj.data['PipelineName']==testval]
+            #         print(testdf['geometry']) 
+            #         input(f'CHECK geo DEBUG for testval before transform to gdf: {testval}')
+                                        
+                    
             tracker_obj.transform_to_gdf()
-   
+        
+            # if testval != '':
+            #     # TEMP FOR GGIT PIPELINES DEBUGGING ISSUE
+            #     # if len(map_obj.trackers) > 1:
+            #     #     for tracker in map_obj.trackers:
+            #     if "PipelineName" in tracker_obj.data.columns:
+            #         print(f'this is a tracker_obj: {tracker_obj.data}')
+            #         print(f'this is tracker_obj.data["PipelineName"]: {tracker_obj.data["PipelineName"]}')
+            #         testdf = tracker_obj.data[tracker_obj.data['PipelineName']==testval]
+            #         print(testdf['geometry']) 
+            #         input(f'CHECK geo DEBUG for testval before transform to gdf: {testval}')
+                                
             if tracker_obj.acro in ['GMET']:
                 
                 print(set(tracker_obj.data['legend-filter'].to_list()))
@@ -121,10 +151,23 @@ def make_map(list_of_map_objs, tracker):
         # we account for GOGPT eu that already aritficially set tracker-acro according to differences in columns of hy and plants in gogpt eu
         map_obj.rename_and_concat_gdfs() 
         # NOTE AFTER THIS FUNCTION IS CALLED trackers holds ONE dataframe for the entire map, before it is a list of dfs per tracker
-
+        
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['geometry']) 
+            input(f'CHECK capacity DEBUG for testval after rename and concat gdfs: {testval}')
+        
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['capacity']) 
+            input(f'CHECK capacity DEBUG for testval after rename and concat gdfs: {testval}')
 
         map_obj.set_capacity_conversions()
 
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['capacity']) 
+            input(f'CHECK capacity DEBUG for testval after set_capacity_conversions: {testval}')
 
         map_obj.map_ready_statuses_and_countries()
 
@@ -136,12 +179,23 @@ def make_map(list_of_map_objs, tracker):
 
 
         map_obj.set_fuel_goit()
+
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['geometry']) 
+            input(f'CHECK geometry DEBUG for testval before last min fixes: {testval}')            
         if testval != '':
             testdf = map_obj.trackers[map_obj.trackers['name']==testval]
             print(testdf['capacity']) 
             input(f'CHECK capacity DEBUG for testval: {testval}')
 
         map_obj.last_min_fixes()
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['geometry']) 
+            input(f'CHECK geometry DEBUG for testval after last min fixes: {testval}')   
+        print(type(map_obj.trackers))
+        # input('Check it is still a gdf')
         if testval != '':
             testdf = map_obj.trackers[map_obj.trackers['name']==testval]
             print(testdf['capacity']) 
@@ -151,7 +205,10 @@ def make_map(list_of_map_objs, tracker):
             print(set(tracker_obj.data['legend-filter'].to_list()))
             input('check legend filter')
         map_obj.remove_excess_cols() # affects ALL trackers rn so if new column must add to list in this function
-
+        if testval != '':
+            testdf = map_obj.trackers[map_obj.trackers['name']==testval]
+            print(testdf['geometry']) 
+            input(f'CHECK capacity DEBUG for testval before save file: {testval}')   
         map_obj.save_file(tracker)
 
         

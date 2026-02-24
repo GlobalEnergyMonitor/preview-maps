@@ -44,23 +44,6 @@ var config = {
     },
     assetFullLabel: 'Gas Infrastructure projects',
     assetLabel: 'projects',
-    // assetFullLabel: {
-    //     field: 'tracker-custom',
-    //     values: {
-    //         'GGIT': 'Pipelines',
-    //         'GGIT-import': 'Terminals',
-    //         'GGIT-export': 'Terminals',            
-    //     }
-    // },
-    
-    // assetLabel: {
-    //     field: 'tracker-custom',
-    //     values: {
-    //         'GGIT': 'segments',
-    //         'GGIT-import': 'trains',
-    //         'GGIT-export': 'trains',            
-    //     }
-    // },
     linkField: 'pid',
     countryField: 'areas',
     nameField: 'name', 
@@ -75,8 +58,8 @@ var config = {
     
     },
     searchFields: { 'Infrastructure Type': ['tracker-custom'],
-        'Project': ['name', 'pid'], 
-        'Companies': ['owner', 'parent'],
+        'Project': ['name', 'pid', 'name-search'], 
+        'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year']
     },
     detailView: {
@@ -95,9 +78,10 @@ showMaxCapacity: false,
 multiCountry: true,
 
 minLineWidth: 1,
-maxLineWidth: 4,
-highZoomMinLineWidth: 2,
-highZoomMaxLineWidth: 5,
+maxLineWidth: 3,
+
+highZoomMinLineWidth: 1,
+highZoomMaxLineWidth: 3,
 
 minRadius: 3,
 maxRadius: 10,

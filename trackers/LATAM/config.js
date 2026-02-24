@@ -1,5 +1,5 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gas-plant/2026-01/LATAM_map_2026-01-28.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/geothermal/2026-03/LATAM_map_2026-02-24.geojson',
     geometries: ['Point','LineString'],
     center: [-60, 0], //previously was -90, -14
     zoomFactor: 1.4,
@@ -79,27 +79,7 @@ var config = {
     //can be string for single value, or hash
     // not using assetLabel for now TODO
     assetLabel: 'units',
-    // assetLabel: {
-    //     // field: 'tracker-custom',
-    //     // values: {
-    //     //     'GCPT': 'units',
-    //     //     'GOGPT': 'units',
-    //     //     'GBPT': 'units',
-    //     //     'GNPT': 'units',
-    //     //     'GSPT': 'phases',
-    //     //     'GWPT':	'phases',
-    //     //     'GHPT':	'units',
-    //     //     'GGPT':	'units',
-    //     //     'GOGET - oil': 'areas',
-    //     //     'GOGET - gas': 'areas',
-    //     //     'GOIT': 'projects',
-    //     //     'GGIT': 'projects',
-    //     //     'GGIT - import': 'projects',
-    //     //     'GGIT - export': 'projects',
-    //     //     'GCMT': 'projects',
-    //     //     'GCTT': 'projects'
-    //     // }
-    // },
+
     nameField: 'name',
 //    linkField: 'id',  
 
@@ -116,16 +96,9 @@ var config = {
         rightAlign: ['unit','capacity-table','prod-oil', 'prod-gas','start-year', 'prod-year-oil', 'prod-year-gas'], 
         removeLastComma: ['areas'], 
         toLocaleString: ['capacity-table'],
-
-        // displayValue: {'tracker-display': "assetLabel"},
-        // appendValue: {'capacity': "capItemLabel"},
-        // appendValue: {'production': "prodItemLabel"},
-        // appendValue: {'capacity-oil ': "prodItemLabel"},
-        // appendValue: {'capacity-gas': "prodItemLabel"},
-
     },
-    searchFields: { 'Project': ['name'], 
-        'Companies': ['owner', 'parent'],
+    searchFields: { 'Project': ['name', 'name-search', 'pid'], 
+        'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year'],
         'Infrastructure Type': ['tracker-display'],
         'Status': ['status'],
@@ -152,6 +125,9 @@ var config = {
     // maxRadius: 10,
     minLineWidth: 1,
     maxLineWidth: 3,
+    
+    highZoomMinLineWidth: 1,
+    highZoomMaxLineWidth: 3,
 
 
     // /* radius to increase min/max to under high zoom */

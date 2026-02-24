@@ -10,11 +10,6 @@ import os
 ########
 # Make data downloads for regional maps with goget change
 ########
-def test_make_data_dwnlds(num_of_maps_to_create, tracker_to_update):
-
-    if num_of_maps_to_create > 0:
-        print(f'There will be {num_of_maps_to_create} maps created for {tracker_to_update} with priority {priority}')
-
 
 def make_data_dwnlds(tracker):
     maplen = 0.0 # initialize for test later
@@ -38,7 +33,7 @@ def make_data_dwnlds(tracker):
             # TO HELP PRIORITIZE AND SPEED UP CODE WHEN DEBUGGING SOMETHING AND NEED TO GET ANOTHER FILE OUT QUICKLY
             if map_tab_df.loc[row, 'mapname'] in priority:
                 logger.info(f'Map name is in priority {priority} so making map object')
-            elif priority == [''] or None:
+            elif priority == [""] or None:
                 logger.info(f'Nothing is in priority so making map object')
             else:
                 logger.info(f"Not making map object for {map_tab_df.loc[row, 'mapname']} moving onto next row in map_tab_df to save time!")
@@ -96,13 +91,14 @@ def make_data_dwnlds(tracker):
                 else:
                     about_tab_name = map_obj.mapname
                 
-                map_obj.about.to_excel(writer, sheet_name=f'About {about_tab_name}', index=False, header=False) # TODO using header false id not work
+                map_obj.about.to_excel(writer, sheet_name=f'About {about_tab_name}', index=False, header=False) 
 
                 for tracker_obj in map_obj.trackers:
 
                     logger.info(f"Writing source to filename for tracker: {tracker_obj.off_name}")
                     logger.info(f'Length of tracker df is: {len(tracker_obj.data)}')
                     about = tracker_obj.about
+                    
                     tracker_name = tracker_obj.tab_name # TODO change to off name or swap out in all places for acro 
                     about.to_excel(writer, sheet_name=f'About {tracker_name}', index=False)
                     if isinstance(tracker_obj.data, tuple):
@@ -168,7 +164,7 @@ def make_data_dwnlds(tracker):
         print(f'Successfully saved data download for {tracker} to s3 folder {tracker}/{releaseiso}/')
         logger.info(f'Successfully saved data download for {tracker} to s3 folder {tracker}/{releaseiso}/')
 
-    test_make_data_dwnlds(maplen, tracker)
+    # test_make_data_dwnlds(maplen, tracker)
     return map_obj_list
 
 
