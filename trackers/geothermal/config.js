@@ -1,6 +1,6 @@
 var config = {
     /* name of the data file; use key `csv` if data file is CSV format */
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/geothermal/2026-03/geothermal_map_2026-02-13.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/geothermal/2026-03/geothermal_map_2026-02-24.geojson',
 
     colors: {
         'red greeninfo': '#c00',
