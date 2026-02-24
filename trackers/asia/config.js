@@ -1,6 +1,6 @@
 var config = {
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/gas-plant/2026-01/asia_map_2026-01-28.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/ggit/2026-02/asia_map_2026-02-20.geojson',
     geometries: ['Point','LineString'],
     center: [60, 20],
     zoomFactor: 1.9,
@@ -95,8 +95,8 @@ var config = {
         toLocaleString: ['capacity'],
   
     },
-    searchFields: { 'Project': ['name'], 
-        'Companies': ['owner', 'parent'],
+    searchFields: { 'Project': ['name', 'pid','name-search'], 
+        'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year'],
         'Infrastructure Type': ['tracker-display'],
         'Status': ['status'],
@@ -120,6 +120,9 @@ var config = {
     // maxRadius: 10,
     minLineWidth: 1,
     maxLineWidth: 3,
+    
+    highZoomMinLineWidth: 1,
+    highZoomMaxLineWidth: 3,
 
     // /* radius to increase min/max to under high zoom */
     // highZoomMinRadius: 4,

@@ -86,7 +86,7 @@ def gspread_access_file_read_only(key, tab_list):
         # Access a specific tab
         spreadsheet = gsheets.worksheet(tab)
         df = pd.DataFrame(spreadsheet.get_all_records(expected_headers=[]))
-        df = df.replace('*', pd.NA).replace('Unknown', pd.NA)
+        df = df.replace('*', np.nan).replace('Unknown', np.nan)
         df = df.dropna()
         df['tracker'] = tab
         # print(tab)
@@ -818,12 +818,12 @@ def investigate_goget_missing(df):
     
     df = df.copy()
     
-    df_mask = df[(df['status-legend']==pd.NA) & (df['tracker']=="oil-and-gas-extraction-areas")]
+    df_mask = df[(df['status-legend'].isna()) & (df['tracker']=="oil-and-gas-extraction-areas")]
     df_mask.to_csv('goget_investigate.csv')
     df['status-legend'] = df['status-legend'].mask(df['status-legend']=='', other='unknown-plus')
-    df['status-legend'] = df['status-legend'].mask(df['status-legend']==pd.NA, other='unknown-plus')
+    df['status-legend'] = df['status-legend'].mask(df['status-legend'].isna(), other='unknown-plus')
     df['status'] = df['status'].mask(df['status']=='', other='not found')
-    df['status'] = df['status'].mask(df['status']==pd.NA, other='not found')
+    df['status'] = df['status'].mask(df['status'].isna(), other='not found')
     
     
     # print(set(df['tracker'].to_list()))

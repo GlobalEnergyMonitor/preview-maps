@@ -1,5 +1,5 @@
 from requests import HTTPError
-from all_config import nostopping, renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
+from all_config import about_sheets_pkl_path, nostopping, renaming_cols_dict, final_cols, testtracker, testfilekey, force_refresh_flag, about_templates_key, logpath, local_pkl_dir, new_h2_data, logger, new_release_dateinput, iso_today_date,trackers_to_update, geo_mapping, releaseiso, gspread_creds, region_key, region_tab, centroid_key, centroid_tab, rep_point_key, rep_point_tab
 from helper_functions import update_col_formatting_config, check_list, split_countries, convert_coords_to_point, wait_n_sec, fix_prod_type_space, fix_status_space, split_coords, make_plant_level_status, make_prod_method_tier, clean_about_df, replace_old_date_about_page_reg, convert_google_to_gdf, check_and_convert_float, check_in_range, check_and_convert_int, get_most_recent_value_and_year_goget, calculate_total_production_goget, get_country_list, get_country_list, create_goget_wiki_name,create_goget_wiki_name, gspread_access_file_read_only
 import pandas as pd
 from numpy import absolute
@@ -15,6 +15,7 @@ import urllib.parse # quote() and quote_plus() for query params
 import os
 from shapely.geometry import shape, Point, MultiLineString
 import geopandas as gpd
+import hashlib
 
 
 class TrackerObject:
@@ -24,10 +25,12 @@ class TrackerObject:
                  acro="",
                  key="",
                  tabs=[],
+                 about_tabs = [],
                  release="",
                  geocol = [],
                  fuelcol = "",
-                 about_key = "",
+                 about_pipe_key = "",
+                 about_pipe_tabs = [],
                  about = pd.DataFrame(),
                  data = pd.DataFrame(), # will be used for map creation 
                  data_official = pd.DataFrame() # should be for final data downloads removed new columns!
@@ -37,10 +40,12 @@ class TrackerObject:
         self.acro = acro
         self.key = key
         self.tabs = tabs
+        self.about_tabs = [tab.strip() for tab in about_tabs.split(';')] if isinstance(about_tabs, str) else about_tabs
         self.release = release
         self.geocol = geocol
         self.fuelcol = fuelcol
-        self.about_key = about_key
+        self.about_pipe_key = about_pipe_key
+        self.about_pipe_tabs = [tab.strip() for tab in about_pipe_tabs.split(';')] if isinstance(about_pipe_tabs, str) else about_pipe_tabs
         self.about = about
         self.data = data
         self.data_official = data_official
@@ -65,10 +70,118 @@ class TrackerObject:
                     df.drop(columns=internal_cols, inplace=True)
             df_official = (main, prod)
 
-
         
         self.data_official = df_official
     
+    def set_about_metadata(self):
+
+        # using about tabs in the class and key pull the most up to date about page
+
+        print(self.about_tabs)
+        print(self.key)
+        
+        # Check if cached about pages exist
+        about_cache_path = os.path.join(local_pkl_dir, f'about_pages_cache_{iso_today_date}.pkl')
+        about_cache = {}
+        
+        if os.path.exists(about_cache_path):
+            try:
+                with open(about_cache_path, 'rb') as f:
+                    about_cache = pickle.load(f)
+                logger.info(f'Loaded about pages cache from {about_cache_path}')
+            except Exception as e:
+                logger.warning(f'Failed to load about pages cache: {e}. Will fetch fresh.')
+                about_cache = {}
+        
+        # Create a cache key based on tabs and key
+        cache_key = f"{self.key}_{'-'.join(self.about_tabs)}_{'-'.join(self.about_pipe_tabs)}"
+        
+        # Return cached about_df if available
+        if cache_key in about_cache:
+            logger.info(f'Using cached about page for {self.off_name}')
+            about_df = about_cache[cache_key].copy()
+        else:
+            logger.info(f'Fetching fresh about page for {self.off_name}')
+            about_metadata_tabs = []
+            
+            # handle for geojson ones
+            if self.about_tabs == [''] and self.about_pipe_tabs != ['']:
+                for tab in self.about_pipe_tabs:
+                    gsheets = gspread_creds.open_by_key(self.about_pipe_key)
+                    about_spreadsheet = gsheets.worksheet(tab)
+                    time.sleep(6)
+                    about_df_temp = pd.DataFrame(about_spreadsheet.get_all_records(expected_headers=[]))
+                    about_metadata_tabs.append(about_df_temp)
+            else:
+                for about_tab in self.about_tabs:
+                    gsheets = gspread_creds.open_by_key(self.key)
+                    about_spreadsheet = gsheets.worksheet(about_tab)
+                    time.sleep(6)
+
+                    about_df_temp = pd.DataFrame(about_spreadsheet.get_all_records(expected_headers=[]))
+                    about_metadata_tabs.append(about_df_temp)
+
+            
+            about_df = pd.concat(about_metadata_tabs, sort=False).reset_index(drop=True)
+            
+            # Cache the about_df before processing
+            about_cache[cache_key] = about_df.copy()
+        
+        if self.tab_name in trackers_to_update:
+            release_month_year = f"{new_release_dateinput.replace('_', ' ')}" 
+        else:
+            release_month_year = self.release
+
+        print(f'This is release_month_year for {self.off_name}, make sure gsheet tracker log is updated or input better date:\n{release_month_year}')
+
+        copyright_full = f"Copyright © Global Energy Monitor. Global {self.off_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
+        citation_full = f'Recommended Citation: "Global Energy Monitor, Global {self.off_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
+                        
+        print(f'This is copyright_full for {self.off_name}:\n{copyright_full}')
+        print(f'This is citation_full for {self.off_name}:\n{citation_full}')
+        
+        # Copyright and citation handling
+        if copyright_full in about_df.values:
+            logger.info(f'Already has full copyright: {copyright_full}')
+        elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1).any():
+            logger.info('Partial copyright, delete row and insert full')
+            copyright_rows = about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1)
+            copyright_row_idx = about_df[copyright_rows].index[0]
+            about_df.iloc[copyright_row_idx] = [copyright_full] * len(about_df.columns)
+        else:
+            logger.info('Inserting full copyright into second row') 
+            full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
+            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
+
+        about_df.reset_index(drop=True, inplace=True)
+
+        if citation_full in about_df.values:
+            logger.info(f'Already has full citation: {citation_full}')
+        elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1).any():
+            logger.info('Partial citation, delete row and insert full')
+            citation_rows = about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1)
+            citation_row_idx = about_df[citation_rows].index[0]
+            about_df.iloc[citation_row_idx] = [citation_full] * len(about_df.columns)
+        else:
+            logger.info('Inserting full citation_full into second row') 
+            full_copy_row = pd.DataFrame([[citation_full] * len(about_df.columns)], columns=about_df.columns)
+            about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
+        
+        about_df.reset_index(drop=True, inplace=True)
+        about_df = about_df.apply(lambda row: row.where(~row.duplicated(), ''), axis=1)
+        
+        if about_df.iloc[0].isnull().all() or (about_df.iloc[0] == '').all():
+            about_df = about_df.drop(0).reset_index(drop=True)
+
+        self.about = about_df
+        
+        # Save updated cache to pickle file
+        try:
+            with open(about_cache_path, 'wb') as f:
+                pickle.dump(about_cache, f)
+            logger.info(f'Saved about pages cache to {about_cache_path}')
+        except Exception as e:
+            logger.warning(f'Failed to save about pages cache: {e}')
 
     def set_df(self, final_cols, renaming_cols_dict):
         # DATA LOADING HAPPENS HERE
@@ -87,19 +200,28 @@ class TrackerObject:
                 logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
                 
                 # to get the file names in latest
-                parquet_s3 = self.get_file_name(releaseiso)
-                logger.info(f'This is file: {parquet_s3}')
+                geojson_s3 = self.get_file_name(releaseiso)
+                logger.info(f'This is file: {geojson_s3}')
                 
-                if 'parquet' in parquet_s3:
+                # if 'parquet' in geojson_s3:
+                # RENAME THIS IT IS NOT A PARQUET ANYMORE
+                # geojson_s3 = self.get_file_name(releaseiso)
 
-                    df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
                 
-                    df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+                # #assign gdf to data 
 
-                    gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
+
+                gdf.set_crs("EPSG:4326", inplace=True)
+
+                    # df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
                 
-                else:
-                    gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
+                    # df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+
+                    # gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                
+                # else:
+                #     gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
                 
                 self.data = gdf
                 
@@ -109,19 +231,41 @@ class TrackerObject:
                 logger.info('handle non_gsheet_data for pulling data from s3 already has coords')
 
                 # to get the file names in latest
-                parquet_s3 = self.get_file_name(releaseiso)
-                logger.info(f'This is file: {parquet_s3}')
+                # RENAME THIS IT IS NOT A PARQUET ANYMORE
+                # geojson_s3 = self.get_file_name(releaseiso)
 
-                if 'parquet' in parquet_s3:
-
-                    df = pd.read_parquet(f'{s3_file_source_path}{parquet_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
                 
-                    df['geometry'] = df['geometry'].apply(lambda geom: wkt.loads(geom) if geom else None)
+                # #assign gdf to data 
 
-                    gdf = gpd.GeoDataFrame(df, geometry='geometry', crs="EPSG:4326")
+                # gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
+
+                # gdf.set_crs("EPSG:4326", inplace=True)
+
+                geojson_s3 = self.get_file_name(releaseiso)
+                logger.info(f'This is file: {geojson_s3}')
+
+
+                gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}') # , engine='pyarrow' NOTE gpd calls a different method "read_table" that requires a file path NOT a URI
+                gdf.set_crs("EPSG:4326", inplace=True)
                 
-                else:
-                    gdf = gpd.read_file(f'{s3_file_source_path}{parquet_s3}')
+                # check all rows that might be empty, not line, multi line or point
+                # POLYGON EMPTY
+                problematic_geoms = []
+                for idx, row in gdf.iterrows():
+                    geom = row['geometry']
+                    if geom is None or geom.is_empty:
+                        problematic_geoms.append(idx)
+                
+                if problematic_geoms:
+                    logger.warning(f"Found {len(problematic_geoms)} rows with empty/problematic geometry in {self.tab_name}")
+                    problematic_df = gdf.iloc[problematic_geoms]
+                    report_path = f'{logpath}problematic_geometry_{self.tab_name.replace(" ", "_")}_{iso_today_date}.csv'
+                    problematic_df.to_csv(report_path, index=False)
+                    logger.info(f"Saved problematic geometry report to {report_path}")
+                    
+                    # Remove problematic rows from gdf
+                    gdf = gdf.drop(problematic_geoms)
+
                 
                 self.data = gdf
 
@@ -137,7 +281,7 @@ class TrackerObject:
 
                 gdf = gpd.read_file(f'{s3_file_source_path}{geojson_s3}')
 
-                gdf.set_crs("epsg:4326", inplace=True)
+                gdf.set_crs("EPSG:4326", inplace=True)
 
                 self.data = gdf
                 
@@ -215,6 +359,8 @@ class TrackerObject:
                     logger.info(f'File timestamp: {pkl_date}')
                     print(f'Loading data from local pkl file...')
                     self.data = pickle.load(f)
+                    print(self.data)
+                    
                     print(f'Successfully loaded data for {self.off_name}')
                     return  # Exit early if pkl loaded successfully
             except Exception as e:
@@ -266,9 +412,11 @@ class TrackerObject:
             # this case is for the normies where we'll loop through their final data dwld file and find the about page
             else:
                 tracker_key = self.key
+                
             about_df = self.find_about_page(tracker_key)
         
             tracker_official_name = f"{self.off_name}"
+            
             if self.tab_name in trackers_to_update:
                 # use new date not old one in map log gsheets
                 release_month_year = f"{new_release_dateinput.replace('_', ' ')}" 
@@ -280,23 +428,33 @@ class TrackerObject:
             # NEEDS 
             # Copyright © Global Energy Monitor. Global Wind Power Tracker, February 2025 release. Distributed under a Creative Commons Attribution 4.0 International License.
             # Recommended Citation: "Global Energy Monitor, Global Wind Power Tracker, February 2025 release" (See the CC license for attribution requirements if sharing or adapting the data set.)
-            
+            print(f'This is release_month_year for {self.off_name}, make sure gsheet tracker log is updated or input better date:\n{release_month_year}')
+
+        
             copyright_full = f"Copyright © Global Energy Monitor. Global {tracker_official_name} Tracker, {release_month_year} release. Distributed under a Creative Commons Attribution 4.0 International License."
             citation_full = f'Recommended Citation: "Global Energy Monitor, Global {tracker_official_name} Tracker, {release_month_year} release" (See the CC license for attribution requirements if sharing or adapting the data set.)'
-            
-            
+                            
+            print(f'This is copyright_full for {self.off_name}:\n{copyright_full}')
+            print(f'This is citation_full for {self.off_name}:\n{citation_full}')
+            # TEMP
             # TODO redo this because it is so buggy if there are multiple headers or collapsed cells in about pages (re COAL), create about pages like wiki template
             # currently I manually check the about pages to be sure it all looks ok and fix little things
             
             # if either are not in there fully then insert into the df after first row
             # elif partially in there, delete row and insert
             # else pass
-            if (about_df == copyright_full).any().any():
+            if copyright_full in about_df.values:
                 logger.info(f'Already has full copyright: {copyright_full}')
             elif about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1).any():
                 logger.info('Partial copyright, delete row and insert full')
-                # find row number in df that holds partial
-                logger.warning(f'need to add full copyright to about template for {self.off_name}')
+                # Find the row index
+                copyright_rows = about_df.apply(lambda row: row.astype(str).str.contains('Copyright').any(), axis=1)
+                copyright_row_idx = about_df[copyright_rows].index[0]
+
+                # Replace that entire row with the full copyright
+                about_df.iloc[copyright_row_idx] = [copyright_full] * len(about_df.columns)
+
+
             else:
                 logger.info('Inserting full copyright into second row') 
                 # insert a new blank row in the second row
@@ -305,18 +463,22 @@ class TrackerObject:
                 about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
 
             about_df.reset_index(drop=True, inplace=True)
-            
-            
-            if (about_df == citation_full).any().any():
+
+            if citation_full in about_df.values:
                 logger.info(f'Already has full citation: {citation_full}')
             elif about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1).any():
                 logger.info('Partial citation, delete row and insert full')
-                logger.warning(f'need to add full citation to about template for {self.off_name}')
+                # Find the row index
+                citation_rows = about_df.apply(lambda row: row.astype(str).str.contains('Recommended Citation').any(), axis=1)
+                citation_row_idx = about_df[citation_rows].index[0]
+
+                # Replace that entire row with the full copyright
+                about_df.iloc[citation_row_idx] = [citation_full] * len(about_df.columns)
 
             else:
                 logger.info('Inserting full citation_full into second row') 
                 # insert a new blank row in the second row
-                full_copy_row = pd.DataFrame([[copyright_full] * len(about_df.columns)], columns=about_df.columns)
+                full_copy_row = pd.DataFrame([[citation_full] * len(about_df.columns)], columns=about_df.columns)
                 # split the existing df in two at the second row, concat full copy row like a sandwich in between
                 about_df = pd.concat([about_df.iloc[:1], full_copy_row, about_df.iloc[1:]]).reset_index(drop=True)
             
@@ -1101,7 +1263,32 @@ class TrackerObject:
         
         self.data = df
     
-    
+    def gspt_changes(self):
+        df = self.data
+        print(df.columns.tolist())
+        if 'Technology Type' in df.columns.tolist():
+            df['Technology Type-table'] = df['Technology Type']
+            df['Technology Type'] = df['Technology Type'].apply(lambda x: str(x).lower().replace(' ', '_'))
+        
+        else:
+            input("technology type uppercase not in df cols for solar TEMP")
+        
+        self.data = df 
+        
+    def gwpt_changes(self):
+        df = self.data
+        if 'Installation Type' in df.columns.tolist():
+            df['Installation Type-table'] = df['Installation Type']
+
+            df['Installation Type'] = df['Installation Type'].apply(lambda x: str(x).lower().replace(' ', '_').replace('<na>', 'unknown'))
+        else:
+            input("installation type uppercase not in df cols for wind TEMP")
+        # check statuses for na 
+        print(set(df['Installation Type'].tolist()))
+        # input(f'The set of statuses for wind at gwpt_changes')
+        self.data = df 
+        
+
     def gcct_changes(self):
             # before renaming 
             # before clean_num_data()
@@ -1137,10 +1324,15 @@ class TrackerObject:
             self.data = df 
 
     def find_about_page(self,key):
-            logger.info(f'this is key and tab list in def find_about_page(tracker,key):function:\n{self.off_name}{key}')
+            logger.info(f'this is key and tab list in def find_about_page(tracker, key):function:\n{self.off_name} {key}')            
             # tracker = self.acro
             official_name = self.off_name
-            
+
+        
+        # TODO decide to only pull from template file if pipelines? or is it ok for regional downloads to create like template
+        # OR decide to paste in new about page every release so regional pulls from correct one
+        # if we do this then we do not need the citation and copyright check...
+        
             # check if the release date should be the current one or pulled from the tracker object / release column in map log
             if official_name in trackers_to_update:
                 release = new_release_dateinput
@@ -1154,70 +1346,74 @@ class TrackerObject:
             # go to the about sheet template and if the self name has a non empty tab then use that
             # WOOT new better way! Like wiki template
             
-            about_gsheets = gspread_creds.open_by_key(about_templates_key)
-            for sheet in about_gsheets.worksheets():
-                logger.info(sheet.title)
-                if self.off_name in sheet.title:
-                    logger.info(f'Found template for {self.off_name}!')
-                    data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
-                    if len(data) > 1:
+            # about_gsheets = gspread_creds.open_by_key(about_templates_key)
+            # for sheet in about_gsheets.worksheets():
+            #     logger.info(sheet.title)
+            #     if self.tab_name in sheet.title:
+            #         logger.info(f'Found template for {self.tab_name}!')
+            #         data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
+            #         if len(data) > 1:
                         
-                        about_df = data.copy()
-                        # find replace  {RELEASE NON NUMERICAL MONTH} {RELEASE YEAR} with release_mon release_yr
-                        about_df = about_df.applymap(lambda x: str(x).replace('{RELEASE NON NUMERICAL MONTH}', release_mon).replace('{RELEASE YEAR}', release_yr).replace('{FULL TRACKER NAME}', self.off_name))
-                        return about_df
-                    else:
-                        logger.info('Appears to be empty... so moving on to old way')
+            #             about_df = data.copy()
+            #             # find replace  {RELEASE NON NUMERICAL MONTH} {RELEASE YEAR} with release_mon release_yr
+            #             about_df = about_df.applymap(lambda x: str(x).replace('{RELEASE NON NUMERICAL MONTH}', release_mon).replace('{RELEASE YEAR}', release_yr).replace('{FULL TRACKER NAME}', self.off_name))
+            #             return about_df
+            #         else:
+            #             input(f'Appears to be empty... so moving on to old way of getting about page for {self.tab_name}')
+            #             logger.info('Appears to be empty... so moving on to old way')
 
             # else go through this search
             
-            wait_time = 10
-
-            gsheets = gspread_creds.open_by_key(key)
+            # wait_time = 10
+            # data = None # initialize
+            # gsheets = gspread_creds.open_by_key(key)
                 
-            # List all sheet names
-            sheet_names = [sheet.title for sheet in gsheets.worksheets()]
-            # Access a specific sheet by name
-            first_tab = sheet_names[0]
-            first_sheet = gsheets.worksheet(first_tab)  # Access the first sheet
+            # # List all sheet names
+            # sheet_names = [sheet.title for sheet in gsheets.worksheets()]
+            # # Access a specific sheet by name
+            # first_tab = sheet_names[0]
+            # first_sheet = gsheets.worksheet(first_tab)  # Access the first sheet
             
-            last_tab = sheet_names[-1]
-            last_sheet = gsheets.worksheet(last_tab)  # Access the last sheet
-            tries = 0
-            about_df = None  # Initialize about_df
-            while tries <= 3:
-                time.sleep(wait_time)
-                try:
-                    logger.info(f"First sheet name:{first_sheet.title}")
-                    if 'About' not in first_sheet.title:
-                        logger.info('Looking for about page in last tab now, first one no.')
-                        # handle for goget and ggit, goit who put it in the last tab
-                        if 'About' not in last_sheet.title:
-                            if 'Copyright' not in last_sheet.title:
-                                logger.info('Checked first and last tab, no about page found not even for copyright. Pausing.')
-                                logger.info("Press Enter to continue...")
-                            else:
-                                logger.info(f'Found about page in last tab: {last_tab}')
-                                sheet = last_sheet
+            # last_tab = sheet_names[-1]
+            # last_sheet = gsheets.worksheet(last_tab)  # Access the last sheet
+            # tries = 0
+            # about_df = None  # Initialize about_df
+            # while tries <= 10:
+            #     time.sleep(wait_time)
+            #     try:
+            #         logger.info(f"First sheet name:{first_sheet.title}")
+            #         if 'About' not in first_sheet.title:
+            #             logger.info('Looking for about page in last tab now, first one no.')
+            #             # handle for goget and ggit, goit who put it in the last tab
+            #             if 'About' not in last_sheet.title:
+            #                 if 'Copyright' not in last_sheet.title:
+            #                     logger.info('Checked first and last tab, no about page found not even for copyright. Pausing.')
+            #                     logger.info("Press Enter to continue...")
+            #                 else:
+            #                     logger.info(f'Found about page in last tab: {last_tab}')
+            #                     sheet = last_sheet
                                 
-                        else:
-                            logger.info(f'Found about page in last tab: {last_tab}')
-                            sheet = last_sheet
+            #             else:
+            #                 logger.info(f'Found about page in last tab: {last_tab}')
+            #                 sheet = last_sheet
                             
-                    else:
-                        # print(f'Found about page in first tab: {first_tab}')
-                        sheet = first_sheet
+            #         else:
+            #             # print(f'Found about page in first tab: {first_tab}')
+            #             sheet = first_sheet
                         
-                    
-                    data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
+            #         if len(sheet) > 1:
+                        
+            #             data = pd.DataFrame(sheet.get_all_values(combine_merged_cells=True))
+            #         else:
+            #             print(f'this is sheet it is empty: {sheet}')
                     
 
-                    about_df = data.copy()
-                    return about_df
-                except HTTPError as e:
-                    print(f'This is error: \n{e}')
-                    wait_time += 5
-                    tries +=1
+            #         about_df = data.copy()
+            #         return about_df
+            #     except HTTPError as e:
+            #         print(f'This is error: \n{e}')
+            #         wait_time += 5
+            #         tries +=1
         
             return about_df
 
@@ -1351,7 +1547,7 @@ class TrackerObject:
             # 1. Handle null variations BEFORE other operations
             null_variations = ['nan', 'NaN', 'None', 'N/A', 'NA', 'n/a', 'null', 'NULL',
                              '-', '--', '?', 'unknown', 'Unknown', 'UNKNOWN', '*', '']
-            self.data[col] = self.data[col].replace(null_variations, pd.NA)
+            self.data[col] = self.data[col].replace(null_variations, np.nan)
             self.data[col] = self.data[col].fillna('')
 
             # 2. Strip whitespace (leading/trailing/multiple internal spaces)
@@ -1413,7 +1609,7 @@ class TrackerObject:
             # 7. Check for entries with only whitespace after cleaning
             whitespace_only = self.data[self.data[col].str.isspace()][col]
             if len(whitespace_only) > 0:
-                self.data.loc[self.data[col].str.isspace(), col] = pd.NA
+                self.data.loc[self.data[col].str.isspace(), col] = np.nan
                 logger.info(f"  Replaced {len(whitespace_only)} whitespace-only entries with NA in {col}")
 
             # 8. Log significant changes in unique value count
@@ -1440,7 +1636,27 @@ class TrackerObject:
         
     
     def clean_num_data(self):
-        # apply df['b'] = pd.to_numeric(df['b'], errors='coerce')
+        """
+        Clean and validate numerical data in the DataFrame.
+        This method processes the DataFrame (self.data) to clean and standardize numerical columns
+        including capacity, production, year, and coordinate data. It performs the following operations:
+        - Capacity/Production columns: Converts to numeric, replaces common non-numeric placeholders
+          with NaN, and rounds to 4 decimal places.
+        - Year columns: Converts to numeric (coercing errors to NaN), then converts to integers,
+          handling empty strings appropriately.
+        - Latitude/Longitude columns: Converts to numeric, validates against acceptable ranges
+          (-90 to 90 for latitude, -180 to 180 for longitude), and removes rows with missing or
+          out-of-range coordinates.
+        Rows with missing coordinates are logged and exported to a CSV file for review.
+        Raises:
+            TypeError: Caught and logged for problematic columns, with warnings to check QC PM reports.
+        Note:
+            When pd.to_numeric() is called with errors='coerce', any data point that cannot be
+            converted to numeric will be replaced with NaN (Not a Number). This includes invalid
+            strings, empty values, and malformed data. Subsequent processing (rounding, range checks,
+            etc.) will treat these NaN values according to the logic in those steps, potentially
+            resulting in rows being dropped if coordinates are NaN.
+        """
         # clean df
         logger.info(f'Length of df at clean num data: {len(self.data)}')
         logger.info('CHECK ITS NOT EMPTY') #working
@@ -1451,14 +1667,13 @@ class TrackerObject:
         }
         
         if isinstance(self.data, pd.DataFrame):  # Ensure self.data is a DataFrame
-            self.data = self.data.replace('*', pd.NA).replace('Unknown', pd.NA).replace('--', pd.NA) # remove the oddities for missing capacity
             
             for col in self.data.columns: # handling for all capacity, production, 
                 if any(keyword in col for keyword in ['CapacityInMtpa','Capacity (MW)', 'Capacity (Mt)','Capacity (Mtpa)', 'CapacityBcm/y', 'CapacityBOEd', 'Capacity (MT)', 'Production - Gas', 'Production - Oil', 'Production (Mt)', 'Production (Mtpa)', 'Capacity (ttpa)']):                    
                     try:
                         # Clean the column first - strip whitespace and handle common non-numeric values
                         self.data[col] = self.data[col].astype(str).str.strip()
-                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-'], pd.NA)
+                        self.data[col] = self.data[col].replace(['', 'nan', 'NaN', 'None', 'unknown', 'not found', '--', '*', '<NA>', '-'], np.nan)
                         
                         # Use pandas to_numeric which is more robust than custom function
                         self.data[col] = pd.to_numeric(self.data[col], errors='raise') # raise
@@ -1472,16 +1687,17 @@ class TrackerObject:
                         logger.warning(f'{e} error for {col} in {self.acro}')
                         logger.warning('Check for QC PM report') # so far problem with StartYearEarliest LNG Terminals geo in there
                         
-                
+                # RULESET FLAG
                 elif 'year' in col.lower():
                     try:
+                        print('in map_tracker_class coercing year to numeric will raise an issue')
                         self.data[col] = pd.to_numeric(self.data[col], errors='coerce')
                         self.data[col] = self.data[col].apply(lambda x: check_and_convert_int(x))
                         self.data[col].fillna('', inplace=True)
                         # Round all year columns to 0 decimal places
                         self.data[col] = self.data[col].apply(lambda x: round(x, 0) if x != '' else x)   
                         self.data[col] = self.data[col].apply(lambda x: int(str(x).replace('.0', '')) if x != '' else x)
-                         
+                        self.data[col] = self.data[col].fillna('not found')
                     except TypeError as e:
                         logger.warning(f'{e} error for {col} in {self.tab_name}')
                         logger.warning('Check for QC PM report') # so far problem with StartYearEarliest LNG Terminals geo in there
@@ -1811,10 +2027,13 @@ class TrackerObject:
     
         
     def transform_to_gdf(self): # This is dropping all geo rows for pipeline data
-        
+    # TODO FIX pipeline issue  
+        print(f'length prior to anything in transform_to_gdf: {len(self.data)}')
+
         if isinstance(self.data, tuple):
             logger.info(self.tab_name)
             logger.info('Why is that a tuple up there? GOGET and GOGPT eu should be consolidated by now...')
+            input('There is a tuple in the data but all are consolidated so look into it.')
         else:
             
             if 'latitude' in self.data.columns.str.lower():
@@ -1835,7 +2054,9 @@ class TrackerObject:
             else:
                 logger.info(f'{self.tab_name} already a gdf MOST LIKELY but if not pipelines or ggit terminals then be worried.')
                 gdf = self.data
-
+        print(f'length right before saving in transform_to_gdf: {len(self.data)}')
+        # input('check above length')
+        
         self.data = gdf
         
     def split_goget_ggit(self):

@@ -17,7 +17,7 @@ class MapObject:
                  fuel="",
                  pm="",
                  trackers=[], 
-                 aboutkey = "",
+                 aboutkey = "", # used for all regional maps
                  about=pd.DataFrame(),
                  ):
         self.mapname = mapname
@@ -218,7 +218,8 @@ class MapObject:
         gdf.columns = [col.replace(' ', '-') for col in gdf.columns] 
 
         for col in gdf.columns:
-            gdf[col] = gdf[col].apply(lambda x: str(x).replace('nan',''))
+            if col != 'geometry':
+                gdf[col] = gdf[col].apply(lambda x: str(x).replace('nan',''))
 
 
         entities = ['owner', 'parent', 'operator']
@@ -232,7 +233,7 @@ class MapObject:
         gdf['tracker-legend'] = gdf['tracker-custom'].map(tracker_to_legendname)
         # make sure all null geo is removed
 
-        gdf.dropna(subset=['geometry'],inplace=True)
+        # gdf.dropna(subset=['geometry'],inplace=True)
 
         # make sure all of the units of m are removed for goget and gcmt that has no capacity
         # just allowing for the rare trackers like ggft where capacity is not the main focus
@@ -259,20 +260,39 @@ class MapObject:
 
         # gdf.fillna('', inplace = True)
                     
+        # Remove rows with null/missing geometry and save report
+        null_geom_mask = gdf['geometry'].isna() | gdf['geometry'].isnull()
+        # also catch empty string or 'nan' string geometry values
+        null_geom_mask = null_geom_mask | gdf['geometry'].apply(lambda g: not hasattr(g, 'is_valid') and str(g).strip() in ('', 'nan', 'None'))
+        # also catch empty shapely geometries (serialize to null in GeoJSON)
+        null_geom_mask = null_geom_mask | gdf['geometry'].apply(lambda g: hasattr(g, 'is_empty') and g.is_empty)
+        if null_geom_mask.any():
+            null_geom_df = gdf[null_geom_mask].copy()
+            null_geom_df['geometry'] = null_geom_df['geometry'].astype(str)
+            report_cols = [c for c in ['pid', 'name', 'tracker-acro', 'tracker', 'status', 'geometry'] if c in null_geom_df.columns]
+            null_geom_df[report_cols].to_csv(f'{logpath}{self.mapname}-null-geometry-removed-{iso_today_date}.csv', index=False)
+            logger.warning(f"Found {null_geom_mask.sum()} rows with null/missing geometry — removed and saved to logfiles")
+            gdf = gdf[~null_geom_mask].copy()
+
         # Check for invalid geometries in the 'geometry' column
         invalid_geoms = []
+        invalid_lines_for_report = []  # LineString/MultiLineString needing manual review
         fixed_count = 0
+
+        line_types = ('LineString', 'MultiLineString')
+
         for idx, geom in gdf['geometry'].items():
             # Check if geometry is a shapely object and is valid
             if hasattr(geom, 'is_valid') and not geom.is_valid:
-                logger.info(f"Invalid geometry found at index {idx}: {gdf.loc[idx,'name']}")
-                # Try to fix geometry
-                fixed_geom = geom.buffer(0)
-                if fixed_geom.is_valid:
-                    gdf.at[idx, 'geometry'] = fixed_geom
-                    fixed_count += 1
+                geom_type = geom.geom_type
+                logger.info(f"Invalid geometry found at index {idx}: {gdf.loc[idx,'name']} (type: {geom_type})")
+
+                if geom_type in line_types:
+                    # Don't try to fix lines - report for manual review
+                    invalid_lines_for_report.append(idx)
                 else:
                     invalid_geoms.append((idx, geom))
+
             # If geometry is not a shapely object, try to parse it
             elif not hasattr(geom, 'is_valid'):
                 try:
@@ -281,31 +301,43 @@ class MapObject:
                         gdf.at[idx, 'geometry'] = parsed_geom
                         fixed_count += 1
                     else:
-                        fixed_geom = parsed_geom.buffer(0)
-                        if fixed_geom.is_valid:
-                            gdf.at[idx, 'geometry'] = fixed_geom
-                            fixed_count += 1
+                        geom_type = parsed_geom.geom_type
+
+                        if geom_type in line_types:
+                            invalid_lines_for_report.append(idx)
                         else:
                             invalid_geoms.append((idx, geom))
                 except Exception as e:
                     logger.warning(f"Failed to parse geometry at index {idx}: {e}")
                     invalid_geoms.append((idx, geom))
-            
+
         # Log summary before removing rows
-        logger.info(f"Fixed {fixed_count} geometries, found {len(invalid_geoms)} unfixable geometries")
-        
-        # Remove rows with invalid geometry and log them
+        logger.info(f"Fixed {fixed_count} geometries, found {len(invalid_geoms)} unfixable geometries, {len(invalid_lines_for_report)} invalid lines for review")
+
+        # Save invalid lines report with full row information for PM review
+        if invalid_lines_for_report:
+            logger.warning(f"Found {len(invalid_lines_for_report)} invalid LineString/MultiLineString geometries requiring manual review")
+            invalid_lines_gdf = gpd.GeoDataFrame(gdf.loc[invalid_lines_for_report].copy())
+            # invalid_lines_df['geometry_wkt'] = invalid_lines_gdf['geometry'].apply(lambda g: g.wkt if hasattr(g, 'wkt') else str(g))
+            invalid_lines_gdf.to_file(f'{logpath}{self.mapname}-invalid-lines-for-review-{iso_today_date}.geojson', driver="GeoJSON")
+            logger.info(f"Invalid lines report saved to {logpath}{self.mapname}-invalid-lines-for-review-{iso_today_date}.geojson")
+            # TODO Feb 20th test not dropping in case this is fine and over strict
+            # gdf.drop(invalid_lines_for_report, inplace=True)
+            
+            # logger.info(f"Dropped {len(invalid_lines_for_report)} rows with invalid line geometries")
+
+        # Remove rows with other invalid geometries and log them
         if invalid_geoms:
             logger.warning(f"Found {len(invalid_geoms)} invalid geometries, removing rows")
             pd.DataFrame(invalid_geoms, columns=['index', 'geometry']).to_csv(f'{logpath}{self.mapname}-invalid-geometries-{iso_today_date}.csv', index=False)
-            # Extract indices of invalid geometries for removal
             invalid_geom_indices = [idx for idx, _ in invalid_geoms]
-            gdf.drop(invalid_geom_indices, inplace=True)
-            logger.info(f"Dropped {len(invalid_geom_indices)} rows with invalid geometries")
+            # TODO Feb 20th test not dropping in case this is fine and over strict
+
+            # gdf.drop(invalid_geom_indices, inplace=True)
+            # logger.info(f"Dropped {len(invalid_geom_indices)} rows with invalid geometries")
 
         gdf.columns = [col.lower() for col in gdf.columns]
-        
-        
+
         if simplified:
             simplified_cols_drop = []
             for col in simplified_cols:
@@ -323,8 +355,21 @@ class MapObject:
         # make sure everything is a number than can be
         # so js functions as expected and no NaNs
         if 'capacity' in gdf.columns:
-            gdf['capacity'] = gdf['capacity'].apply(lambda x: pd.to_numeric(str(x).split('.')[0].replace(',', ''), errors='coerce')) # 20,000.00
-        
+            logger.info('Converting capacity to numeric, coercing errors to NaN')
+            gdf['capacity'] = pd.to_numeric(gdf['capacity'].apply(lambda x: str(x).split('.')[0].replace(',', '')), errors='coerce')
+            
+
+            # TODO Feb 19th sort out to catch weird capacity 
+            # Identify rows that had non-empty capacity values but failed conversion
+            # orig_capacity = gdf.loc[:, 'capacity'].astype(str)
+            # failed_conversion = gdf[pd.to_numeric(orig_capacity.split('.').str[0].str.replace(',', ''), errors='coerce').isna() & (orig_capacity != 'nan') & (orig_capacity != '')]
+            
+            # if len(failed_conversion) > 0:
+            #     logger.warning(f'Found {len(failed_conversion)} rows with capacity conversion errors')
+            #     error_output = failed_conversion[['pid', 'name', 'capacity']].copy()
+            #     error_output['tracker'] = gdf.loc[error_output.index, 'tracker-acro'].values if 'tracker-acro' in gdf.columns else self.mapname
+            #     error_output.to_csv(f'issues/{self.mapname}-capacity-conversion-errors-{iso_today_date}.csv', index=False)
+            #     logger.info(f'Capacity conversion errors saved to issues/{self.mapname}-capacity-conversion-errors-{iso_today_date}.csv')
         self.trackers = gdf
     
     def save_file(self, tracker):
@@ -468,11 +513,11 @@ class MapObject:
             print(f'{tracker}')
 
             # for singular map will only go through one
-            total = len(gdf[gdf['tracker-acro'] == tracker])
-            sum = gdf[gdf['tracker-acro'] == tracker]['cleaned_cap'].sum()
-            avg = sum / total
-            total_pair = (tracker, total)
-            total_counts_trackers.append(total_pair)
+            # total = len(gdf[gdf['tracker-acro'] == tracker])
+            # sum = gdf[gdf['tracker-acro'] == tracker]['cleaned_cap'].sum()
+            avg = gdf[gdf['tracker-acro']==tracker]['cleaned_cap'].mean()
+            # total_pair = (tracker, total)
+            # total_counts_trackers.append(total_pair)
             avg_pair = (tracker, avg)
             avg_trackers.append(avg_pair)
             
@@ -483,10 +528,12 @@ class MapObject:
             if pd.isna(cap_cleaned):
                 for pair in avg_trackers:
                     if pair[0] == tracker:
-                        gdf.loc[row, 'cleaned_cap'] = pair[1]
+                        # this accounts for situations with no capacity across the whole dataset # rare
+                        fill_val = pair[1] if not pd.isna(pair[1]) else 1
+                        gdf.loc[row, 'cleaned_cap'] = fill_val
             cap_cleaned = gdf.loc[row, 'cleaned_cap']
             if pd.isna(cap_cleaned):
-                input('still na')
+                input('ISSUE still na')
     
 
         pd.options.display.float_format = '{:.0f}'.format
@@ -504,6 +551,8 @@ class MapObject:
             logger.info(f'{set(gdf["conversion_factor"].to_list())}')
             gdf['scaling_capacity'] = gdf.apply(lambda row: conversion_multiply(row), axis=1)
             
+        # check that all rows get a scaling capacity
+        
         
         if self.mapname in ['ggft']: 
             print('passing cap-table now')
@@ -773,6 +822,8 @@ class MapObject:
                 multi_tracker_about_page = gsheets.worksheet(multi_tracker_about_page) 
                 multi_tracker_about_page = pd.DataFrame(multi_tracker_about_page.get_all_values())
                 multi_tracker_about_page = replace_old_date_about_page_reg(multi_tracker_about_page) 
+                print(f'This is multi_tracker_about_page after replace old date for {self.mapname}:')
+                print(multi_tracker_about_page)
                 self.about = multi_tracker_about_page
                 logger.info(self.about)
                 
@@ -780,6 +831,7 @@ class MapObject:
                 logger.info('Double check the map tab in the log, did we add global single tracker about pages here?')
                 logger.info('Check')
         else:
+            
             stubbdf = pd.DataFrame({"Note": ["Note to PM, please review this data file, report any issues, and then delete this tab"]})
             self.about = stubbdf        
 

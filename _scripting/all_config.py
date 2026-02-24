@@ -39,28 +39,26 @@ list_of_all_official = [
 
 ]
 
-# TODO maybe have the script make the folder based on the acro in map tarcker log
-
 pm_preview_mode = False # For Baird's testing work
-trackers_to_update = ["Oil & Gas Plants"]  # tab name in map tracker log sheet # Gas Finance
+trackers_to_update = ["Gas Pipelines"]  # tab name in map tracker log sheet # Gas Finance
 
-new_release_date = 'January_2026' # for within about page NEEDS TO BE FULL MONTH
-releaseiso = '2026-01'
+new_release_date = 'February_2026' # for within about page NEEDS TO BE FULL MONTH
+releaseiso = '2026-02'
 new_release_dateinput = input(f'In {new_release_date} format, with no spaces, tell me the public release date. Or press enter if {new_release_date} is the right month.')
 if new_release_dateinput == '':
     new_release_dateinput = new_release_date
 
-
+dd_only = False
 nostopping = True
 # add test local
 localtestfile = '' #'../testinputfile.xlsx'
-testval = '' #'Toscana FSRU' #optional for debugging Canatxx LNG Terminal
+testval = '' #'Toscana FSRU' #optional for debugging Canatxx LNG Terminal 
 testfilekey = '' # '1ivc-DkGvbAz8BW0LV2Q0XcZaB7s6q5hoUuVZTdxmxk8' #optional for debugging
 testtracker = ''  #'ggit-lng'
 simplified = False # True False to make a very barebones map files with coords and name and url (for speed tests gipt)
 new_h2_data = False
-priority = ["europe", "asia", "latam", "africa"]   # tracker_mapnames "europe", "asia", "latam", "africa", "ggit"
-force_refresh_flag = True 
+priority = ["latam", "asia", "europe"]   # tracker_mapnames "europe", "asia", "latam", "africa", "ggit"
+force_refresh_flag = False 
 tracker_mapnames = ["europe", "africa", "integrated", "asia", "latam", "ggit", "goit", "goget", "gctt", "gcpt", "gcmt", "gogpt", "gspt", "gwpt", "gnpt", "gbpt", "ggpt", "ghpt", "gist", "gmet", "giomt", "ggft"]
 about_templates_key = '1wrPJBqNuf5o-vzKYljlrWbjDtf_Ui7hR4JQM1p8gV7I' # new initiative to build about page for teams
 final_cols = []
@@ -103,7 +101,7 @@ metadata_dir = os.path.join(os.path.dirname(__file__), 'metadata_files')
 os.makedirs(metadata_dir, exist_ok=True)
 local_pkl_dir = os.path.join(os.path.dirname(__file__), 'local_pkl')
 os.makedirs(local_pkl_dir, exist_ok=True)
-
+about_sheets_pkl_path = os.path.join(local_pkl_dir, f"About_sheets_{iso_today_date}.pkl")
 
 # create logging functionality 
 logpath = 'logfiles/'

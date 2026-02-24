@@ -6,6 +6,8 @@ from all_config import nostopping, logger, trackers_to_update, final_cols, renam
 
 
 def make_map_tracker_objs(map_tab_df,row, prep_dict):
+    
+    # THIS IS THE MAP OBJECT not trackers within it
     map_obj = MapObject(
         mapname=map_tab_df.loc[row, 'mapname'],
         source=map_tab_df.loc[row, 'source'],
@@ -15,7 +17,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
         fuel=map_tab_df.loc[row, 'fuel'],
         pm=map_tab_df.loc[row, 'PM'], 
         trackers=[],
-        aboutkey = map_tab_df.loc[row, 'about_key'],
+        aboutkey = map_tab_df.loc[row, 'about_key'],  # only needed for regional maps 
         about=pd.DataFrame(),
     )
     
@@ -34,6 +36,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
         logger.info(f'Remember to clear out the local pkl files if needed!')
         # logger.info(msg=f'{prep_dict[item]}')
         item = item.strip()
+        # THIS IS THE TRACKER OBJECTS WITHIN THE MAP
         tracker_source_obj = TrackerObject(
             key = prep_dict[item]['gspread_key'],
             off_name = prep_dict[item]['official name'], 
@@ -43,7 +46,9 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
             acro = prep_dict[item]['tracker-acro'],
             geocol = prep_dict[item]['geocol'],
             fuelcol = prep_dict[item]['fuelcol'],
-            about_key = prep_dict[item]['about_key'],
+            about_tabs = prep_dict[item]['about_tabs'],
+            about_pipe_key = prep_dict[item]['about_pipe_key'], # only needed for pipelines trackers because geojson not excel
+            about_pipe_tabs = prep_dict[item]['about_pipe_tabs'], # only needed for pipelines trackers because geojson not excel
             about = pd.DataFrame(),
             data = pd.DataFrame()  # Initialize as an empty DataFrame
         )
@@ -57,25 +62,9 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
             logger.info(f'Is this release date correct for {tracker_source_obj.off_name}? {tracker_source_obj.release}\nEdit the map tracker log sheet in GEM maps if not.')
             
         # SET UP DF AND ABOUT HERE
+        tracker_source_obj.set_about_metadata()
         tracker_source_obj.set_df(final_cols, renaming_cols_dict) # need to set this up at the map level so sharing data pull, or add to a dictionary
 
-        print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
-        if nostopping == True:
-            print('pass')
-        else:
-            input('DEBUG CHECK THIS LENGTH') 
-        
-        if map_obj.mapname in ['ggft']:
-            print('skipping get about again for gas finance')
-        else:
-            tracker_source_obj.get_about() # for tracker specific tab in a data download file
-        print(f'Check data leng {tracker_source_obj.off_name} {len(tracker_source_obj.data)}')
-        if nostopping == True:
-            print('pass')
-        else:
-            input('DEBUG CHECK THIS LENGTH') # GOOD            
-        # set data and about attributes for each tracker
-        # append tracker obj to map obj attribute trackers 
         map_obj.trackers.append(tracker_source_obj)
         
     # filter by geo and fuel AND test if data got added
@@ -98,7 +87,7 @@ def make_map_tracker_objs(map_tab_df,row, prep_dict):
             
             # Filter by geo and fuel and check result
             tracker.create_filtered_geo_fuel_df(map_obj.geo, map_obj.fuel)
-            print(f'Check data leng {tracker.off_name} {len(tracker.data)}')
+            print(f'Check data leng {tracker.off_name} {tracker.tab_name} {len(tracker.data)}')
             logger.info(f'This is tracker.name {tracker.tab_name}')
 
             # Log the results after filtering
