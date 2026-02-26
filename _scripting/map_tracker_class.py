@@ -1768,8 +1768,9 @@ class TrackerObject:
                 else:
                     logger.info(f"Skipping non-numeric column: {col}")
                             # write issues_coords dict to a csv file in gem_tracker_maps
-            issue_df = pd.DataFrame(missing_coordinate_row)
-            issue_df.to_csv(f'{logpath}missing_coordinates_geo-{self.acro}_{releaseiso}_{iso_today_date}.csv',  index=False)     
+            if len(issue_df) > 0:
+                issue_df = pd.DataFrame(missing_coordinate_row)
+                issue_df.to_csv(f'{logpath}missing_coordinates_geo-{self.acro}_{releaseiso}_{iso_today_date}.csv',  index=False)     
         else:
             logger.info("Error: 'self.data' is not a DataFrame. And should be even for GOGET since it is run at a special point for it.")
             logger.info(msg=f"Error:'self.data' is {type(self.data).__name__}: {repr(self.data)}")
