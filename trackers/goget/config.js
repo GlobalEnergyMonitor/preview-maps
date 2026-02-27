@@ -2,7 +2,7 @@ var config = {
 
     /* name of the data file; use key `csv` if data file is CSV format */
     // csv: 'GOGET_Earthgenome_file2024-04-01.csv',
-    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/goget/Oil%20&%20Gas%20Extraction-map-file-2025-02-26.csv',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/GOGET_map_2026-02-27.geojson',
     
     /* Define labels for sitewide colors, referenced in tracker config */
     colors: {
@@ -14,22 +14,22 @@ var config = {
     },
 
     /* define the column and associated values for color application */
-    countryField: 'country/area',
-    linkField: 'unit-id',
+    countryField: 'areas',
+    linkField: 'id',
     urlField: 'url',
 
     color: {
-        field: 'status',
-        values: {
+        field: 'status-legend-global', // status-legend-global
+        values: { // TODO need to add more, and adjust hyphens likely
             'operating': 'red',
             'in_development': 'blue',
             'discovered': 'blue',
-            'shut_in': 'green',
-            'decommissioned': 'green',
+            // 'shut_in': 'green', // not there
+            'decommissioned': 'green', //decommissioning 
             'cancelled': 'green',
             'abandoned': 'grey',
-            'UGS': 'grey',
-            'not found': 'black'
+            'ugs': 'grey', // ugs in new 
+            'not-found': 'black'
         }
     },
 
@@ -39,15 +39,15 @@ var config = {
       */
     filters: [
         {
-            field: 'status',
-            values: ['operating', 'in_development', 'discovered', 'shut_in', 'decommissioned', 'cancelled', 'abandoned', 'UGS', ""],
-            values_labels: ['Operating','In development','Discovered','Shut in','Decommissioned','Cancelled','Abandoned','UGS','Not found']
+            field: 'status-legend-global',
+            values: ['operating', 'in_development', 'discovered', 'decommissioned', 'cancelled', 'abandoned', 'ugs', "not-found"],
+            values_labels: ['Operating','In development','Discovered', 'Decommissioned','Cancelled','Abandoned','UGS','Not found']
         }
     ],
 
     /* define the field for calculating and showing capacity along with label.
        this is defined per tracker since it varies widely */
-    capacityField: 'production---total-(oil,-gas-and-hydrocarbons)-(million-boe/y)',
+    capacityField: 'scaling-capacity',
     capacityDisplayField: 'capacity',
     // capacityLabel: 'million boe/y',
     capacityLabel: '', // (million boe/y)
@@ -56,16 +56,16 @@ var config = {
     assetLabel: 'areas',
 
     /* the column that contains the asset name. this varies between trackers */
-    nameField: 'wiki-name',
-    statusDisplayField: 'status_display',
+    nameField: 'name',
+    statusDisplayField: 'status',
     /* configure the table view, selecting which columns to show, how to label them, 
         and designated which column has the link */
     
     tableHeaders: {
-        values: ['wiki-name', 'operator', 'status_display', 'country/area', 'subnational-unit-(province,-state)', 'production---oil-(million-bbl/y)', 'production---gas-(million-m³/y)', 'production-year---oil', 'production-year---gas', 'production-start-year',],        
-        labels: ['Extraction Area', 'Operator', 'Status','Country/Area(s)','Subnational unit (province/state)', 'Production - Oil (Million bbl/y)', 'Production - Gas (Million m³/y)', 'Production Year - Oil', 'Production Year - Gas', 'Production start year',],
-        clickColumns: ['wiki-name'],
-        rightAlign: ['wiki-name','discovery-year', 'fid-year', 'production-start-year', 'production---oil-(million-bbl/y)', 'production---gas-(million-m³/y)', 'production-year---oil', ],
+        values: ['name', 'operator', 'status-legend-global', 'areas', 'subnational-unit-(province,-state)', 'production---oil-(million-bbl/y)', 'production---gas-(million-m³/y)', 'production-year---oil', 'production-year---gas', 'production-start-year',],        
+        labels: ['Extraction Area', 'Operator', 'Status','country/area(s)','Subnational unit (province/state)', 'Production - Oil (Million bbl/y)', 'Production - Gas (Million m³/y)', 'Production Year - Oil', 'Production Year - Gas', 'Production start year',],
+        clickColumns: ['name'],
+        rightAlign: ['name','discovery-year', 'fid-year', 'production-start-year', 'production---oil-(million-bbl/y)', 'production---gas-(million-m³/y)', 'production-year---oil', ],
         toLocaleString: ['production---oil-(million-bbl/y)', 'production---gas-(million-m³/y)'],
     
     
@@ -73,7 +73,7 @@ var config = {
 
     /* configure the search box; 
         each label has a value with the list of fields to search. Multiple fields might be searched */
-    searchFields: { 'Extraction Area': ['wiki-name'], 
+    searchFields: { 'Extraction Area': ['name'], 
         'Companies': ['owner', 'operator', 'parent'],
         'Discovery Year': ['discovery-year'],
         'Production start year': ['production-start-year']
@@ -87,7 +87,7 @@ var config = {
       `'label': '...'` prepends a label. If a range, two values for singular and plural.
     */
     detailView: {
-        'wiki-name': {'display': 'heading'},
+        'name': {'display': 'heading'},
         // 'status': {'label': 'Status'},
         'loc_accuracy': {'label': 'Location Accuracy'},
         'operator': {'label': 'Operator'},
@@ -99,7 +99,7 @@ var config = {
         'production---oil-(million-bbl/y)': {'label': 'Production - Oil (Million bbl/y)'},
         'production---gas-(million-m³/y)': {'label': 'Production - Gas (Million m³/y)'},
         'subnational-unit-(province,-state)': {'display': 'location'},
-        'country/area': {'display': 'location'}
+        'areas': {'display': 'location'}
     },
     countryFile: './countries.js',
     showMaxCapacity: false,
