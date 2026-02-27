@@ -1,10 +1,10 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/europe_map_2026-02-26.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/europe_map_2026-02-27.geojson',
     geometries: ['Point','LineString'],
     center: [8, 50],
     zoomFactor: 1.9,
     img_detail_zoom: 10,
-    statusField: 'status-legend',
+    statusField: 'status-legend-regional-regional',
     statusDisplayField: 'status',
     color: {
 
@@ -28,10 +28,10 @@ var config = {
             values_labels: ['Gas power units','Gas pipelines', 'LNG import terminals', 'LNG export terminals',  "Gas extraction areas",],
         },
         {
-            field: 'status-legend',
+            field: 'status-legend-regional',
             label: 'Status',
             values: ['operating','proposed-plus','pre-construction-plus','construction-plus','retired-plus','cancelled','mothballed-plus', 'abandoned','shelved', 'ugs', 'not-found'],
-            values_labels: ['Operating','Proposed/Announced/Discovered','Pre-construction', 'Construction/In development','Retired/Closed/Decommissioned','Cancelled','Mothballed/Idle/Shut in','Abandoned','Shelved', 'UGS', 'Not Found']
+            values_labels: ['Operating','Proposed/Announced/Discovered','Pre-construction', 'Construction/In development','Retired/Closed/Decommissioned','Cancelled','Mothballed/Idle','Abandoned','Shelved', 'UGS', 'Not Found']
         },
 
     ],
@@ -86,19 +86,21 @@ var config = {
     searchFields: { 'Project': ['name', 'other-name', 'local-name', 'name-search', 'pid'], 
         'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year'],
-        // 'Infrastructure Type': ['tracker-display'],
-        // 'Status': ['status'],
-        // 'Province/State': ['subnat']
+        'Infrastructure Type': ['tracker-display'],
+        'Status': ['status', 'status-legend-regional'],
+        'Province/State': ['subnat']
     },
     detailView: {
         'name': {'display': 'heading'},
-        'prod-gas': {'label': 'Production (Million m³/y)'},
+        'prod-gas': {'label': 'Gas Production (million m³/y)'},
+        'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
         'prod-year-gas': {'label': 'Production Year - Gas'},
+        'prod-year-unspecified': {'label': 'Production Year - Hydrocarbons (unspecified)'},
         'start-year': {'label': 'Start Year'},
         'owner': {'label': 'Owner'},
         'parent': {'label': 'Parent'},
-        // 'river': {'label': 'River'},
-        // 'tracker-display': {'label': 'Type'},
+        'river': {'label': 'River'},
+        'tracker-display': {'label': 'Type'},
         'areas': {'label': 'Country/Area(s)'},
         'areas-subnat-sat-display': {'display': 'location'}, 
     },

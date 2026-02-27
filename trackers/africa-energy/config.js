@@ -1,9 +1,9 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/africa-energy_map_2026-02-26.geojson', 
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/africa-energy_map_2026-02-27.geojson', 
     geometries: ['Point','LineString'],
     center: [15, 0],
     zoomFactor: 1,
-    statusField: 'status-legend',
+    statusField: 'status-legend-regional',
     statusDisplayField: 'status',
     // linkField: 'id',
     color: {
@@ -35,10 +35,10 @@ var config = {
             primary: true
         },
         {
-            field: 'status-legend',
+            field: 'status-legend-regional',
             label: 'Status',
-            values: ['operating','proposed-plus','pre-construction-plus','construction-plus','retired-plus','cancelled','mothballed-plus','shelved', 'not-found'],
-            values_labels: ['Operating','Proposed/Announced/Discovered','Pre-construction/Pre-permit/Permitted', 'Construction/In development','Retired/Closed/Decommissioned','Cancelled','Mothballed/Idle/Shut in','Shelved', 'Not Found']
+            values: ['operating','proposed-plus','pre-construction-plus','construction-plus','retired-plus','cancelled','mothballed-plus','shelved','not-found'],
+            values_labels: ['Operating','Proposed/Announced/Discovered','Pre-construction/Pre-permit/Permitted', 'Construction/In development','Retired/Closed/Decommissioned','Cancelled','Mothballed/Idle','Shelved', 'Not Found']
 
         },
 
@@ -138,7 +138,7 @@ var config = {
 
     tableHeaders: {
         values: ['name','unit-name', 'owner', 'parent', 'capacity-table', 'units-of-m','status', 'areas', 'start-year', 'prod-oil', 'prod-year-oil', 'prod-gas', 'prod-year-gas', 'prod-coal','tracker-display',],
-        labels: ['Name','Unit','Owner', 'Parent','Capacity', '','Status','Country/Area(s)','Start year', 'Production (million bbl/y)','Production year (oil)', 'Production (Million m³/y)', 'Production year (gas)', 'Production (Mt)','Facility Type'],
+        labels: ['Name','Unit','Owner', 'Parent','Capacity', '','Status','Country/Area(s)','Start year', 'Liquid Production (million bbl/y)','Production year (oil)', 'Gas Production (Million m³/y)', 'Production year (gas)', 'Production (Mt)','Facility Type'],
 
         clickColumns: ['name'],
         rightAlign: ['unit','capacity-table','prod-oil', 'prod-gas','start-year', 'prod-year-oil', 'prod-year-gas'], 
@@ -155,7 +155,7 @@ var config = {
         'Companies': ['owner', 'parent', 'owner-search', 'parent-search'],
         'Start Year': ['start-year'],
         'Infrastructure Type': ['tracker-display'],
-        'Status': ['status'],
+        'Status': ['status', 'status-legend-regional'],
         'Province/State': ['subnat']
     },
 
@@ -164,10 +164,12 @@ var config = {
 
     detailView: {
         'name': {'display': 'heading'},
-        'prod-oil': {'label': 'Production (Million bbl/y)'},
-        'prod-gas': {'label': 'Production (Million m³/y)'},
+        'prod-oil': {'label': 'Liquids Production (million bbl/y)'},
+        'prod-gas': {'label': 'Gas Production (million m³/y)'},
+        'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
         'prod-year-oil': {'label': 'Production Year - Oil'},
         'prod-year-gas': {'label': 'Production Year - Gas'},
+        'prod-year-unspecified': {'label': 'Production Year - Hydrocarbons (unspecified)'},
         'prod-coal': {'label': 'Production (Mt)'},
         'start-year': {'label': 'Start Year'},
         'owner': {'label': 'Owner'},
