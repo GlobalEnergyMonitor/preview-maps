@@ -92,6 +92,7 @@ var config = {
     },
     detailView: {
         'name': {'display': 'heading'},
+        'location-accuracy': {'label': 'Location Accuracy'},
         'prod-gas': {'label': 'Gas Production (million m³/y)'},
         'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
         'prod-year-gas': {'label': 'Production Year - Gas'},

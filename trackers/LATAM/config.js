@@ -105,7 +105,9 @@ var config = {
         'Province/State': ['subnat']
     },
     detailView: {
-        'name': {'display': 'heading'},     
+        'name': {'display': 'heading'},   
+        'location-accuracy': {'label': 'Location Accuracy'},
+  
         'prod-oil': {'label': 'Liquids Production (million bbl/y)'},
         'prod-gas': {'label': 'Gas Production (million m³/y)'},
         'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
