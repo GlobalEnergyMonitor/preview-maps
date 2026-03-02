@@ -1,5 +1,5 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/africa-energy_map_2026-02-27.geojson', 
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/africa-energy_map_2026-03-02.geojson', 
     geometries: ['Point','LineString'],
     center: [15, 0],
     zoomFactor: 1,
@@ -137,8 +137,8 @@ var config = {
     multiCountry: true,
 
     tableHeaders: {
-        values: ['name','unit-name', 'owner', 'parent', 'capacity-table', 'units-of-m','status', 'areas', 'start-year', 'prod-oil', 'prod-year-oil', 'prod-gas', 'prod-year-gas', 'prod-coal','tracker-display',],
-        labels: ['Name','Unit','Owner', 'Parent','Capacity', '','Status','Country/Area(s)','Start year', 'Liquid Production (million bbl/y)','Production year (oil)', 'Gas Production (Million m³/y)', 'Production year (gas)', 'Production (Mt)','Facility Type'],
+        values: ['name','unit-name', 'owner', 'parent', 'capacity-table', 'units-of-m','status', 'areas', 'start-year', 'prod-oil', 'prod-year-oil', 'prod-gas', 'prod-year-gas', 'prod-coal','fuel', 'tracker-display',],
+        labels: ['Name','Unit','Owner', 'Parent','Capacity', '','Status','Country/Area(s)','Start year', 'Liquid Production (million bbl/y)','Production year (oil)', 'Gas Production (Million m³/y)', 'Production year (gas)', 'Coal Production (Mt)','Fuel', 'Facility Type'],
 
         clickColumns: ['name'],
         rightAlign: ['unit','capacity-table','prod-oil', 'prod-gas','start-year', 'prod-year-oil', 'prod-year-gas'], 
@@ -164,6 +164,7 @@ var config = {
 
     detailView: {
         'name': {'display': 'heading'},
+        'location-accuracy': {'label': 'Location Accuracy'},
         'prod-oil': {'label': 'Liquids Production (million bbl/y)'},
         'prod-gas': {'label': 'Gas Production (million m³/y)'},
         'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},

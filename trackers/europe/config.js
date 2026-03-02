@@ -1,5 +1,5 @@
 var config = {
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/europe_map_2026-02-27.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/europe_map_2026-03-02.geojson',
     geometries: ['Point','LineString'],
     center: [8, 50],
     zoomFactor: 1.9,
@@ -74,8 +74,8 @@ var config = {
     capacityDisplayField: 'capacity-table',
     
     tableHeaders: {
-        values: ['name','unit-name', 'owner', 'parent', 'capacity-table', 'units-of-m','status', 'areas', 'start-year', 'prod-gas', 'prod-year-gas','tracker-display'],
-        labels: ['Name','Unit','Owner', 'Parent','Capacity', 'units','Status','Country/Area(s)','Start year', 'Production (Million m³/y)', 'Production year (gas)', 'Type'],
+        values: ['name','unit-name', 'owner', 'parent', 'capacity-table', 'units-of-m','status', 'areas', 'start-year', 'prod-gas', 'prod-year-gas','fuel','tracker-display'],
+        labels: ['Name','Unit','Owner', 'Parent','Capacity', 'units','Status','Country/Area(s)','Start year', 'Production (Million m³/y)', 'Production year (gas)', 'Fuel','Type'],
         clickColumns: ['name'],
         rightAlign: ['capacity-table','prod-gas','start-year','prod-year-gas'], 
         removeLastComma: ['areas'], 
@@ -92,6 +92,7 @@ var config = {
     },
     detailView: {
         'name': {'display': 'heading'},
+        'location-accuracy': {'label': 'Location Accuracy'},
         'prod-gas': {'label': 'Gas Production (million m³/y)'},
         'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
         'prod-year-gas': {'label': 'Production Year - Gas'},

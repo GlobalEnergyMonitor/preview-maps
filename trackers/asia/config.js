@@ -1,6 +1,6 @@
 var config = {
 
-    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/asia_map_2026-02-27.geojson',
+    geojson: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/GOGET/2026-03/asia_map_2026-03-02.geojson',
     geometries: ['Point','LineString'],
     center: [60, 20],
     zoomFactor: 1.9,
@@ -104,6 +104,7 @@ var config = {
     },
     detailView: {
         'name': {'display': 'heading'},
+        'location-accuracy': {'label': 'Location Accuracy'},
         'prod-gas': {'label': 'Gas Production (million m³/y)'},
         'prod-unspecified': {'label': 'Unspecified Hydrocarbons Production (million boe/y)'},
         'prod-year-gas': {'label': 'Production Year - Gas'},
