@@ -21,7 +21,7 @@ var config = {
             'hydropower': 'blue',
             'nuclear': 'blue',
             'oil/gas': 'red',
-            'solar': 'green',
+            'utility-scale solar': 'green',
             'wind': 'green'
         }
 
@@ -48,7 +48,7 @@ var config = {
     filters: [
         {
             field: 'type',
-            values: ['coal','oil/gas','nuclear','geothermal','hydropower','bioenergy','solar','wind'],
+            values: ['coal','oil/gas','nuclear','geothermal','hydropower','bioenergy','utility-scale solar','wind'],
             primary: true
         },
         {
