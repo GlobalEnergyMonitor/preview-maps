@@ -1,9 +1,9 @@
 var config = {
-    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/Integrated/2026-03/gipt-data-2026-03-23.csv',
+    csv: 'https://publicgemdata.nyc3.cdn.digitaloceanspaces.com/Integrated/2026-04/gipt-data-2026-03-27.csv',
 
     tiles: [
         // 'https://gem.dev.c10e.org/2024-03-12/{z}/{x}/{y}.pbf'
-        'https://mapsintegrated.nyc3.cdn.digitaloceanspaces.com/maps/integrated-2026-03/{z}/{x}/{y}.pbf'
+        'https://mapsintegrated.nyc3.cdn.digitaloceanspaces.com/maps/integrated-2026-04/{z}/{x}/{y}.pbf'
     
         ],
     tileSourceLayer: 'integrated',
